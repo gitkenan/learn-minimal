@@ -1,6 +1,12 @@
+/* globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Customize the progress bar */
+.bar-of-progress {
+  background-color: #2563eb; /* Tailwind's blue-600 */
+}
 
 :root {
   --background: #ffffff;
@@ -15,6 +21,7 @@
 }
 
 body {
+  @apply bg-gray-900 text-white;
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
