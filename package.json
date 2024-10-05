@@ -11,6 +11,7 @@
   "dependencies": {
     "@badrap/bar-of-progress": "^0.2.2",
     "@clerk/nextjs": "^5.7.1",
+    "@heroicons/react": "^1.0.6",
     "next": "14.2.14",
     "openai": "^4.67.1",
     "react": "^18",
