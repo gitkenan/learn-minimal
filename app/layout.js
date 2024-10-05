@@ -21,8 +21,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-     <ClerkProvider>
+    <ClerkProvider>
       <html lang="en">
+        <head>
+          <title>Learn Minimal</title>
+          <link rel="icon" href="/favicon.ico" />
+        </head>
         <body
           className="bg-cover bg-center"
           style={{ backgroundImage: "url('/background.jpg')" }}
@@ -31,12 +35,5 @@ export default function RootLayout({ children }) {
         </body>
       </html>
     </ClerkProvider>
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
   );
 }
