@@ -30,18 +30,31 @@ export default function Dashboard() {
   }, [isLoaded, userId]);
 
   const handleDelete = async (planId) => {
+    if (!confirm("Are you sure you want to delete this plan?")) return;
     try {
-      await fetch(`/api/plans/${planId}`, { method: 'DELETE' });
-      setPlans(plans.filter((plan) => plan.id !== planId));
+      const res = await fetch(`/api/plans/${planId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setPlans(plans.filter((plan) => plan.id !== planId));
+      } else {
+        alert(data.error || "Failed to delete the plan.");
+      }
     } catch (error) {
       console.error('Error deleting plan:', error);
+      alert("An error occurred while deleting the plan.");
     }
   };
 
   const handleShare = (planId) => {
     const shareLink = `${window.location.origin}/plan/${planId}`;
-    navigator.clipboard.writeText(shareLink);
-    alert("Plan link copied to clipboard!");
+    navigator.clipboard.writeText(shareLink)
+      .then(() => {
+        alert("Plan link copied to clipboard!");
+      })
+      .catch(err => {
+        console.error('Error copying share link:', err);
+        alert("Failed to copy the share link.");
+      });
   };
 
   return (
@@ -69,7 +82,7 @@ export default function Dashboard() {
                 <div className="space-x-4">
                   <Link href={`/plan/${plan.id}`}>
                     <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                      Edit Plan
+                      View Plan
                     </button>
                   </Link>
                   <button
@@ -93,4 +106,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

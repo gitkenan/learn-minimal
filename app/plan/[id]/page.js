@@ -23,11 +23,18 @@ export default function PlanDetail() {
       fetch(`/api/plans/${id}`)
         .then(res => res.json())
         .then(data => {
-          setPlan(data.plan);
-          setProgress(data.plan.progress || {});
+          if (data.plan) {
+            setPlan(data.plan);
+            setProgress(data.plan.progress || {});
+          } else {
+            alert("Plan not found.");
+            router.push('/dashboard');
+          }
         })
         .catch(err => {
           console.error('Error fetching plan:', err);
+          alert("An error occurred while fetching the plan.");
+          router.push('/dashboard');
         });
     }
   }, [isLoaded, userId, id]);
@@ -43,11 +50,12 @@ export default function PlanDetail() {
       body: JSON.stringify({ progress: newProgress }),
     }).catch(err => {
       console.error('Error updating progress:', err);
+      alert("Failed to update progress.");
     });
   };
 
   if (!plan) {
-    return <p>Loading...</p>;
+    return <p className="text-center mt-8">Loading...</p>;
   }
 
   const planSteps = plan.content.split('\n').map((line) => {
@@ -110,4 +118,3 @@ export default function PlanDetail() {
     </div>
   );
 }
-
