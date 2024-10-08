@@ -87,3 +87,48 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
+
+export async function PUT(req) {
+  try {
+    const { userId } = getAuth(req);
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const { planId, topic } = await req.json();
+
+    if (!planId || !topic) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    }
+
+    const existingPlanData = await redis.hget(`user:${userId}:plans`, planId);
+    if (!existingPlanData) {
+      return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
+    }
+
+    let existingPlan;
+    if (typeof existingPlanData === 'string') {
+      try {
+        existingPlan = JSON.parse(existingPlanData);
+      } catch (error) {
+        console.error("Error parsing existing plan data:", error);
+        return new Response(JSON.stringify({ error: 'Invalid plan data' }), { status: 500 });
+      }
+    } else {
+      existingPlan = existingPlanData;
+    }
+
+    const updatedPlan = {
+      ...existingPlan,
+      topic,
+    };
+
+    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(updatedPlan));
+
+    return new Response(JSON.stringify({ message: 'Plan updated successfully' }), { status: 200 });
+  } catch (error) {
+    console.error("Error updating plan:", error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+  }
+}

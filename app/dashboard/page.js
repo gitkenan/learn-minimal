@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaEye, FaEllipsisV, FaTrash, FaShareAlt } from 'react-icons/fa';
+import { FaEye, FaEllipsisV, FaTrash, FaShareAlt, FaEdit } from 'react-icons/fa';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Dashboard() {
@@ -15,6 +15,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [editedTitle, setEditedTitle] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -65,6 +67,33 @@ export default function Dashboard() {
       });
   };
 
+  const handleEdit = (planId, topic) => {
+    setEditingPlan(planId);
+    setEditedTitle(topic);
+  };
+
+  const handleSaveEdit = async (planId) => {
+    try {
+      const res = await fetch(`/api/plans`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId, topic: editedTitle }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPlans(plans.map((plan) => (plan.id === planId ? { ...plan, topic: editedTitle } : plan)));
+        setEditingPlan(null);
+      } else {
+        alert(data.error || 'Failed to update the plan.');
+      }
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      alert('An error occurred while updating the plan.');
+    }
+  };
+
   const filteredPlans = plans.filter((plan) =>
     plan.topic.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,7 +134,24 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPlans.map((plan) => (
               <div key={plan.id} className="bg-gray-800 p-6 rounded-md shadow-md hover:shadow-lg transition-shadow relative">
-                <h2 className="text-xl font-semibold mb-2">{plan.topic}</h2>
+                {editingPlan === plan.id ? (
+                  <div>
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      className="w-full px-3 py-2 mb-2 rounded bg-gray-700 text-white focus:outline-none"
+                    />
+                    <button
+                      onClick={() => handleSaveEdit(plan.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <h2 className="text-xl font-semibold mb-2">{plan.topic}</h2>
+                )}
                 <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <div className="flex items-center justify-between">
                   <Link href={`/plan/${plan.id}`}>
@@ -133,6 +179,12 @@ export default function Dashboard() {
                           className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
                         >
                           <FaTrash className="mr-2" /> Delete
+                        </button>
+                        <button
+                          onClick={() => handleEdit(plan.id, plan.topic)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                        >
+                          <FaEdit className="mr-2" /> Edit
                         </button>
                       </div>
                     )}
