@@ -6,10 +6,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { FaEye, FaEllipsisV, FaTrash, FaShareAlt } from 'react-icons/fa';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Dashboard() {
   const { isLoaded, userId } = useAuth();
   const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,51 +24,69 @@ export default function Dashboard() {
     } else if (isLoaded && userId) {
       // Fetch the user's plans
       fetch('/api/plans')
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           setPlans(data.plans);
+          setLoading(false);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching plans:', err);
+          setLoading(false);
         });
     }
   }, [isLoaded, userId]);
 
   const handleDelete = async (planId) => {
-    if (!confirm("Are you sure you want to delete this plan?")) return;
+    if (!confirm('Are you sure you want to delete this plan?')) return;
     try {
       const res = await fetch(`/api/plans/${planId}`, { method: 'DELETE' });
       const data = await res.json();
       if (res.ok) {
         setPlans(plans.filter((plan) => plan.id !== planId));
       } else {
-        alert(data.error || "Failed to delete the plan.");
+        alert(data.error || 'Failed to delete the plan.');
       }
     } catch (error) {
       console.error('Error deleting plan:', error);
-      alert("An error occurred while deleting the plan.");
+      alert('An error occurred while deleting the plan.');
     }
   };
 
   const handleShare = (planId) => {
     const shareLink = `${window.location.origin}/plan/${planId}`;
-    navigator.clipboard.writeText(shareLink)
+    navigator.clipboard
+      .writeText(shareLink)
       .then(() => {
-        alert("Plan link copied to clipboard!");
+        alert('Plan link copied to clipboard!');
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Error copying share link:', err);
-        alert("Failed to copy the share link.");
+        alert('Failed to copy the share link.');
       });
+  };
+
+  const filteredPlans = plans.filter((plan) =>
+    plan.topic.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const toggleDropdown = (planId) => {
+    setDropdownOpen(dropdownOpen === planId ? null : planId);
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <nav className="container mx-auto px-4 py-4 flex justify-between">
-        <h1 className="text-2xl">My Learning Plans</h1>
-        <div>
+      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">My Learning Plans</h1>
+        <div className="flex items-center space-x-4">
+          <input
+            type="text"
+            placeholder="Search plans..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-3 py-2 rounded bg-gray-800 text-white focus:outline-none"
+          />
           <Link href="/">
-            <button className="text-white mr-4">Home</button>
+            <button className="text-white">Home</button>
           </Link>
           <Link href="/sign-out">
             <button className="text-white">Sign Out</button>
@@ -71,32 +94,49 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {plans.length === 0 ? (
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <LoadingSpinner />
+          </div>
+        ) : filteredPlans.length === 0 ? (
           <p className="text-center mt-8">You have no saved learning plans.</p>
         ) : (
-          <div className="mt-8 space-y-8">
-            {plans.map((plan) => (
-              <div key={plan.id} className="bg-gray-800 p-6 rounded-md">
-                <h2 className="text-xl font-semibold mb-4">{plan.topic}</h2>
-                <div className="space-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPlans.map((plan) => (
+              <div key={plan.id} className="bg-gray-800 p-6 rounded-md shadow-md hover:shadow-lg transition-shadow relative">
+                <h2 className="text-xl font-semibold mb-2">{plan.topic}</h2>
+                <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString()}</p>
+                <div className="flex items-center justify-between">
                   <Link href={`/plan/${plan.id}`}>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                      View Plan
+                    <button className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+                      <FaEye className="mr-2" /> View
                     </button>
                   </Link>
-                  <button
-                    onClick={() => handleDelete(plan.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-                  >
-                    Delete Plan
-                  </button>
-                  <button
-                    onClick={() => handleShare(plan.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-                  >
-                    Share Plan
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => toggleDropdown(plan.id)}
+                      className="text-white focus:outline-none"
+                    >
+                      <FaEllipsisV />
+                    </button>
+                    {dropdownOpen === plan.id && (
+                      <div className="absolute right-0 mt-2 w-32 bg-gray-700 rounded-md shadow-lg z-10">
+                        <button
+                          onClick={() => handleShare(plan.id)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                        >
+                          <FaShareAlt className="mr-2" /> Share
+                        </button>
+                        <button
+                          onClick={() => handleDelete(plan.id)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                        >
+                          <FaTrash className="mr-2" /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
