@@ -106,7 +106,7 @@ export default function Dashboard() {
             {filteredPlans.map((plan) => (
               <div key={plan.id} className="bg-gray-800 p-6 rounded-md shadow-md hover:shadow-lg transition-shadow relative">
                 <h2 className="text-xl font-semibold mb-2">{plan.topic}</h2>
-                <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <div className="flex items-center justify-between">
                   <Link href={`/plan/${plan.id}`}>
                     <button className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">

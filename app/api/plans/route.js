@@ -35,6 +35,11 @@ export async function GET(req) {
           throw new Error(`Plan ${planId} is neither a string nor an object.`);
         }
 
+        // Ensure createdAt is set correctly
+        if (!parsedPlan.createdAt) {
+          parsedPlan.createdAt = new Date().toISOString();
+        }
+
         // Optional: Log the parsed plan for debugging
         console.log(`Parsed Plan (${planId}):`, parsedPlan);
 
@@ -50,6 +55,35 @@ export async function GET(req) {
     return new Response(JSON.stringify({ plans }), { status: 200 });
   } catch (error) {
     console.error("Error fetching plans:", error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+  }
+}
+
+export async function POST(req) {
+  try {
+    const { userId } = getAuth(req);
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const { planId, topic } = await req.json();
+
+    if (!planId || !topic) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    }
+
+    const newPlan = {
+      id: planId,
+      topic,
+      createdAt: new Date().toISOString(),
+    };
+
+    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(newPlan));
+
+    return new Response(JSON.stringify({ message: 'Plan created successfully' }), { status: 201 });
+  } catch (error) {
+    console.error("Error creating plan:", error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
