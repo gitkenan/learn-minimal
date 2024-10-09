@@ -56,9 +56,6 @@ export default function Home() {
   return (
     <div className={`min-h-screen bg-gray-900 text-gray-100 ${inter.className}`}>
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-3xl font-bold text-white">
-          Learn Minimal
-        </Link>
         <div className="flex items-center space-x-4">
           <SignedOut>
             <Link href="/sign-in" className="text-white font-medium">
@@ -69,7 +66,9 @@ export default function Home() {
             </Link>
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            <div className="absolute top-4 right-4">
+              <UserButton />
+            </div>
           </SignedIn>
         </div>
       </nav>
@@ -81,20 +80,20 @@ export default function Home() {
         <p className="text-lg text-gray-400 mb-8">
           Discover personalized learning plans tailored just for you.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col items-center w-full max-w-lg">
+        <form onSubmit={handleSubmit} className="flex items-center w-full max-w-lg">
           <input
             type="text"
             placeholder="Enter a topic..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="border border-gray-700 bg-gray-800 rounded-full p-4 w-full mb-4 text-center text-white focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
+            className="border border-gray-700 bg-gray-800 rounded-full p-4 w-full text-center text-white focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full text-lg font-semibold disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-full ml-4 text-lg font-semibold disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? 'Generating...' : 'Get Learning Plan'}
+            {isLoading ? 'Generating...' : 'Go'}
           </button>
         </form>
 
