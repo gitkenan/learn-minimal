@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import { useRouter } from 'next/navigation';
+import AOS from 'aos';
+import 'aos/dist/aos.css'; // Import AOS styles
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,6 +14,14 @@ export default function Home() {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Initialize AOS
+  useEffect(() => {
+    AOS.init({
+      duration: 1000, // Animation duration
+      once: true, // Whether animation should happen only once while scrolling
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +54,8 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen ${inter.className} bg-black text-gray-83`}>
+    <div className={`min-h-screen ${inter.className} bg-black text-gray-200`}>
+      {/* Navigation */}
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <SignedOut>
@@ -63,14 +74,15 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
-        <h1 className="text-5xl font-extrabold mb-6 leading-tight">
-          Get a new learning plan, <br /> in <span className="text-neon-green">seconds</span>
+      {/* Hero Section */}
+      <main className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+        <h1 className="text-5xl font-extrabold mb-6 leading-tight" data-aos="fade-up">
+          Empower Your Mind, <br /> Unlock Your <span className="text-neon-green">Potential</span>
         </h1>
-        <p className="text-lg text-gray-400 mb-8">
+        <p className="text-lg text-gray-400 mb-8" data-aos="fade-up" data-aos-delay="200">
           Discover personalized learning plans tailored just for you.
         </p>
-        <form onSubmit={handleSubmit} className="flex items-center w-full max-w-lg">
+        <form onSubmit={handleSubmit} className="flex items-center w-full max-w-lg" data-aos="fade-up" data-aos-delay="400">
           <input
             type="text"
             placeholder="Enter a topic..."
@@ -112,6 +124,66 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Inspirational Sections */}
+      <section className="py-20 bg-gray-900" id="creativity">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-6" data-aos="fade-right">
+            Ignite Your <span className="text-neon-green">Creativity</span>
+          </h2>
+          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
+            "Creativity is intelligence having fun." – Albert Einstein. Embrace the joy of learning and let your imagination soar.
+          </p>
+          <img
+            src="/images/creativity.svg"
+            alt="Creativity"
+            className="mx-auto w-1/2"
+            data-aos="zoom-in"
+            data-aos-delay="400"
+          />
+        </div>
+      </section>
+
+      <section className="py-20 bg-gray-800" id="learning">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-6" data-aos="fade-left">
+            Embrace <span className="text-neon-green">Continuous Learning</span>
+          </h2>
+          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-left" data-aos-delay="200">
+            "The beautiful thing about learning is that nobody can take it away from you." – B.B. King. Invest in yourself every day.
+          </p>
+          <img
+            src="/images/learning.svg"
+            alt="Learning"
+            className="mx-auto w-1/2"
+            data-aos="zoom-in"
+            data-aos-delay="400"
+          />
+        </div>
+      </section>
+
+      <section className="py-20 bg-gray-900" id="ambition">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-6" data-aos="fade-right">
+            Reach for Your <span className="text-neon-green">Ambitions</span>
+          </h2>
+          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
+            "The future belongs to those who believe in the beauty of their dreams." – Eleanor Roosevelt. Turn your dreams into reality.
+          </p>
+          <img
+            src="/images/ambition.svg"
+            alt="Ambition"
+            className="mx-auto w-1/2"
+            data-aos="zoom-in"
+            data-aos-delay="400"
+          />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 bg-black text-center">
+        <p className="text-gray-500">&copy; {new Date().getFullYear()} Learn Minimal. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
