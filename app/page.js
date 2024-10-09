@@ -1,5 +1,3 @@
-// app/page.js
-
 "use client";
 
 import { useState } from 'react';
@@ -13,14 +11,7 @@ const inter = Inter({ subsets: ['latin'] });
 export default function Home() {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [quote, setQuote] = useState('');
   const router = useRouter();
-
-  const motivationalQuotes = [
-    "Learning never exhausts the mind.",
-    "The beautiful thing about learning is nobody can take it away from you.",
-    "Education is the passport to the future.",
-  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +20,6 @@ export default function Home() {
       return;
     }
     setIsLoading(true);
-    setQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
 
     try {
       const res = await fetch('/api/learn', {
@@ -54,14 +44,14 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen bg-gray-900 text-gray-100 ${inter.className}`}>
+    <div className={`min-h-screen ${inter.className} bg-black text-gray-83`}>
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <SignedOut>
-            <Link href="/sign-in" className="text-white font-medium">
+            <Link href="/sign-in" className="text-gray-400 hover:text-gray-200 font-medium">
               Sign In
             </Link>
-            <Link href="/sign-up" className="bg-white text-gray-900 px-4 py-2 rounded-full font-medium">
+            <Link href="/sign-up" className="bg-gray-800 text-gray-200 px-4 py-2 rounded-full font-medium hover:bg-gray-700">
               Sign Up
             </Link>
           </SignedOut>
@@ -75,7 +65,7 @@ export default function Home() {
 
       <main className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
         <h1 className="text-5xl font-extrabold mb-6 leading-tight">
-          Get a new learning plan, <br /> in <span className="text-blue-600">seconds</span>
+          Get a new learning plan, <br /> in <span className="text-neon-green">seconds</span>
         </h1>
         <p className="text-lg text-gray-400 mb-8">
           Discover personalized learning plans tailored just for you.
@@ -86,11 +76,11 @@ export default function Home() {
             placeholder="Enter a topic..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="border border-gray-700 bg-gray-800 rounded-full p-4 w-full text-center text-white focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
+            className="border border-gray-700 bg-gray-800 rounded-full p-4 w-full text-center text-gray-200 focus:outline-none focus:ring-2 focus:ring-neon-green text-lg transition-colors duration-300"
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-full ml-4 text-lg font-semibold disabled:opacity-50"
+            className="bg-gray-800 text-gray-200 px-6 py-4 rounded-full ml-4 text-lg font-semibold hover:bg-neon-green hover:text-black transition-colors duration-300 disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? 'Generating...' : 'Go'}
@@ -100,7 +90,7 @@ export default function Home() {
         {isLoading && (
           <div className="mt-8 flex justify-center">
             <svg
-              className="animate-spin h-12 w-12 text-blue-600"
+              className="animate-spin h-12 w-12 text-neon-green"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

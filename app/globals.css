@@ -1,34 +1,107 @@
-/* globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Customize the progress bar */
-.bar-of-progress {
-  background-color: #2563eb; /* Tailwind's blue-600 */
-}
-
+/* Custom Neon Green Color */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --neon-green: #39FF14; /* Neon Green */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Global Styles */
 body {
-  @apply bg-gray-900 text-gray-100;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-black text-gray-200;
+  font-family: 'Inter', sans-serif;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Input Fields */
+input::placeholder {
+  color: #9ca3af; /* Gray-400 */
+}
+
+input:focus {
+  @apply ring-2 ring-neon-green;
+}
+
+/* Buttons */
+button {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--neon-green);
+  color: #000000; /* Black */
+}
+
+/* Neon Green Text */
+.text-neon-green {
+  color: var(--neon-green);
+}
+
+/* Gray Backgrounds */
+.bg-gray-700 {
+  background-color: #374151;
+}
+
+.bg-gray-800 {
+  background-color: #1f2937;
+}
+
+.bg-gray-800:hover {
+  background-color: #4b5563;
+}
+
+.bg-gray-900 {
+  background-color: #111827;
+}
+
+/* Gray Text */
+.text-gray-200 {
+  color: #e5e7eb;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.text-gray-400:hover {
+  color: #e5e7eb;
+}
+
+/* Rounded Corners */
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.rounded-md {
+  border-radius: 0.375rem;
+}
+
+/* Spinner Color */
+.animate-spin {
+  color: var(--neon-green);
+}
+
+/* Transition for Links */
+nav a {
+  @apply transition-colors duration-300;
+}
+
+nav a:hover {
+  color: #e5e7eb; /* Gray-200 */
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  @apply absolute right-0 mt-2 w-32 bg-gray-700 rounded-md shadow-lg z-10;
+}
+
+.dropdown-menu button {
+  @apply flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors duration-300;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  main {
+    padding: 2rem;
   }
 }

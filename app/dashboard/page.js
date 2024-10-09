@@ -1,5 +1,3 @@
-// app/dashboard/page.js
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -103,7 +101,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-gray-200">
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1 className="text-3xl font-bold">Learn Minimal Dashboard</h1>
         <div className="flex items-center space-x-4">
@@ -112,13 +110,13 @@ export default function Dashboard() {
             placeholder="Search plans..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="px-3 py-2 rounded-full bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-neon-green transition-colors duration-300"
           />
           <Link href="/">
-            <button className="text-teal-500 hover:underline">Home</button>
+            <button className="text-gray-400 hover:text-gray-200 transition-colors duration-300">Home</button>
           </Link>
           <Link href="/sign-out">
-            <button className="text-teal-500 hover:underline">Sign Out</button>
+            <button className="text-gray-400 hover:text-gray-200 transition-colors duration-300">Sign Out</button>
           </Link>
         </div>
       </nav>
@@ -140,29 +138,31 @@ export default function Dashboard() {
                       type="text"
                       value={editedTitle}
                       onChange={(e) => setEditedTitle(e.target.value)}
-                      className="w-full px-3 py-2 mb-2 rounded bg-gray-700 text-white focus:outline-none"
+                      className="w-full px-3 py-2 mb-2 rounded-full bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-neon-green transition-colors duration-300"
                     />
                     <button
                       onClick={() => handleSaveEdit(plan.id)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+                      className="bg-gray-800 text-gray-200 px-4 py-2 rounded-full hover:bg-neon-green hover:text-black transition-colors duration-300"
                     >
                       Save
                     </button>
                   </div>
                 ) : (
-                  <h2 className="text-2xl font-semibold mb-2 text-teal-400">{plan.topic}</h2>
+                  <h2 className="text-2xl font-semibold mb-2 text-neon-green">{plan.topic}</h2>
                 )}
-                <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  Created on: {new Date(plan.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
                 <div className="flex items-center justify-between">
                   <Link href={`/plan/${plan.id}`}>
-                    <button className="flex items-center bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded transition">
+                    <button className="flex items-center bg-gray-800 text-gray-200 px-4 py-2 rounded-full hover:bg-neon-green hover:text-black transition-colors duration-300">
                       <FaEye className="mr-2" /> View Plan
                     </button>
                   </Link>
                   <div className="relative">
                     <button
                       onClick={() => toggleDropdown(plan.id)}
-                      className="text-white focus:outline-none"
+                      className="text-gray-400 hover:text-gray-200 focus:outline-none"
                     >
                       <FaEllipsisV />
                     </button>
@@ -170,19 +170,19 @@ export default function Dashboard() {
                       <div className="absolute right-0 mt-2 w-32 bg-gray-700 rounded-md shadow-lg z-10">
                         <button
                           onClick={() => handleShare(plan.id)}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors duration-300"
                         >
                           <FaShareAlt className="mr-2" /> Share
                         </button>
                         <button
                           onClick={() => handleDelete(plan.id)}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors duration-300"
                         >
                           <FaTrash className="mr-2" /> Delete
                         </button>
                         <button
                           onClick={() => handleEdit(plan.id, plan.topic)}
-                          className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-600 transition"
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors duration-300"
                         >
                           <FaEdit className="mr-2" /> Edit
                         </button>
