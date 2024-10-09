@@ -132,3 +132,32 @@ export async function PUT(req) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
+
+export async function DELETE(req) {
+  try {
+    const { userId } = getAuth(req);
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    const url = new URL(req.url);
+    const planId = url.pathname.split('/').pop();
+
+    if (!planId) {
+      return new Response(JSON.stringify({ error: 'Missing plan ID' }), { status: 400 });
+    }
+
+    const existingPlanData = await redis.hget(`user:${userId}:plans`, planId);
+    if (!existingPlanData) {
+      return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
+    }
+
+    await redis.hdel(`user:${userId}:plans`, planId);
+
+    return new Response(JSON.stringify({ message: 'Plan deleted successfully' }), { status: 200 });
+  } catch (error) {
+    console.error("Error deleting plan:", error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+  }
+}

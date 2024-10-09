@@ -5,9 +5,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import { CheckIcon } from '@heroicons/react/24/solid';
 import { Inter } from 'next/font/google';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,13 +14,12 @@ export default function Home() {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState('');
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
 
   const motivationalQuotes = [
     "Learning never exhausts the mind.",
     "The beautiful thing about learning is nobody can take it away from you.",
     "Education is the passport to the future.",
-    // Add more quotes as desired
   ];
 
   const handleSubmit = async (e) => {
@@ -42,7 +40,6 @@ export default function Home() {
 
       const data = await res.json();
       if (res.ok) {
-        // Redirect to the plan detail page
         router.push(`/plan/${data.planId}`);
       } else {
         console.error('Error generating plan:', data.error);
@@ -58,35 +55,43 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen bg-gray-900 text-gray-100 ${inter.className}`}>
-      <nav className="container mx-auto px-4 py-4 flex justify-end">
-        <SignedOut>
-          <Link href="/sign-in" className="text-white mr-4">
-            Sign In
-          </Link>
-          <Link href="/sign-up" className="text-white">
-            Sign Up
-          </Link>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <Link href="/" className="text-3xl font-bold text-white">
+          Learn Minimal
+        </Link>
+        <div className="flex items-center space-x-4">
+          <SignedOut>
+            <Link href="/sign-in" className="text-white font-medium">
+              Sign In
+            </Link>
+            <Link href="/sign-up" className="bg-white text-gray-900 px-4 py-2 rounded-full font-medium">
+              Sign Up
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
       </nav>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-semibold mb-8 text-center">
-          What would you like to learn about today?
+      <main className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+        <h1 className="text-5xl font-extrabold mb-6 leading-tight">
+          Get a new learning plan, <br /> in <span className="text-blue-600">seconds</span>
         </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col items-center w-full max-w-3xl mx-auto">
+        <p className="text-lg text-gray-400 mb-8">
+          Discover personalized learning plans tailored just for you.
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center w-full max-w-lg">
           <input
             type="text"
             placeholder="Enter a topic..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="border border-gray-700 bg-gray-800 rounded-full p-3 w-full mb-4 text-center text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="border border-gray-700 bg-gray-800 rounded-full p-4 w-full mb-4 text-center text-white focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full text-lg font-semibold disabled:opacity-50"
             disabled={isLoading}
           >
             {isLoading ? 'Generating...' : 'Get Learning Plan'}
@@ -95,9 +100,8 @@ export default function Home() {
 
         {isLoading && (
           <div className="mt-8 flex justify-center">
-            {/* Spinner or loading indicator */}
             <svg
-              className="animate-spin h-8 w-8 text-blue-600"
+              className="animate-spin h-12 w-12 text-blue-600"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -118,10 +122,7 @@ export default function Home() {
             </svg>
           </div>
         )}
-
-        {/* Remove the plan display from here since plans are now managed in the dashboard */}
       </main>
     </div>
   );
 }
-

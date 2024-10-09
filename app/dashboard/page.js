@@ -103,22 +103,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
+    <div className="min-h-screen bg-black text-white">
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">My Learning Plans</h1>
+        <h1 className="text-3xl font-bold">Learn Minimal Dashboard</h1>
         <div className="flex items-center space-x-4">
           <input
             type="text"
             placeholder="Search plans..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 rounded bg-gray-800 text-white focus:outline-none"
+            className="px-3 py-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <Link href="/">
-            <button className="text-white">Home</button>
+            <button className="text-teal-500 hover:underline">Home</button>
           </Link>
           <Link href="/sign-out">
-            <button className="text-white">Sign Out</button>
+            <button className="text-teal-500 hover:underline">Sign Out</button>
           </Link>
         </div>
       </nav>
@@ -150,13 +150,13 @@ export default function Dashboard() {
                     </button>
                   </div>
                 ) : (
-                  <h2 className="text-xl font-semibold mb-2">{plan.topic}</h2>
+                  <h2 className="text-2xl font-semibold mb-2 text-teal-400">{plan.topic}</h2>
                 )}
                 <p className="text-sm text-gray-400 mb-4">Created on: {new Date(plan.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <div className="flex items-center justify-between">
                   <Link href={`/plan/${plan.id}`}>
-                    <button className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
-                      <FaEye className="mr-2" /> View
+                    <button className="flex items-center bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded transition">
+                      <FaEye className="mr-2" /> View Plan
                     </button>
                   </Link>
                   <div className="relative">
