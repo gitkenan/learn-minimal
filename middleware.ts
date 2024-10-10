@@ -5,10 +5,13 @@ export default clerkMiddleware(() => {
   return NextResponse.next();
 });
 
-// Temporarily match all routes for testing purposes
+// Configuration to specify which routes this middleware applies to
 export const config = {
     matcher: [
-      '/((?!api|_next/static|_next/image|favicon.ico|images|fonts).*)',
+      /*
+       * Match all API routes and pages for Clerk authentication
+       */
+      "/api/:path*",
+      "/((?!_next|.*\\..*).*)",  // Matches all routes except those starting with `_next` or having an extension like `.js`, `.css`, etc.
     ],
   };
-  

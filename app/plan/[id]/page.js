@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, useParams } from 'next/navigation';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
+import { marked } from 'marked';
 
 export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
@@ -21,19 +22,19 @@ export default function PlanDetail() {
       router.push('/sign-in');
     } else if (isLoaded && userId) {
       fetch(`/api/plans/${id}`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.plan) {
             setPlan(data.plan);
             setProgress(data.plan.progress || {});
           } else {
-            alert("Plan not found.");
+            alert('Plan not found.');
             router.push('/dashboard');
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching plan:', err);
-          alert("An error occurred while fetching the plan.");
+          alert('An error occurred while fetching the plan.');
           router.push('/dashboard');
         });
     }
@@ -48,9 +49,9 @@ export default function PlanDetail() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ progress: newProgress }),
-    }).catch(err => {
+    }).catch((err) => {
       console.error('Error updating progress:', err);
-      alert("Failed to update progress.");
+      alert('Failed to update progress.');
     });
   };
 
@@ -58,26 +59,31 @@ export default function PlanDetail() {
     return <p className="text-center mt-8">Loading...</p>;
   }
 
-  const planSteps = plan.content.split('\n').map((line) => {
+  // Split content into lines and determine which lines should have checkboxes
+  const planLines = plan.content.split('\n');
+  const planSteps = planLines.map((line, index) => {
     const trimmedLine = line.trim();
     const hasCheckbox = trimmedLine.startsWith('* ') || trimmedLine.startsWith('+');
+    const formattedLine = marked(trimmedLine.replace(/^[*+]\s*/, ''));
 
-    let formattedLine = trimmedLine
-      .replace(/^[*+]\s*/, '')
-      .replace(/(?:\*\*)(.*?)(?:\*\*)/g, '<strong>$1</strong>');
-
-    return { text: formattedLine, hasCheckbox };
+    return {
+      index,
+      text: formattedLine,
+      hasCheckbox,
+      isCompleted: progress[index] || false,
+    };
   });
 
-  const stepsWithCheckboxes = planSteps.filter(step => step.hasCheckbox);
-  const completedSteps = stepsWithCheckboxes.filter((_, index) => progress[index]).length;
+  // Calculate completion percentage
+  const stepsWithCheckboxes = planSteps.filter((step) => step.hasCheckbox);
+  const completedSteps = stepsWithCheckboxes.filter((step) => step.isCompleted).length;
   const totalStepsWithCheckboxes = stepsWithCheckboxes.length;
   const completionPercentage = totalStepsWithCheckboxes === 0 ? 0 : Math.round((completedSteps / totalStepsWithCheckboxes) * 100);
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <nav className="container mx-auto px-4 py-4 flex justify-between">
-        <h1 className="text-2xl">{plan.topic}</h1>
+        <h1 className="text-2xl font-bold">{plan.topic}</h1>
         <Link href="/dashboard">
           <button className="text-white">Back to Dashboard</button>
         </Link>
@@ -86,13 +92,13 @@ export default function PlanDetail() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mt-12 bg-gray-800 p-8 rounded-md">
           <ul className="space-y-4">
-            {planSteps.map((step, index) => (
-              <li key={index} className="flex items-start">
+            {planSteps.map((step) => (
+              <li key={step.index} className="flex items-start">
                 {step.hasCheckbox && (
                   <input
                     type="checkbox"
-                    checked={progress[index] || false}
-                    onChange={() => handleCheckboxChange(index)}
+                    checked={step.isCompleted}
+                    onChange={() => handleCheckboxChange(step.index)}
                     className="mt-1 mr-3 h-5 w-5 text-green-500 border-gray-300 rounded focus:ring-green-500"
                   />
                 )}
@@ -100,12 +106,14 @@ export default function PlanDetail() {
                   className="text-lg flex-1"
                   dangerouslySetInnerHTML={{ __html: step.text }}
                 ></span>
-                {progress[index] && step.hasCheckbox && (
+                {step.isCompleted && step.hasCheckbox && (
                   <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
                 )}
               </li>
             ))}
           </ul>
+
+          {/* Progress bar and completion percentage */}
           <div className="w-full bg-gray-700 rounded-full h-2 mt-6">
             <div
               className="bg-green-500 h-2 rounded-full"

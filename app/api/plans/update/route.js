@@ -1,5 +1,5 @@
 // app/api/plans/update/route.js
-import { currentUser } from '@clerk/nextjs';
+import { getAuth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
@@ -9,14 +9,14 @@ const redis = new Redis({
 
 export async function POST(req) {
   try {
-    const user = await currentUser();
-    if (!user) {
+    const { userId } = getAuth(req);
+    if (!userId) {
       return new Response('Unauthorized', { status: 401 });
     }
 
     const { planId, progress } = await req.json();
 
-    const planData = await redis.hget(`user:${user.id}:plans`, planId);
+    const planData = await redis.hget(`user:${userId}:plans`, planId);
     if (!planData) {
       return new Response('Plan not found', { status: 404 });
     }
@@ -24,7 +24,7 @@ export async function POST(req) {
     const plan = JSON.parse(planData);
     plan.progress = progress;
 
-    await redis.hset(`user:${user.id}:plans`, {
+    await redis.hset(`user:${userId}:plans`, {
       [planId]: JSON.stringify(plan),
     });
 
@@ -34,4 +34,3 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
-
