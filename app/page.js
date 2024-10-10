@@ -7,9 +7,9 @@ import { Inter } from 'next/font/google';
 import { useRouter } from 'next/navigation';
 import AOS from 'aos';
 import 'aos/dist/aos.css'; // Import AOS styles
-import CreativityIcon from '../components/icons/CreativityIcon';
-import LearningIcon from '../components/icons/LearningIcon';
-import AmbitionIcon from '../components/icons/AmbitionIcon';
+import CreativityIcon from '../components/icons/CreativityIcon.jsx';
+import LearningIcon from '../components/icons/LearningIcon.jsx';
+import AmbitionIcon from '../components/icons/AmbitionIcon.jsx';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -135,7 +135,7 @@ export default function Home() {
                         Ignite Your <span className="text-neon-green">Creativity</span>
                     </h2>
                     <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
-                        "Creativity is intelligence having fun." – Albert Einstein. Embrace the joy of learning and let your imagination soar.
+                        &ldquo; Creativity is intelligence having fun. &rdquo; Albert Einstein. Embrace the joy of learning and let your imagination soar.
                     </p>
                     <CreativityIcon className="mx-auto w-1/2" />
                 </div>
@@ -147,7 +147,7 @@ export default function Home() {
                         Embrace <span className="text-neon-green">Continuous Learning</span>
                     </h2>
                     <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-left" data-aos-delay="200">
-                        "The beautiful thing about learning is that nobody can take it away from you." – B.B. King. Invest in yourself every day.
+                        &ldquo; The beautiful thing about learning is that nobody can take it away from you.&rdquo;  B.B. King. Invest in yourself every day.
                     </p>
                     <LearningIcon className="mx-auto w-1/2" />
                 </div>
@@ -159,7 +159,7 @@ export default function Home() {
                         Reach for Your <span className="text-neon-green">Ambitions</span>
                     </h2>
                     <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
-                        "The future belongs to those who believe in the beauty of their dreams." – Eleanor Roosevelt. Turn your dreams into reality.
+                        &ldquo; The future belongs to those who believe in the beauty of their dreams.&rdquo; Eleanor Roosevelt. Turn your dreams into reality.
                     </p>
                     <AmbitionIcon className="mx-auto w-1/2" />
                 </div>
