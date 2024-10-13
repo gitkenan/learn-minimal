@@ -2,23 +2,24 @@
 
 import { ClerkProvider, SignedIn, SignedOut } from '@clerk/nextjs';
 import Link from 'next/link';
-import localFont from "next/font/local";
-import "./globals.css";
+import localFont from 'next/font/local';
+import './globals.css';
+import SignOutButton from '../components/SignOutButton'; // Import the client component
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+  src: './fonts/GeistVF.woff',
+  variable: '--font-geist-sans',
+  weight: '100 900',
 });
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+  src: './fonts/GeistMonoVF.woff',
+  variable: '--font-geist-mono',
+  weight: '100 900',
 });
 
 export const metadata = {
-  title: "Learn Minimal",
-  description: "A minimal learning plan application.",
+  title: 'Learn Minimal',
+  description: 'A minimal learning plan application.',
 };
 
 export default function RootLayout({ children }) {
@@ -29,14 +30,16 @@ export default function RootLayout({ children }) {
           <title>Learn Minimal</title>
           <link rel="icon" href="/favicon.ico" />
         </head>
-        <body className={`bg-gray-900 text-gray-100 ${geistSans.variable} ${geistMono.variable}`}>
+        <body
+          className={`bg-black text-gray-100 ${geistSans.variable} ${geistMono.variable}`}
+        >
           <nav className="container mx-auto px-4 py-4 flex justify-between">
             <div>
               <Link href="/" className="text-white text-lg font-semibold">
                 Learn Minimal
               </Link>
             </div>
-            <div>
+            <div className="flex items-center space-x-6">
               <SignedOut>
                 <Link href="/sign-in" className="text-white mr-4">
                   Sign In
@@ -46,12 +49,14 @@ export default function RootLayout({ children }) {
                 </Link>
               </SignedOut>
               <SignedIn>
-                <Link href="/dashboard" className="text-white mr-4">
+                <Link
+                  href="/dashboard"
+                  className="text-white text-lg hover:text-neon-green transition-colors duration-300"
+                >
                   Dashboard
                 </Link>
-                <Link href="/sign-out" className="text-white">
-                  Sign Out
-                </Link>
+                {/* Use the SignOutButton client component */}
+                <SignOutButton />
               </SignedIn>
             </div>
           </nav>
@@ -61,4 +66,3 @@ export default function RootLayout({ children }) {
     </ClerkProvider>
   );
 }
-

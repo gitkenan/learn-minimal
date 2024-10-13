@@ -8,6 +8,44 @@
     /* Neon Green */
 }
 
+
+/* Neon Glow Effect for Text */
+.neon-text {
+    color: var(--neon-green);
+    text-shadow:
+        0 0 0px var(--neon-green),
+        0 0 2px var(--neon-green),
+        0 0 2px var(--neon-green),
+        0 0 0px var(--neon-green);
+}
+
+/* Neon Glow Effect for Buttons */
+.neon-button {
+    background-color: var(--neon-green);
+    color: black;
+    box-shadow:
+        0 0 0px var(--neon-green),
+        0 0 2px var(--neon-green),
+        0 0 0px var(--neon-green),
+        0 0 5px var(--neon-green);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.neon-button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Adjust Input Focus Ring to Match Neon Effect */
+input:focus {
+    outline: none;
+    box-shadow:
+        0 0 0px var(--neon-green),
+        0 0 2px var(--neon-green),
+        0 0 5px var(--neon-green),
+        0 0 5px var(--neon-green);
+}
+
 /* Global Styles */
 body {
     @apply bg-black text-gray-200;
@@ -22,17 +60,6 @@ input::placeholder {
 
 input:focus {
     @apply ring-2 ring-neon-green;
-}
-
-/* Buttons */
-button {
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-button:hover {
-    background-color: var(--neon-green);
-    color: #000000;
-    /* Black */
 }
 
 /* Neon Green Text */
@@ -97,10 +124,6 @@ nav a:hover {
 /* Dropdown Menu */
 .dropdown-menu {
     @apply absolute right-0 mt-2 w-32 bg-gray-700 rounded-md shadow-lg z-10;
-}
-
-.dropdown-menu button {
-    @apply flex items-center w-full px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 transition-colors duration-300;
 }
 
 /* Responsive Adjustments */

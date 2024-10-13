@@ -8,10 +8,12 @@ module.exports = {
     theme: {
       extend: {
         colors: {
-          'neon-green': '#39FF08',
+          'neon-green': '#39FF14',
+        },
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
         },
       },
     },
     plugins: [],
-  };
-  
+};

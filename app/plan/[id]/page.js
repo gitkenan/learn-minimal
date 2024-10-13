@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
@@ -64,8 +65,10 @@ export default function PlanDetail() {
   const planSteps = planLines.map((line, index) => {
     const trimmedLine = line.trim();
     const hasCheckbox = trimmedLine.startsWith('* ') || trimmedLine.startsWith('+');
-    const formattedLine = marked(trimmedLine.replace(/^[*+]\s*/, ''));
-
+    const formattedLine = DOMPurify.sanitize(
+        marked(trimmedLine.replace(/^[*+]\s*/, ''))
+      );
+      
     return {
       index,
       text: formattedLine,

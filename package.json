@@ -14,6 +14,7 @@
     "@heroicons/react": "^2.1.5",
     "@upstash/redis": "^1.34.2",
     "aos": "^2.3.4",
+    "dompurify": "^3.1.7",
     "marked": "^14.1.2",
     "next": "14.2.14",
     "openai": "^4.67.1",
