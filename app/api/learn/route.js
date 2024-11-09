@@ -10,41 +10,46 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { userId } = getAuth(req);
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
+    const auth = getAuth(req);
+    const userId = auth.userId || null;
 
     const { topic } = await req.json();
+
+    // Generate the plan using the AI model
     const completion = await openai.chat.completions.create({
-      model: 'meta/llama-3.2-3b-instruct',
+      model: 'ibm/granite-3.0-8b-instruct',
       messages: [{ role: 'user', content: `Create a learning plan for: ${topic}` }],
       temperature: 0.2,
+      top_p: 0.7,
       max_tokens: 2048,
     });
 
     const planContent = completion.choices[0]?.message?.content || 'No plan generated.';
-    const planId = `plan:${Date.now()}`;
 
-    console.log(`Saving plan with ID: ${planId} for user: ${userId}`);
+    // Save the plan only if the user is authenticated
+    if (userId) {
+      const planId = `plan:${Date.now()}`;
 
-    // Ensure the entire plan is stringified
-    const planData = JSON.stringify({
-      id: planId,
-      topic,
-      content: planContent,
-      progress: {}, // Initialize empty progress
-    });
+      console.log(`Saving plan with ID: ${planId} for user: ${userId}`);
 
-    // Save the plan to Redis
-    await redis.hset(`user:${userId}:plans`, {
-      [planId]: planData,
-    });
+      // Save the plan to Redis
+      await redis.hset(`user:${userId}:plans`, {
+        [planId]: JSON.stringify({
+          id: planId,
+          topic,
+          content: planContent,
+          progress: {}, // Initialize empty progress
+        }),
+      });
 
-    console.log(`Plan saved successfully with ID: ${planId}`);
+      console.log(`Plan saved successfully with ID: ${planId}`);
 
-    return new Response(JSON.stringify({ plan: planContent, planId }), { status: 200 });
+      // Include planId in the response
+      return new Response(JSON.stringify({ plan: planContent, planId }), { status: 200 });
+    } else {
+      // For unauthenticated users, just return the plan without saving
+      return new Response(JSON.stringify({ plan: planContent }), { status: 200 });
+    }
   } catch (error) {
     console.error('Error in POST request:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
