@@ -20,7 +20,7 @@ export default function PlanDetail() {
 
   useEffect(() => {
     if (isLoaded && !userId) {
-      router.push('/sign-up?redirect_url=' + encodeURIComponent(`/plan/${id}`));
+      router.push('/sign-in');
     } else if (isLoaded && userId) {
       fetch(`/api/plans/${id}`)
         .then((res) => res.json())
@@ -45,7 +45,7 @@ export default function PlanDetail() {
     const newProgress = { ...progress, [index]: !progress[index] };
     setProgress(newProgress);
 
-    // Save progress to the server 
+    // Save progress to the server
     fetch(`/api/plans/${id}/progress`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -60,9 +60,9 @@ export default function PlanDetail() {
     return <p className="text-center mt-8">Loading...</p>;
   }
 
-  // Split content into lines and determine which lines should have checkboxes 
+  // Split content into lines and determine which lines should have checkboxes
   const planLines = plan.content.split('\n');
-  const planSteps = planLines.map((line, index) => { 
+  const planSteps = planLines.map((line, index) => {
     const trimmedLine = line.trim();
     const hasCheckbox = trimmedLine.startsWith('* ') || trimmedLine.startsWith('+');
     const formattedLine = DOMPurify.sanitize(
@@ -77,7 +77,7 @@ export default function PlanDetail() {
     };
   });
 
-  // Calculate completion percentage 
+  // Calculate completion percentage
   const stepsWithCheckboxes = planSteps.filter((step) => step.hasCheckbox);
   const completedSteps = stepsWithCheckboxes.filter((step) => step.isCompleted).length;
   const totalStepsWithCheckboxes = stepsWithCheckboxes.length;
