@@ -67,15 +67,15 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen ${inter.className} bg-theme-dark text-theme-light`}>
+    <div className={`min-h-screen ${inter.className} bg-black text-white`}>
       {/* Hero Section */}
       <main className="flex flex-col items-center justify-center min-h-screen text-center px-4">
         {/* Main Heading */}
-        <h1 className="text-6xl font-extrabold mb-8 leading-tight theme-text" data-aos="fade-up">
-          Empower Your Mind,<br />Unlock Your <span className="text-theme-light">Potential</span>
+        <h1 className="text-6xl font-extrabold mb-8 leading-tight neon-text" data-aos="fade-up">
+          Empower Your Mind,<br />Unlock Your <span className="text-white">Potential</span>
         </h1>
         {/* Subheading */}
-        <p className="text-xl mb-12 text-gray-300" data-aos="fade-up" data-aos-delay="200">
+        <p className="text-xl mb-12" data-aos="fade-up" data-aos-delay="200">
           Shape your future with custom-made learning plans.
         </p>
         {/* Input Form */}
@@ -85,11 +85,11 @@ export default function Home() {
             placeholder="Enter a topic..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            className="border border-theme-green bg-theme-dark rounded-full p-4 w-full text-center text-theme-light text-lg transition-colors duration-300"
+            className="border border-neon-green bg-black rounded-full p-4 w-full text-center text-white text-lg transition-colors duration-300"
           />
           <button
             type="submit"
-            className={`ml-4 px-6 py-4 rounded-full text-lg font-semibold theme-button hover-lift ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`ml-4 px-6 py-4 rounded-full text-lg font-semibold disabled:opacity-50 neon-button ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={isLoading}
           >
             {isLoading ? 'Generating...' : 'Go'}
@@ -100,7 +100,7 @@ export default function Home() {
         {isLoading && (
           <div className="mt-8 flex justify-center">
             <svg
-              className="animate-spin h-12 w-12 text-theme-green"
+              className="animate-spin h-12 w-12 text-neon-green"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -124,15 +124,15 @@ export default function Home() {
 
         {/* Display Generated Plan for Unauthenticated Users */}
         {plan && (
-          <div className="mt-8 w-full max-w-xl bg-white/10 backdrop-blur-sm p-6 rounded-lg border border-theme-green/20">
-            <h2 className="text-lg font-bold mb-2 text-theme-green">Your Learning Plan:</h2>
-            <p className="text-theme-light whitespace-pre-line">{plan}</p>
+          <div className="mt-8 w-full max-w-xl bg-gray-100 p-4 rounded-md text-black">
+            <h2 className="text-lg font-bold mb-2">Your Learning Plan:</h2>
+            <p className="text-gray-900 whitespace-pre-line">{plan}</p>
             {/* Encourage Users to Sign Up */}
             <SignedOut>
-              <p className="mt-4 text-sm text-gray-400">
+              <p className="mt-4 text-sm text-gray-600">
                 Want to save your learning plan?{' '}
-                <Link href="/sign-up" className="text-theme-accent hover:text-theme-green transition-colors">Sign up</Link> or{' '}
-                <Link href="/sign-in" className="text-theme-accent hover:text-theme-green transition-colors">log in</Link>!
+                <Link href="/sign-up" className="text-blue-500">Sign up</Link> or{' '}
+                <Link href="/sign-in" className="text-blue-500">log in</Link>!
               </p>
             </SignedOut>
           </div>
@@ -140,44 +140,44 @@ export default function Home() {
       </main>
 
       {/* Inspirational Sections */}
-      <section className="py-20 bg-theme-dark" id="creativity">
+      <section className="py-20 bg-black" id="creativity">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 theme-text" data-aos="fade-right">
-            Ignite Your <span className="text-theme-light">Creativity</span>
+          <h2 className="text-4xl font-bold mb-6 neon-text" data-aos="fade-right">
+            Ignite Your <span className="text-white">Creativity</span>
           </h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto text-gray-300" data-aos="fade-right" data-aos-delay="200">
-            "Creativity is intelligence having fun." – Albert Einstein. Embrace the joy of learning and let your imagination soar.
+          <p className="text-lg mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
+            “Creativity is intelligence having fun.” – Albert Einstein. Embrace the joy of learning and let your imagination soar.
           </p>
           <CreativityIcon className="mx-auto w-1/2" />
         </div>
       </section>
 
-      <section className="py-20 bg-theme-dark" id="learning">
+      <section className="py-20 bg-black" id="learning">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 theme-text" data-aos="fade-left">
-            Embrace <span className="text-theme-light">Continuous Learning</span>
+          <h2 className="text-4xl font-bold mb-6 neon-text" data-aos="fade-left">
+            Embrace <span className="text-white">Continuous Learning</span>
           </h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto text-gray-300" data-aos="fade-left" data-aos-delay="200">
-            "The beautiful thing about learning is that nobody can take it away from you." – B.B. King. Invest in yourself every day.
+          <p className="text-lg mb-8 max-w-2xl mx-auto" data-aos="fade-left" data-aos-delay="200">
+            “The beautiful thing about learning is that nobody can take it away from you.” – B.B. King. Invest in yourself every day.
           </p>
           <LearningIcon className="mx-auto w-1/2" />
         </div>
       </section>
 
-      <section className="py-20 bg-theme-dark" id="ambition">
+      <section className="py-20 bg-black" id="ambition">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 theme-text" data-aos="fade-right">
-            Reach for Your <span className="text-theme-light">Ambitions</span>
+          <h2 className="text-4xl font-bold mb-6 neon-text" data-aos="fade-right">
+            Reach for Your <span className="text-white">Ambitions</span>
           </h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto text-gray-300" data-aos="fade-right" data-aos-delay="200">
-            "The future belongs to those who believe in the beauty of their dreams." – Eleanor Roosevelt. Turn your dreams into reality.
+          <p className="text-lg mb-8 max-w-2xl mx-auto" data-aos="fade-right" data-aos-delay="200">
+            “The future belongs to those who believe in the beauty of their dreams.” – Eleanor Roosevelt. Turn your dreams into reality.
           </p>
           <AmbitionIcon className="mx-auto w-1/2" />
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-theme-dark text-center">
+      <footer className="py-8 bg-black text-center">
         <p className="text-gray-500">&copy; {new Date().getFullYear()} Learn Minimal. All rights reserved.</p>
       </footer>
     </div>
