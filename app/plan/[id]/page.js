@@ -1,5 +1,3 @@
-// app/plan/[id]/page.js
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -17,8 +15,15 @@ export default function PlanDetail() {
   const { id } = params;
   const [plan, setPlan] = useState(null);
   const [progress, setProgress] = useState({});
+
+  // State for expanded sections
   const [expandedSections, setExpandedSections] = useState({});
+  // State to store the fetched expanded data
   const [expandedData, setExpandedData] = useState({});
+  // Whether the user has requested info before (for changing "Learn more" text)
+  const [requestedBefore, setRequestedBefore] = useState({});
+
+  // State for thumbs feedback
   const [feedbackMode, setFeedbackMode] = useState({});
   const [feedbackText, setFeedbackText] = useState({});
 
@@ -61,13 +66,13 @@ export default function PlanDetail() {
   };
 
   const handleExpand = async (index, text) => {
-    // If already expanded, toggle it off
+    // Toggle off if already expanded
     if (expandedSections[index]) {
       setExpandedSections({ ...expandedSections, [index]: false });
       return;
     }
 
-    // If we already have expanded data, just toggle it on
+    // If already have data, just show it
     if (expandedData[index]) {
       setExpandedSections({ ...expandedSections, [index]: true });
       return;
@@ -78,7 +83,7 @@ export default function PlanDetail() {
       const res = await fetch('/api/expand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snippet: text })
+        body: JSON.stringify({ snippet: text }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -88,6 +93,7 @@ export default function PlanDetail() {
       }
       setExpandedData({ ...expandedData, [index]: data.expanded });
       setExpandedSections({ ...expandedSections, [index]: true });
+      setRequestedBefore({ ...requestedBefore, [index]: true });
     } catch (error) {
       console.error('Error during expansion fetch:', error);
       alert('An error occurred while expanding this section.');
@@ -95,10 +101,12 @@ export default function PlanDetail() {
   };
 
   const handleThumbsUp = (index) => {
-    alert('Thanks for your feedback!');
+    // For now, do nothing more than alert or console
+    console.log('User gave thumbs up on index:', index);
   };
 
   const handleThumbsDown = (index) => {
+    // Show feedback input
     setFeedbackMode({ ...feedbackMode, [index]: true });
   };
 
@@ -110,7 +118,7 @@ export default function PlanDetail() {
       const res = await fetch('/api/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snippet: originalText, feedback: userFeedback })
+        body: JSON.stringify({ snippet: originalText, feedback: userFeedback }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -118,6 +126,7 @@ export default function PlanDetail() {
         alert(data.error || 'Failed to improve the section.');
         return;
       }
+      // Update the expandedData with improved text
       setExpandedData({ ...expandedData, [index]: data.improved });
       setFeedbackMode({ ...feedbackMode, [index]: false });
       alert('Thanks! Updated the section based on your feedback.');
@@ -131,21 +140,20 @@ export default function PlanDetail() {
     return <p className="text-center mt-8">Loading...</p>;
   }
 
-  // Split content into lines and determine which lines should have checkboxes
+  // Process the plan content
   const planLines = plan.content.split('\n');
   const planSteps = planLines.map((line, index) => {
     const trimmedLine = line.trim();
     const hasCheckbox = trimmedLine.startsWith('* ') || trimmedLine.startsWith('+');
-    const formattedLine = DOMPurify.sanitize(
-        marked(trimmedLine.replace(/^[*+]\s*/, ''))
-      );
-      
+    const cleanedLine = trimmedLine.replace(/^[*+]\s*/, '');
+    const formattedLine = DOMPurify.sanitize(marked(cleanedLine));
+
     return {
       index,
       text: formattedLine,
-      originalText: trimmedLine,
+      originalText: cleanedLine,
       hasCheckbox,
-      isCompleted: progress[index] || false,
+      isCompleted: progress[index] || false
     };
   });
 
@@ -160,41 +168,80 @@ export default function PlanDetail() {
       <nav className="container mx-auto px-4 py-4 flex justify-between">
         <h1 className="text-2xl font-bold">{plan.topic}</h1>
         <Link href="/dashboard">
-          <button className="text-white">Back to Dashboard</button>
+          <button className="text-white hover:underline">Back to Dashboard</button>
         </Link>
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mt-12 bg-gray-800 p-8 rounded-md">
           <ul className="space-y-4">
-            {planSteps.map((step) => (
-              <li key={step.index} className="flex items-start">
-                {step.hasCheckbox && (
-                  <input
-                    type="checkbox"
-                    checked={step.isCompleted}
-                    onChange={() => handleCheckboxChange(step.index)}
-                    className="mt-1 mr-3 h-5 w-5 text-green-500 border-gray-300 rounded focus:ring-green-500"
-                  />
-                )}
-                <span
-                  className="text-lg flex-1"
-                  dangerouslySetInnerHTML={{ __html: step.text }}
-                ></span>
-                {step.isCompleted && step.hasCheckbox && (
-                  <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
-                )}
-                <div className="mt-2 flex items-center space-x-4">
-                  <button
-                    onClick={() => handleExpand(step.index, step.originalText)}
-                    className="text-sm text-blue-500 hover:underline"
-                  >
-                    {expandedSections[step.index] ? 'Hide details' : 'Learn more'}
-                  </button>
-                  {expandedSections[step.index] && expandedData[step.index] && (
-                    <div className="mt-2 bg-gray-700 p-4 rounded-md w-full">
+            {planSteps.map((step) => {
+              const isExpanded = expandedSections[step.index];
+              const hasData = expandedData[step.index];
+              const isRequested = requestedBefore[step.index];
+
+              // Determine the button label
+              let learnMoreLabel = 'Learn more';
+              if (isRequested) {
+                learnMoreLabel = isExpanded ? 'Hide details' : 'View details';
+              } else if (isExpanded) {
+                learnMoreLabel = 'Hide details';
+              }
+
+              return (
+                <li
+                  key={step.index}
+                  className="group transition-colors duration-200 rounded-md relative"
+                >
+                  <div className="flex items-start p-2 hover:bg-gray-700">
+                    {step.hasCheckbox && (
+                      <input
+                        type="checkbox"
+                        checked={step.isCompleted}
+                        onChange={() => handleCheckboxChange(step.index)}
+                        className="mt-1 mr-3 h-5 w-5 text-green-500 border-gray-300 rounded focus:ring-green-500"
+                      />
+                    )}
+                    <span
+                      className="text-lg flex-1"
+                      dangerouslySetInnerHTML={{ __html: step.text }}
+                    ></span>
+                    {step.isCompleted && step.hasCheckbox && (
+                      <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
+                    )}
+
+                    {/* "Learn More" / "View Details" trigger */}
+                    <button
+                      onClick={() => handleExpand(step.index, step.originalText)}
+                      className={`
+                        ml-4 text-sm underline
+                        ${isExpanded ? 'text-blue-300' : 'text-blue-500'}
+                        hover:text-blue-300
+                        transition-colors
+                        duration-200
+                        ${
+                          // Desktop: show only on hover unless expanded or requested before
+                          // Mobile: always show
+                          isExpanded || isRequested
+                            ? ''
+                            : 'hidden group-hover:inline-block'
+                        }
+                        
+                        @media (max-width: 640px) {
+                          inline-block !important;
+                        }
+                      `}
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      {learnMoreLabel} {isExpanded ? '▲' : '▼'}
+                    </button>
+                  </div>
+
+                  {/* Expanded details (below the line) */}
+                  {isExpanded && hasData && (
+                    <div className="ml-8 mt-2 bg-gray-700 p-4 rounded-md">
                       <div
-                        className="prose prose-invert"
+                        className="prose prose-invert max-w-none"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
                       ></div>
                       <div className="mt-4 flex space-x-4">
@@ -231,9 +278,9 @@ export default function PlanDetail() {
                       )}
                     </div>
                   )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
 
           {/* Progress bar and completion percentage */}
