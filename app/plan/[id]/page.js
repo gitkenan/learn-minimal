@@ -17,6 +17,10 @@ export default function PlanDetail() {
   const { id } = params;
   const [plan, setPlan] = useState(null);
   const [progress, setProgress] = useState({});
+  const [expandedSections, setExpandedSections] = useState({});
+  const [expandedData, setExpandedData] = useState({});
+  const [feedbackMode, setFeedbackMode] = useState({});
+  const [feedbackText, setFeedbackText] = useState({});
 
   useEffect(() => {
     if (isLoaded && !userId) {
@@ -56,6 +60,73 @@ export default function PlanDetail() {
     });
   };
 
+  const handleExpand = async (index, text) => {
+    // If already expanded, toggle it off
+    if (expandedSections[index]) {
+      setExpandedSections({ ...expandedSections, [index]: false });
+      return;
+    }
+
+    // If we already have expanded data, just toggle it on
+    if (expandedData[index]) {
+      setExpandedSections({ ...expandedSections, [index]: true });
+      return;
+    }
+
+    // Otherwise, fetch from API
+    try {
+      const res = await fetch('/api/expand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snippet: text })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Error fetching expanded data:', data.error);
+        alert(data.error || 'Failed to expand the section.');
+        return;
+      }
+      setExpandedData({ ...expandedData, [index]: data.expanded });
+      setExpandedSections({ ...expandedSections, [index]: true });
+    } catch (error) {
+      console.error('Error during expansion fetch:', error);
+      alert('An error occurred while expanding this section.');
+    }
+  };
+
+  const handleThumbsUp = (index) => {
+    alert('Thanks for your feedback!');
+  };
+
+  const handleThumbsDown = (index) => {
+    setFeedbackMode({ ...feedbackMode, [index]: true });
+  };
+
+  const handleFeedbackSubmit = async (index) => {
+    const originalText = planSteps[index].originalText;
+    const userFeedback = feedbackText[index] || '';
+
+    try {
+      const res = await fetch('/api/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snippet: originalText, feedback: userFeedback })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('Error improving section:', data.error);
+        alert(data.error || 'Failed to improve the section.');
+        return;
+      }
+      setExpandedData({ ...expandedData, [index]: data.improved });
+      setFeedbackMode({ ...feedbackMode, [index]: false });
+      alert('Thanks! Updated the section based on your feedback.');
+    } catch (error) {
+      console.error('Error during improvement fetch:', error);
+      alert('An error occurred while improving this section.');
+    }
+  };
+
   if (!plan) {
     return <p className="text-center mt-8">Loading...</p>;
   }
@@ -72,6 +143,7 @@ export default function PlanDetail() {
     return {
       index,
       text: formattedLine,
+      originalText: trimmedLine,
       hasCheckbox,
       isCompleted: progress[index] || false,
     };
@@ -112,6 +184,54 @@ export default function PlanDetail() {
                 {step.isCompleted && step.hasCheckbox && (
                   <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
                 )}
+                <div className="mt-2 flex items-center space-x-4">
+                  <button
+                    onClick={() => handleExpand(step.index, step.originalText)}
+                    className="text-sm text-blue-500 hover:underline"
+                  >
+                    {expandedSections[step.index] ? 'Hide details' : 'Learn more'}
+                  </button>
+                  {expandedSections[step.index] && expandedData[step.index] && (
+                    <div className="mt-2 bg-gray-700 p-4 rounded-md w-full">
+                      <div
+                        className="prose prose-invert"
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
+                      ></div>
+                      <div className="mt-4 flex space-x-4">
+                        <button
+                          className="text-sm text-green-500 hover:underline"
+                          onClick={() => handleThumbsUp(step.index)}
+                        >
+                          👍 Thumbs Up
+                        </button>
+                        <button
+                          className="text-sm text-red-500 hover:underline"
+                          onClick={() => handleThumbsDown(step.index)}
+                        >
+                          👎 Thumbs Down
+                        </button>
+                      </div>
+                      {feedbackMode[step.index] && (
+                        <div className="mt-4">
+                          <textarea
+                            className="w-full p-2 rounded-md bg-gray-800 text-gray-200"
+                            placeholder="What would you have preferred for this section?"
+                            value={feedbackText[step.index] || ''}
+                            onChange={(e) =>
+                              setFeedbackText({ ...feedbackText, [step.index]: e.target.value })
+                            }
+                          ></textarea>
+                          <button
+                            onClick={() => handleFeedbackSubmit(step.index)}
+                            className="mt-2 px-4 py-2 bg-green-600 rounded text-white hover:bg-green-500"
+                          >
+                            Submit Improvement
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
