@@ -32,19 +32,27 @@ export default function PlanDetail() {
       router.push('/sign-in');
     } else if (isLoaded && userId) {
       fetch(`/api/plans/${id}`)
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || `HTTP error! status: ${res.status}`);
+          }
+          return data;
+        })
         .then((data) => {
           if (data.plan) {
+            console.log('Plan data received:', data.plan);
             setPlan(data.plan);
             setProgress(data.plan.progress || {});
           } else {
+            console.error('Plan data missing in response');
             alert('Plan not found.');
             router.push('/dashboard');
           }
         })
         .catch((err) => {
           console.error('Error fetching plan:', err);
-          alert('An error occurred while fetching the plan.');
+          alert(`An error occurred while fetching the plan: ${err.message}`);
           router.push('/dashboard');
         });
     }
@@ -80,23 +88,32 @@ export default function PlanDetail() {
 
     // Otherwise, fetch from API
     try {
+      console.log('Expanding text:', text);
       const res = await fetch('/api/expand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snippet: text }),
       });
-      const data = await res.json();
+
       if (!res.ok) {
-        console.error('Error fetching expanded data:', data.error);
-        alert(data.error || 'Failed to expand the section.');
-        return;
+        const errorData = await res.json().catch(() => ({ error: 'Failed to parse error response' }));
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
       }
+
+      const data = await res.json();
+      console.log('Expansion response:', data);
+
+      if (!data.expanded) {
+        throw new Error('No expanded content in response');
+      }
+
       setExpandedData({ ...expandedData, [index]: data.expanded });
       setExpandedSections({ ...expandedSections, [index]: true });
       setRequestedBefore({ ...requestedBefore, [index]: true });
     } catch (error) {
       console.error('Error during expansion fetch:', error);
-      alert('An error occurred while expanding this section.');
+      alert(`Failed to expand this section: ${error.message}`);
     }
   };
 
