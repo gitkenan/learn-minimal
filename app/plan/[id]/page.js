@@ -177,16 +177,17 @@ export default function PlanDetail() {
   const planSteps = plan.content.split('\n')
     .filter(line => line.trim())
     .map((line, index) => {
-      const cleanLine = line.trim().replace(/^[-*+]\s*/, ''); // Remove list markers
-      const hasLearnMore = cleanLine.toLowerCase().includes('learn more');
+      const cleanLine = line.trim();
+      const listMarker = cleanLine.match(/^[-*+]\s*/)?.[0] || '';
+      const textContent = cleanLine.replace(/^[-*+]\s*/, '');
       
       return {
         index,
-        text: cleanLine,
+        text: textContent,
         originalText: cleanLine,
-        hasCheckbox: line.match(/^[-*+]\s/), // Check if line starts with -, * or +
+        hasCheckbox: !!listMarker,
         isCompleted: progress[index] || false,
-        hasLearnMore
+        hasLearnMore: true // Make all rows hoverable and expandable
       };
     });
 
@@ -217,9 +218,7 @@ export default function PlanDetail() {
             {planSteps.map((step) => (
               <li
                 key={step.index}
-                className={`rounded-md ${
-                  step.hasLearnMore ? 'group hover:bg-gray-800/50 transition-colors duration-200' : ''
-                }`}
+                className="group rounded-md hover:bg-gray-800/50 transition-colors duration-200"
               >
                 <div className="flex items-start p-2">
                   {step.hasCheckbox && (
@@ -233,25 +232,23 @@ export default function PlanDetail() {
                   <div className="flex-grow">
                     <div className="flex items-start justify-between">
                       <div className="flex-grow prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked(step.text) }} />
-                      {step.hasLearnMore && (
-                        <button
-                          onClick={() => handleExpand(step.index, step.originalText)}
-                          disabled={loadingExpansions[step.index]}
-                          className="ml-4 px-3 py-1 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                        >
-                          {loadingExpansions[step.index] ? (
-                            <span className="flex items-center">
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Expanding...
-                            </span>
-                          ) : (
-                            'Learn more'
-                          )}
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleExpand(step.index, step.originalText)}
+                        disabled={loadingExpansions[step.index]}
+                        className="ml-4 px-3 py-1 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                      >
+                        {loadingExpansions[step.index] ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Expanding...
+                          </span>
+                        ) : (
+                          'Learn more'
+                        )}
+                      </button>
                     </div>
                     {expandedSections[step.index] && expandedData[step.index] && (
                       <div className="mt-3 ml-4 p-4 bg-gray-700/50 rounded-md">
