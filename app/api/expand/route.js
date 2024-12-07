@@ -27,29 +27,41 @@ export async function POST(req) {
     }
 
     console.log('Expanding snippet for user:', userId);
-    const expanded = await expandSnippet(body.snippet);
-    console.log('Raw expanded content:', expanded);
-    
-    if (!expanded) {
-      console.error('No expanded content returned from AI');
-      return new Response(JSON.stringify({ error: 'Failed to generate expanded content' }), { 
-        status: 500,
+    try {
+      const expanded = await expandSnippet(body.snippet);
+      console.log('Raw expanded content:', expanded);
+      
+      if (!expanded) {
+        console.error('No expanded content returned from AI');
+        return new Response(JSON.stringify({ error: 'Failed to generate expanded content' }), { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log('Successfully expanded snippet');
+      // Ensure we're wrapping the expanded content in a proper JSON object
+      const responseData = { expanded: expanded };
+      console.log('Response data structure:', responseData);
+      
+      const jsonString = JSON.stringify(responseData);
+      console.log('Stringified response:', jsonString);
+      
+      return new Response(jsonString, { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Error in expand route:', error);
+      const errorMessage = error.message === 'Request took too long. Please try again.' 
+        ? 'The request took too long. Please try again with a shorter text.'
+        : error.message || 'Internal Server Error';
+      
+      return new Response(JSON.stringify({ error: errorMessage }), { 
+        status: error.message === 'Request took too long. Please try again.' ? 503 : 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    console.log('Successfully expanded snippet');
-    // Ensure we're wrapping the expanded content in a proper JSON object
-    const responseData = { expanded: expanded };
-    console.log('Response data structure:', responseData);
-    
-    const jsonString = JSON.stringify(responseData);
-    console.log('Stringified response:', jsonString);
-    
-    return new Response(jsonString, { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
   } catch (error) {
     console.error('Error in expand route:', error);
     return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), { 
