@@ -180,7 +180,11 @@ export default function PlanDetail() {
   };
 
   if (!plan) {
-    return <p className="text-center mt-8">Loading...</p>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   // Process the plan content
@@ -207,80 +211,56 @@ export default function PlanDetail() {
   const completionPercentage = totalStepsWithCheckboxes === 0 ? 0 : Math.round((completedSteps / totalStepsWithCheckboxes) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
-      <nav className="container mx-auto px-4 py-4 flex justify-between">
-        <h1 className="text-2xl font-bold">{plan.topic}</h1>
-        <Link href="/dashboard">
-          <button className="text-white hover:underline">Back to Dashboard</button>
-        </Link>
-      </nav>
-
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mt-12 bg-gray-800 p-8 rounded-md">
+    <div className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">{plan.topic}</h1>
+        <div className="bg-gray-800 rounded-lg p-6">
           <ul className="space-y-4">
-            {planSteps.map((step) => {
-              const isExpanded = expandedSections[step.index];
-              const hasData = expandedData[step.index];
-              const isRequested = requestedBefore[step.index];
-
-              // Determine the button label
-              let learnMoreLabel = 'Learn more';
-              if (isRequested) {
-                learnMoreLabel = isExpanded ? 'Hide details' : 'View details';
-              } else if (isExpanded) {
-                learnMoreLabel = 'Hide details';
-              }
-
-              return (
-                <li
-                  key={step.index}
-                  className="group transition-colors duration-200 rounded-md relative"
-                >
-                  <div className="flex items-start p-2 hover:bg-gray-700">
-                    {step.hasCheckbox && (
-                      <input
-                        type="checkbox"
-                        checked={step.isCompleted}
-                        onChange={() => handleCheckboxChange(step.index)}
-                        className="mt-1 mr-3 h-5 w-5 text-green-500 border-gray-300 rounded focus:ring-green-500"
-                      />
-                    )}
-                    <span
-                      className="text-lg flex-1"
-                      dangerouslySetInnerHTML={{ __html: step.text }}
-                    ></span>
-                    {step.isCompleted && step.hasCheckbox && (
-                      <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
-                    )}
-
-                    {/* Learn more button */}
-                    <div className="mt-2">
-                      <button
-                        onClick={() => handleExpand(step.index, step.originalText)}
-                        className="text-blue-400 hover:text-blue-300 text-sm flex items-center space-x-1"
-                        disabled={loadingExpansions[step.index]}
-                      >
-                        {loadingExpansions[step.index] ? (
-                          <span className="inline-flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Loading...
-                          </span>
-                        ) : (
-                          <span>{requestedBefore[step.index] ? 'Show explanation' : 'Learn more'}</span>
-                        )}
-                      </button>
+            {planSteps.map((step) => (
+              <li
+                key={step.index}
+                className={`rounded-md ${
+                  step.includes('Learn more') ? 'hover:bg-gray-700/50 transition-colors duration-200 group' : ''
+                }`}
+              >
+                <div className="flex items-start p-2">
+                  {step.hasCheckbox && (
+                    <input
+                      type="checkbox"
+                      checked={!!progress[step.index]}
+                      onChange={() => handleCheckboxChange(step.index)}
+                      className="mt-1 mr-2"
+                    />
+                  )}
+                  <div className="flex-grow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-grow">{step.text}</div>
+                      {step.includes('Learn more') && (
+                        <button
+                          onClick={() => handleExpand(step.index, step.originalText)}
+                          disabled={loadingExpansions[step.index]}
+                          className="ml-4 px-3 py-1 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                        >
+                          {loadingExpansions[step.index] ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Expanding...
+                            </span>
+                          ) : (
+                            'Learn more'
+                          )}
+                        </button>
+                      )}
                     </div>
-
-                    {/* Expanded details (below the line) */}
-                    {isExpanded && hasData && (
-                      <div className="ml-8 mt-2 bg-gray-700 p-4 rounded-md">
+                    {expandedSections[step.index] && expandedData[step.index] && (
+                      <div className="mt-3 ml-4 p-4 bg-gray-700/50 rounded-md">
                         <div
                           className="prose prose-invert max-w-none"
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
-                        ></div>
+                        />
                         <div className="mt-4 flex space-x-4">
                           <button
                             className="text-sm text-green-500 hover:underline"
@@ -316,21 +296,19 @@ export default function PlanDetail() {
                       </div>
                     )}
                   </div>
-                </li>
-              );
-            })}
+                </div>
+              </li>
+            ))}
           </ul>
-
-          {/* Progress bar and completion percentage */}
-          <div className="w-full bg-gray-700 rounded-full h-2 mt-6">
-            <div
-              className="bg-green-500 h-2 rounded-full"
-              style={{ width: `${completionPercentage}%` }}
-            ></div>
-          </div>
-          <p className="mt-2 text-sm text-gray-400">{`Progress: ${completionPercentage}%`}</p>
         </div>
-      </main>
+      </div>
+      <div className="w-full bg-gray-800 rounded-full h-2 mt-6">
+        <div
+          className="bg-green-500 h-2 rounded-full"
+          style={{ width: `${completionPercentage}%` }}
+        ></div>
+      </div>
+      <p className="mt-2 text-sm text-gray-400">{`Progress: ${completionPercentage}%`}</p>
     </div>
   );
 }
