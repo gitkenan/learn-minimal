@@ -15,131 +15,117 @@ export default function PlanDetail() {
   const { id } = params;
   const [plan, setPlan] = useState(null);
   const [progress, setProgress] = useState({});
-
-  // State for expanded sections
   const [expandedSections, setExpandedSections] = useState({});
-  // State to store the fetched expanded data
   const [expandedData, setExpandedData] = useState({});
-  // Whether the user has requested info before (for changing "Learn more" text)
-  const [requestedBefore, setRequestedBefore] = useState({});
-  // Loading state for expansions
   const [loadingExpansions, setLoadingExpansions] = useState({});
-
-  // State for thumbs feedback
+  const [requestedBefore, setRequestedBefore] = useState({});
   const [feedbackMode, setFeedbackMode] = useState({});
   const [feedbackText, setFeedbackText] = useState({});
 
   useEffect(() => {
-    if (isLoaded && !userId) {
-      router.push('/sign-in');
-      return; // Early return to prevent further execution
+    const fetchPlan = async () => {
+      try {
+        const res = await fetch(`/api/plans/${id}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch plan');
+        }
+
+        if (!data.plan) {
+          throw new Error('Plan not found');
+        }
+
+        setPlan(data.plan);
+        // Initialize progress from the plan data if it exists
+        setProgress(data.plan.progress || {});
+      } catch (error) {
+        console.error('Error fetching plan:', error);
+      }
+    };
+
+    if (id) {
+      fetchPlan();
     }
+  }, [id]);
 
-    if (isLoaded && userId) {
-      fetch(`/api/plans/${id}`)
-        .then(async (res) => {
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || `HTTP error! status: ${res.status}`);
-          }
-          return data;
-        })
-        .then((data) => {
-          if (data.plan) {
-            console.log('Plan data received:', data.plan);
-            setPlan(data.plan);
-            setProgress(data.plan.progress || {});
-          } else {
-            console.error('Plan data missing in response');
-            alert('Plan not found.');
-            router.push('/dashboard');
-            return;
-          }
-        })
-        .catch((err) => {
-          console.error('Error fetching plan:', err);
-          alert(`An error occurred while fetching the plan: ${err.message}`);
-          router.push('/dashboard');
-          return;
-        });
-    }
-  }, [isLoaded, userId, id]);
-
-  const handleCheckboxChange = (index) => {
-    const newProgress = { ...progress, [index]: !progress[index] };
-    setProgress(newProgress);
-
-    // Save progress to the server
-    fetch(`/api/plans/${id}/progress`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ progress: newProgress }),
-    }).catch((err) => {
-      console.error('Error updating progress:', err);
-      alert('Failed to update progress.');
-    });
-  };
-
-  const handleExpand = async (index, text) => {
-    // Toggle off if already expanded
-    if (expandedSections[index]) {
-      setExpandedSections({ ...expandedSections, [index]: false });
-      return;
-    }
-
-    // If already have data, just show it
-    if (expandedData[index]) {
-      setExpandedSections({ ...expandedSections, [index]: true });
-      return;
-    }
-
-    // Otherwise, fetch from API
+  const handleCheckboxChange = async (stepIndex) => {
     try {
-      setLoadingExpansions({ ...loadingExpansions, [index]: true });
-      console.log('Expanding text:', text);
-      const res = await fetch('/api/expand', {
+      // Update local state optimistically
+      const newProgress = {
+        ...progress,
+        [stepIndex]: !progress[stepIndex]
+      };
+      setProgress(newProgress);
+
+      // Send update to server
+      const res = await fetch(`/api/plans/${id}/progress`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snippet: text }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ progress: newProgress })
       });
 
-      console.log('Response status:', res.status);
-      console.log('Response headers:', Object.fromEntries(res.headers.entries()));
-
-      let data;
-      try {
-        const rawText = await res.text();
-        console.log('Raw response text:', rawText);
-        
-        try {
-          data = JSON.parse(rawText);
-          console.log('Parsed response data:', data);
-        } catch (parseError) {
-          console.error('JSON parse error:', parseError);
-          console.error('Failed to parse text:', rawText);
-          throw new Error('Failed to parse server response');
-        }
-      } catch (error) {
-        console.error('Error reading response:', error);
-        throw new Error('Failed to read server response');
+      if (!res.ok) {
+        // Revert on error
+        setProgress(progress);
+        throw new Error('Failed to update progress');
       }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
+
+  const handleExpand = async (stepIndex, originalText) => {
+    if (loadingExpansions[stepIndex] || expandedData[stepIndex]) {
+      // Toggle visibility if already expanded
+      setExpandedSections(prev => ({
+        ...prev,
+        [stepIndex]: !prev[stepIndex]
+      }));
+      return;
+    }
+
+    setLoadingExpansions(prev => ({
+      ...prev,
+      [stepIndex]: true
+    }));
+
+    try {
+      const res = await fetch('/api/expand', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ snippet: originalText })
+      });
+
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || `HTTP error! status: ${res.status}`);
+        throw new Error(data.error || 'Failed to expand content');
       }
 
-      if (!data.expanded) {
-        throw new Error('No expanded content in response');
-      }
-
-      setExpandedData({ ...expandedData, [index]: data.expanded });
-      setExpandedSections({ ...expandedSections, [index]: true });
-      setRequestedBefore({ ...requestedBefore, [index]: true });
+      setExpandedData(prev => ({
+        ...prev,
+        [stepIndex]: data.expanded
+      }));
+      setExpandedSections(prev => ({
+        ...prev,
+        [stepIndex]: true
+      }));
+      setRequestedBefore(prev => ({
+        ...prev,
+        [stepIndex]: true
+      }));
     } catch (error) {
-      console.error('Error during expansion fetch:', error);
-      alert(error.message);
+      console.error('Error expanding content:', error);
     } finally {
-      setLoadingExpansions({ ...loadingExpansions, [index]: false });
+      setLoadingExpansions(prev => ({
+        ...prev,
+        [stepIndex]: false
+      }));
     }
   };
 
@@ -187,27 +173,21 @@ export default function PlanDetail() {
     );
   }
 
-  // Process the plan content
-  const planLines = plan.content.split('\n');
-  const planSteps = planLines.map((line, index) => {
-    const trimmedLine = line.trim();
-    const hasCheckbox = trimmedLine.startsWith('* ') || trimmedLine.startsWith('+');
-    const cleanedLine = trimmedLine.replace(/^[*+]\s*/, '');
-    const formattedLine = DOMPurify.sanitize(marked(cleanedLine));
-
-    return {
+  // Process the plan content to extract steps
+  const planSteps = plan.content.split('\n')
+    .filter(line => line.trim())
+    .map((line, index) => ({
       index,
-      text: formattedLine,
-      originalText: cleanedLine,
-      hasCheckbox,
-      isCompleted: progress[index] || false
-    };
-  });
+      text: DOMPurify.sanitize(marked(line)),
+      originalText: line,
+      hasCheckbox: line.match(/^[-*]\s/), // Check if line starts with - or *
+      isCompleted: progress[index] || false,
+    }));
 
   // Calculate completion percentage
-  const stepsWithCheckboxes = planSteps.filter((step) => step.hasCheckbox);
-  const completedSteps = stepsWithCheckboxes.filter((step) => step.isCompleted).length;
-  const totalStepsWithCheckboxes = stepsWithCheckboxes.length;
+  const stepsWithCheckbox = planSteps.filter(step => step.hasCheckbox);
+  const totalStepsWithCheckboxes = stepsWithCheckbox.length;
+  const completedSteps = Object.values(progress).filter(Boolean).length;
   const completionPercentage = totalStepsWithCheckboxes === 0 ? 0 : Math.round((completedSteps / totalStepsWithCheckboxes) * 100);
 
   return (
@@ -220,7 +200,7 @@ export default function PlanDetail() {
               <li
                 key={step.index}
                 className={`rounded-md ${
-                  step.includes('Learn more') ? 'hover:bg-gray-700/50 transition-colors duration-200 group' : ''
+                  step.text.includes('Learn more') ? 'hover:bg-gray-700/50 transition-colors duration-200 group' : ''
                 }`}
               >
                 <div className="flex items-start p-2">
@@ -235,7 +215,7 @@ export default function PlanDetail() {
                   <div className="flex-grow">
                     <div className="flex items-start justify-between">
                       <div className="flex-grow">{step.text}</div>
-                      {step.includes('Learn more') && (
+                      {step.text.includes('Learn more') && (
                         <button
                           onClick={() => handleExpand(step.index, step.originalText)}
                           disabled={loadingExpansions[step.index]}
