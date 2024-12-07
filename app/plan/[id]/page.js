@@ -1,353 +1,178 @@
 "use client";
 
-import { useAuth } from '@clerk/nextjs';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { storage } from '../../../lib/storage';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
-export default function PlanDetail() {
-  const { isLoaded, userId } = useAuth();
+export default function Home() {
+  const [topic, setTopic] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
-  const params = useParams();
-  const { id } = params;
-  const [plan, setPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [progress, setProgress] = useState({});
-  const [expandedSections, setExpandedSections] = useState({});
-  const [expandedData, setExpandedData] = useState({});
-  const [loadingExpansions, setLoadingExpansions] = useState({});
-  const [requestedBefore, setRequestedBefore] = useState({});
-  const [feedbackMode, setFeedbackMode] = useState({});
-  const [feedbackText, setFeedbackText] = useState({});
+  const { isLoaded, userId } = useAuth();
 
   useEffect(() => {
-    const maxRetries = 3;
-    const retryDelay = 1000; // 1 second
+    AOS.init({
+      duration: 1000,
+      once: true,
+    });
+  }, []);
 
-    const fetchPlan = async () => {
-      try {
-        // First try local storage
-        if (typeof window !== 'undefined') {
-          const localPlan = storage.getPlan(userId, id);
-          if (localPlan) {
-            setPlan(localPlan);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // If not in local storage, try API
-        const res = await fetch(`/api/plans/${id}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to fetch plan');
-        }
-
-        if (!data.plan) {
-          throw new Error('Plan not found');
-        }
-
-        setPlan(data.plan);
-        // Save to local storage for future
-        if (typeof window !== 'undefined') {
-          storage.savePlan(userId, id, data.plan);
-        }
-      } catch (error) {
-        console.error('Error fetching plan:', error);
-        if (retryCount < maxRetries) {
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-          }, retryDelay);
-        } else {
-          setError(error.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isLoaded && userId && id) {
-      fetchPlan();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!userId) {
+      setError('Please sign in to create a learning plan');
+      return;
     }
-  }, [isLoaded, userId, id, retryCount]);
-
-  const handleCheckboxChange = async (stepIndex) => {
-    try {
-      // Update local state optimistically
-      const newProgress = {
-        ...progress,
-        [stepIndex]: !progress[stepIndex]
-      };
-      setProgress(newProgress);
-
-      // Send update to server
-      const res = await fetch(`/api/plans/${id}/progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ progress: newProgress })
-      });
-
-      if (!res.ok) {
-        // Revert on error
-        setProgress(progress);
-        throw new Error('Failed to update progress');
-      }
-    } catch (error) {
-      console.error('Error updating progress:', error);
-    }
-  };
-
-  const handleExpand = async (stepIndex, originalText) => {
-    if (loadingExpansions[stepIndex] || expandedData[stepIndex]) {
-      // Toggle visibility if already expanded
-      setExpandedSections(prev => ({
-        ...prev,
-        [stepIndex]: !prev[stepIndex]
-      }));
+    
+    const trimmedTopic = topic.trim();
+    if (!trimmedTopic) {
+      setError('Please enter a topic to learn about');
       return;
     }
 
-    setLoadingExpansions(prev => ({
-      ...prev,
-      [stepIndex]: true
-    }));
+    setError('');
+    setSuccessMessage('');
+    setIsLoading(true);
 
     try {
-      const res = await fetch('/api/expand', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ snippet: originalText })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to expand content');
-      }
-
-      setExpandedData(prev => ({
-        ...prev,
-        [stepIndex]: data.expanded
-      }));
-      setExpandedSections(prev => ({
-        ...prev,
-        [stepIndex]: true
-      }));
-      setRequestedBefore(prev => ({
-        ...prev,
-        [stepIndex]: true
-      }));
-    } catch (error) {
-      console.error('Error expanding content:', error);
-    } finally {
-      setLoadingExpansions(prev => ({
-        ...prev,
-        [stepIndex]: false
-      }));
-    }
-  };
-
-  const handleThumbsUp = (index) => {
-    // For now, do nothing more than alert or console
-    console.log('User gave thumbs up on index:', index);
-  };
-
-  const handleThumbsDown = (index) => {
-    // Show feedback input
-    setFeedbackMode({ ...feedbackMode, [index]: true });
-  };
-
-  const handleFeedbackSubmit = async (index) => {
-    const originalText = planSteps[index].originalText;
-    const userFeedback = feedbackText[index] || '';
-
-    try {
-      const res = await fetch('/api/improve', {
+      const res = await fetch('/api/learn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ snippet: originalText, feedback: userFeedback }),
+        body: JSON.stringify({ topic: trimmedTopic }),
       });
+
       const data = await res.json();
+      
       if (!res.ok) {
-        console.error('Error improving section:', data.error);
-        alert(data.error || 'Failed to improve the section.');
-        return;
+        throw new Error(data.error || 'Failed to generate plan');
       }
-      // Update the expandedData with improved text
-      setExpandedData({ ...expandedData, [index]: data.improved });
-      setFeedbackMode({ ...feedbackMode, [index]: false });
-      alert('Thanks! Updated the section based on your feedback.');
+
+      if (data.plan && data.plan.id) {
+        try {
+          // Try to save to local storage
+          const saved = storage.savePlan(userId, data.plan.id, data.plan);
+          if (!saved) {
+            console.warn('Failed to save plan to local storage, continuing anyway...');
+          }
+        } catch (storageError) {
+          console.warn('Storage error:', storageError);
+          // Continue even if storage fails - the plan was generated successfully
+        }
+
+        setSuccessMessage('Plan generated successfully! Redirecting...');
+        
+        // Small delay for UX
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Navigate to the plan
+        router.push(`/plan/${data.plan.id}`);
+      } else {
+        throw new Error('Invalid plan data received');
+      }
     } catch (error) {
-      console.error('Error during improvement fetch:', error);
-      alert('An error occurred while improving this section.');
+      console.error('Error during plan generation:', error);
+      setError(
+        error.message === 'Failed to fetch' 
+          ? 'Network error. Please check your connection and try again.'
+          : error.message || 'An error occurred while generating the plan.'
+      );
+      setSuccessMessage('');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
-        <div className="text-center">
-          <h2 className="text-xl mb-4">Error Loading Plan</h2>
-          <p className="text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-white">Loading your learning plan...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Process the plan content to extract steps
-  const planSteps = plan.content.split('\n')
-    .filter(line => line.trim())
-    .map((line, index) => {
-      const cleanLine = line.trim();
-      // Check for both numbered lists and bullet points
-      const isActionItem = /^[*•-]\s/.test(cleanLine) || /^\d+\.\s*[*•-]\s/.test(cleanLine);
-      const textContent = cleanLine
-        .replace(/^\d+\.\s*/, '') // Remove number prefix
-        .replace(/^[*•-]\s*/, ''); // Remove bullet point
-      
-      return {
-        index,
-        text: textContent,
-        originalText: cleanLine,
-        hasCheckbox: isActionItem,
-        isCompleted: progress[index] || false,
-        hasLearnMore: true // Make all rows hoverable and expandable
-      };
-    });
-
-  // Calculate completion percentage
-  const stepsWithCheckbox = planSteps.filter(step => step.hasCheckbox);
-  const totalStepsWithCheckboxes = stepsWithCheckbox.length;
-  const completedSteps = Object.values(progress).filter(Boolean).length;
-  const completionPercentage = totalStepsWithCheckboxes === 0 ? 0 : Math.round((completedSteps / totalStepsWithCheckboxes) * 100);
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-4">{plan.topic}</h1>
-          <div className="bg-gray-800 rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span>Progress</span>
-              <span>{completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-blue-500 rounded-full h-2 transition-all duration-300"
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
+    <div className="min-h-screen bg-black text-white">
+      <main className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center" data-aos="fade-up">
+          Learn Anything
+        </h1>
+        
+        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4" data-aos="fade-up" data-aos-delay="200">
+          <div className="relative">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => {
+                setTopic(e.target.value);
+                setError(''); // Clear error when user types
+              }}
+              placeholder="Enter a topic to learn..."
+              className="w-full px-6 py-4 rounded-full bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-neon-green transition-all duration-300"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 rounded-full 
+                ${isLoading 
+                  ? 'bg-gray-600 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
+                } 
+                text-white font-semibold transition-all duration-300`}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <LoadingSpinner />
+                  <span className="ml-2">Generating...</span>
+                </span>
+              ) : (
+                'Generate Plan'
+              )}
+            </button>
           </div>
-          <ul className="space-y-2">
-            {planSteps.map((step) => (
-              <li
-                key={step.index}
-                className="group rounded-md hover:bg-gray-800/50 transition-colors duration-200"
-              >
-                <div className="flex items-start p-2">
-                  {step.hasCheckbox && (
-                    <input
-                      type="checkbox"
-                      checked={!!progress[step.index]}
-                      onChange={() => handleCheckboxChange(step.index)}
-                      className="mt-1 mr-2"
-                    />
-                  )}
-                  <div className="flex-grow">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-grow prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked(step.text) }} />
-                      <button
-                        onClick={() => handleExpand(step.index, step.originalText)}
-                        disabled={loadingExpansions[step.index]}
-                        className="ml-4 px-3 py-1 text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                      >
-                        {loadingExpansions[step.index] ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Expanding...
-                          </span>
-                        ) : (
-                          'Learn more'
-                        )}
-                      </button>
-                    </div>
-                    {expandedSections[step.index] && expandedData[step.index] && (
-                      <div className="mt-3 ml-4 p-4 bg-gray-700/50 rounded-md">
-                        <div
-                          className="prose prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
-                        />
-                        <div className="mt-4 flex space-x-4">
-                          <button
-                            className="text-sm text-green-500 hover:underline"
-                            onClick={() => handleThumbsUp(step.index)}
-                          >
-                            👍 Thumbs Up
-                          </button>
-                          <button
-                            className="text-sm text-red-500 hover:underline"
-                            onClick={() => handleThumbsDown(step.index)}
-                          >
-                            👎 Thumbs Down
-                          </button>
-                        </div>
-                        {feedbackMode[step.index] && (
-                          <div className="mt-4">
-                            <textarea
-                              className="w-full p-2 rounded-md bg-gray-800 text-gray-200"
-                              placeholder="What would you have preferred for this section?"
-                              value={feedbackText[step.index] || ''}
-                              onChange={(e) =>
-                                setFeedbackText({ ...feedbackText, [step.index]: e.target.value })
-                              }
-                            ></textarea>
-                            <button
-                              onClick={() => handleFeedbackSubmit(step.index)}
-                              className="mt-2 px-4 py-2 bg-green-600 rounded text-white hover:bg-green-500"
-                            >
-                              Submit Improvement
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+
+          {/* Error Message */}
+          {error && (
+            <div className="text-red-400 text-sm p-3 rounded-lg bg-red-400/10 text-center" role="alert">
+              {error}
+            </div>
+          )}
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="text-green-400 text-sm p-3 rounded-lg bg-green-400/10 text-center" role="status">
+              {successMessage}
+            </div>
+          )}
+        </form>
+
+        {/* Features Section */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl">
+          {[
+            {
+              title: 'AI-Powered',
+              description: 'Get personalized learning plans generated in seconds'
+            },
+            {
+              title: 'Track Progress',
+              description: 'Monitor your learning journey with interactive checkpoints'
+            },
+            {
+              title: 'Expand Knowledge',
+              description: 'Dive deeper into topics with detailed explanations'
+            }
+          ].map((feature, index) => (
+            <div
+              key={feature.title}
+              className="p-6 bg-gray-800/50 rounded-lg text-center"
+              data-aos="fade-up"
+              data-aos-delay={300 + index * 100}
+            >
+              <h3 className="text-xl font-semibold mb-2 text-neon-green">{feature.title}</h3>
+              <p className="text-gray-300">{feature.description}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
