@@ -22,6 +22,8 @@ export default function PlanDetail() {
   const [expandedData, setExpandedData] = useState({});
   // Whether the user has requested info before (for changing "Learn more" text)
   const [requestedBefore, setRequestedBefore] = useState({});
+  // Loading state for expansions
+  const [loadingExpansions, setLoadingExpansions] = useState({});
 
   // State for thumbs feedback
   const [feedbackMode, setFeedbackMode] = useState({});
@@ -93,6 +95,7 @@ export default function PlanDetail() {
 
     // Otherwise, fetch from API
     try {
+      setLoadingExpansions({ ...loadingExpansions, [index]: true });
       console.log('Expanding text:', text);
       const res = await fetch('/api/expand', {
         method: 'POST',
@@ -105,11 +108,11 @@ export default function PlanDetail() {
 
       let data;
       try {
-        const rawText = await res.text(); // First get the raw text
+        const rawText = await res.text();
         console.log('Raw response text:', rawText);
         
         try {
-          data = JSON.parse(rawText); // Then try to parse it
+          data = JSON.parse(rawText);
           console.log('Parsed response data:', data);
         } catch (parseError) {
           console.error('JSON parse error:', parseError);
@@ -134,7 +137,9 @@ export default function PlanDetail() {
       setRequestedBefore({ ...requestedBefore, [index]: true });
     } catch (error) {
       console.error('Error during expansion fetch:', error);
-      alert(`Failed to expand this section: ${error.message}`);
+      alert(error.message);
+    } finally {
+      setLoadingExpansions({ ...loadingExpansions, [index]: false });
     }
   };
 
@@ -248,74 +253,69 @@ export default function PlanDetail() {
                       <CheckIcon className="h-5 w-5 text-green-500 ml-2" />
                     )}
 
-                    {/* "Learn More" / "View Details" trigger */}
-                    <button
-                      onClick={() => handleExpand(step.index, step.originalText)}
-                      className={`
-                        ml-4 text-sm underline
-                        ${isExpanded ? 'text-blue-300' : 'text-blue-500'}
-                        hover:text-blue-300
-                        transition-colors
-                        duration-200
-                        ${
-                          // Desktop: show only on hover unless expanded or requested before
-                          // Mobile: always show
-                          isExpanded || isRequested
-                            ? ''
-                            : 'hidden group-hover:inline-block'
-                        }
-                        
-                        @media (max-width: 640px) {
-                          inline-block !important;
-                        }
-                      `}
-                      style={{ whiteSpace: 'nowrap' }}
-                    >
-                      {learnMoreLabel} {isExpanded ? '▲' : '▼'}
-                    </button>
-                  </div>
+                    {/* Learn more button */}
+                    <div className="mt-2">
+                      <button
+                        onClick={() => handleExpand(step.index, step.originalText)}
+                        className="text-blue-400 hover:text-blue-300 text-sm flex items-center space-x-1"
+                        disabled={loadingExpansions[step.index]}
+                      >
+                        {loadingExpansions[step.index] ? (
+                          <span className="inline-flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Loading...
+                          </span>
+                        ) : (
+                          <span>{requestedBefore[step.index] ? 'Show explanation' : 'Learn more'}</span>
+                        )}
+                      </button>
+                    </div>
 
-                  {/* Expanded details (below the line) */}
-                  {isExpanded && hasData && (
-                    <div className="ml-8 mt-2 bg-gray-700 p-4 rounded-md">
-                      <div
-                        className="prose prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
-                      ></div>
-                      <div className="mt-4 flex space-x-4">
-                        <button
-                          className="text-sm text-green-500 hover:underline"
-                          onClick={() => handleThumbsUp(step.index)}
-                        >
-                          👍 Thumbs Up
-                        </button>
-                        <button
-                          className="text-sm text-red-500 hover:underline"
-                          onClick={() => handleThumbsDown(step.index)}
-                        >
-                          👎 Thumbs Down
-                        </button>
-                      </div>
-                      {feedbackMode[step.index] && (
-                        <div className="mt-4">
-                          <textarea
-                            className="w-full p-2 rounded-md bg-gray-800 text-gray-200"
-                            placeholder="What would you have preferred for this section?"
-                            value={feedbackText[step.index] || ''}
-                            onChange={(e) =>
-                              setFeedbackText({ ...feedbackText, [step.index]: e.target.value })
-                            }
-                          ></textarea>
+                    {/* Expanded details (below the line) */}
+                    {isExpanded && hasData && (
+                      <div className="ml-8 mt-2 bg-gray-700 p-4 rounded-md">
+                        <div
+                          className="prose prose-invert max-w-none"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked(expandedData[step.index])) }}
+                        ></div>
+                        <div className="mt-4 flex space-x-4">
                           <button
-                            onClick={() => handleFeedbackSubmit(step.index)}
-                            className="mt-2 px-4 py-2 bg-green-600 rounded text-white hover:bg-green-500"
+                            className="text-sm text-green-500 hover:underline"
+                            onClick={() => handleThumbsUp(step.index)}
                           >
-                            Submit Improvement
+                            👍 Thumbs Up
+                          </button>
+                          <button
+                            className="text-sm text-red-500 hover:underline"
+                            onClick={() => handleThumbsDown(step.index)}
+                          >
+                            👎 Thumbs Down
                           </button>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {feedbackMode[step.index] && (
+                          <div className="mt-4">
+                            <textarea
+                              className="w-full p-2 rounded-md bg-gray-800 text-gray-200"
+                              placeholder="What would you have preferred for this section?"
+                              value={feedbackText[step.index] || ''}
+                              onChange={(e) =>
+                                setFeedbackText({ ...feedbackText, [step.index]: e.target.value })
+                              }
+                            ></textarea>
+                            <button
+                              onClick={() => handleFeedbackSubmit(step.index)}
+                              className="mt-2 px-4 py-2 bg-green-600 rounded text-white hover:bg-green-500"
+                            >
+                              Submit Improvement
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </li>
               );
             })}
