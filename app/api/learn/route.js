@@ -27,19 +27,21 @@ export async function POST(req) {
       );
     }
 
-    // Create base plan object
+    // Generate a plan ID regardless of authentication status
+    const planId = `plan:${Date.now()}`;
+
+    // Create base plan object with consistent structure
     const planObj = {
+      id: planId,
       topic,
       content: planContent,
       createdAt: new Date().toISOString()
     };
 
-    // Add additional fields for authenticated users
+    // Add additional fields and save to Redis only for authenticated users
     if (userId) {
-      const planId = `plan:${Date.now()}`;
       const authenticatedPlan = {
         ...planObj,
-        id: planId,
         progress: {}
       };
 
@@ -47,7 +49,6 @@ export async function POST(req) {
         await redis.hset(`user:${userId}:plans`, {
           [planId]: JSON.stringify(authenticatedPlan)
         });
-
         return new Response(
           JSON.stringify({ plan: authenticatedPlan }),
           { status: 200 }
@@ -65,7 +66,7 @@ export async function POST(req) {
       }
     }
 
-    // Return basic plan for unauthenticated users
+    // Return plan with consistent structure for unauthenticated users
     return new Response(
       JSON.stringify({ plan: planObj }),
       { status: 200 }
