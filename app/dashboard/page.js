@@ -19,8 +19,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isLoaded && !userId) {
-      // Redirect to sign-in if not authenticated
       router.push('/sign-in');
+      return; // Early return to prevent fetching plans after redirect
     } else if (isLoaded && userId) {
       // Fetch the user's plans
       fetch('/api/plans')

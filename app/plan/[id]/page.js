@@ -30,7 +30,10 @@ export default function PlanDetail() {
   useEffect(() => {
     if (isLoaded && !userId) {
       router.push('/sign-in');
-    } else if (isLoaded && userId) {
+      return; // Early return to prevent further execution
+    }
+
+    if (isLoaded && userId) {
       fetch(`/api/plans/${id}`)
         .then(async (res) => {
           const data = await res.json();
@@ -48,12 +51,14 @@ export default function PlanDetail() {
             console.error('Plan data missing in response');
             alert('Plan not found.');
             router.push('/dashboard');
+            return;
           }
         })
         .catch((err) => {
           console.error('Error fetching plan:', err);
           alert(`An error occurred while fetching the plan: ${err.message}`);
           router.push('/dashboard');
+          return;
         });
     }
   }, [isLoaded, userId, id]);
