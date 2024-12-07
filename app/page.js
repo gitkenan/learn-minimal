@@ -58,9 +58,19 @@ export default function Home() {
         throw new Error(data.error || 'Failed to generate plan');
       }
 
-      if (!data.plan || !data.plan.id) {
+      if (!data.plan || !data.plan.id || !data.plan.content || !data.plan.topic) {
+        console.error('Invalid plan data:', data);
         throw new Error('Invalid plan data received');
       }
+
+      // Create the complete plan object
+      const completePlan = {
+        id: data.plan.id,
+        topic: trimmedTopic,
+        content: data.plan.content,
+        createdAt: new Date().toISOString(),
+        progress: {}
+      };
 
       try {
         console.log('Saving plan to storage:', { userId, planId: data.plan.id });
@@ -70,7 +80,7 @@ export default function Home() {
           throw new Error('Storage is not available');
         }
         
-        const saved = storage.savePlan(userId, data.plan.id, data.plan);
+        const saved = storage.savePlan(userId, data.plan.id, completePlan);
         if (!saved) {
           console.error('Failed to save plan to storage');
           throw new Error('Failed to save plan to storage');
@@ -83,19 +93,18 @@ export default function Home() {
           throw new Error('Failed to verify saved plan');
         }
 
-        console.log('Plan saved successfully');
+        console.log('Plan saved successfully:', verifiedPlan);
+        setSuccessMessage('Plan created successfully! Redirecting...');
+        
+        // Add a small delay to ensure storage is synced
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Redirect to the plan page
+        router.push(`/plan/${data.plan.id}`);
       } catch (storageError) {
         console.error('Storage error:', storageError);
         throw new Error('Failed to save plan: ' + storageError.message);
       }
-
-      setSuccessMessage('Plan created successfully! Redirecting...');
-      
-      // Add a small delay to ensure storage is synced
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirect to the plan page
-      router.push(`/plan/${data.plan.id}`);
     } catch (error) {
       console.error('Error during plan generation:', error);
       setError(error.message || 'An error occurred while generating the plan.');
