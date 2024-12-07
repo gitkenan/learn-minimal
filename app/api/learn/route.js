@@ -42,18 +42,23 @@ export async function POST(request) {
     // Generate a unique ID for the plan
     const planId = uuidv4();
 
-    // Create the plan object
+    // Create the plan object with consistent structure
     const plan = {
       id: planId,
       topic,
       content: planContent,
       createdAt: new Date().toISOString(),
-      progress: {}
+      progress: {
+        completed: [],
+        current: null,
+        lastUpdated: new Date().toISOString()
+      }
     };
 
     // Store the plan in Redis under the user's plans
     await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(plan));
 
+    // Return the plan with the consistent structure
     return new Response(
       JSON.stringify({ plan }), 
       { 
