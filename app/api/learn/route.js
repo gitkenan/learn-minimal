@@ -89,9 +89,12 @@ export async function POST(request) {
 
     // Return the plan with the consistent structure
     return new Response(
-      JSON.stringify({ plan }), 
+      JSON.stringify({ 
+        plan,
+        message: 'Plan created successfully' 
+      }), 
       { 
-        status: 200,
+        status: 201,
         headers: { 'Content-Type': 'application/json' }
       }
     );

@@ -7,7 +7,7 @@ export async function GET(req, { params }) {
     const { userId } = getAuth(req);
     const { id } = params;
 
-    console.log('Fetching plan:', { userId, planId: id });
+    console.log('GET plan request:', { userId, planId: id });
 
     if (!userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
@@ -40,7 +40,7 @@ export async function GET(req, { params }) {
       console.log('Plan not found in Redis:', { userId, decodedId });
       return new Response(JSON.stringify({ 
         error: 'Plan not found',
-        details: 'The requested plan could not be found in the database'
+        details: 'The requested plan could not be found'
       }), { 
         status: 404,
         headers: { 'Content-Type': 'application/json' }
@@ -55,6 +55,7 @@ export async function GET(req, { params }) {
       
       // Validate plan structure
       if (!plan.id || !plan.content) {
+        console.error('Invalid plan structure:', plan);
         throw new Error('Invalid plan structure');
       }
 
@@ -65,7 +66,10 @@ export async function GET(req, { params }) {
 
       console.log('Plan retrieved successfully:', { planId: plan.id, topic: plan.topic });
       
-      return new Response(JSON.stringify({ plan }), { 
+      return new Response(JSON.stringify({ 
+        plan,
+        message: 'Plan retrieved successfully'
+      }), { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -73,16 +77,16 @@ export async function GET(req, { params }) {
       console.error('Error parsing plan data:', error);
       return new Response(JSON.stringify({ 
         error: 'Invalid plan data',
-        details: 'The plan data is corrupted or in an invalid format'
+        details: 'The plan data is corrupted or invalid'
       }), { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
   } catch (error) {
-    console.error('Error fetching plan:', error);
+    console.error('Error retrieving plan:', error);
     return new Response(JSON.stringify({ 
-      error: 'Internal Server Error',
+      error: 'Internal server error',
       details: error.message
     }), { 
       status: 500,
