@@ -14,64 +14,71 @@ export async function POST(req) {
     if (!topic) {
       return new Response(
         JSON.stringify({ error: 'Topic is required' }),
-        { status: 400 }
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    const planContent = await generateLearningPlan(topic);
-    
-    if (!planContent) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate plan content' }),
-        { status: 500 }
-      );
-    }
-
-    // Generate a plan ID regardless of authentication status
-    const planId = `plan:${Date.now()}`;
-
-    // Create base plan object with consistent structure
-    const planObj = {
-      id: planId,
-      topic,
-      content: planContent,
-      createdAt: new Date().toISOString()
-    };
-
-    // Add additional fields and save to Redis only for authenticated users
-    if (userId) {
-      const authenticatedPlan = {
-        ...planObj,
-        progress: {}
-      };
-
-      try {
-        await redis.hset(`user:${userId}:plans`, {
-          [planId]: JSON.stringify(authenticatedPlan)
-        });
+    try {
+      const planContent = await generateLearningPlan(topic);
+      
+      if (!planContent) {
         return new Response(
-          JSON.stringify({ plan: authenticatedPlan }),
-          { status: 200 }
-        );
-      } catch (redisError) {
-        console.error('Redis save error:', redisError);
-        // Still return the plan even if saving fails
-        return new Response(
-          JSON.stringify({ 
-            plan: authenticatedPlan,
-            warning: 'Plan generated but failed to save'
-          }),
-          { status: 200 }
+          JSON.stringify({ error: 'Failed to generate plan content' }),
+          { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          }
         );
       }
+
+      // Generate a plan ID regardless of authentication status
+      const planId = `plan:${Date.now()}`;
+
+      // Create base plan object with consistent structure
+      const planObj = {
+        id: planId,
+        topic,
+        content: planContent,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add additional fields and save to Redis only for authenticated users
+      if (userId) {
+        const authenticatedPlan = {
+          ...planObj,
+          progress: {}
+        };
+
+        try {
+          await redis.hset(`user:${userId}:plans`, {
+            [planId]: JSON.stringify(authenticatedPlan)
+          });
+        } catch (redisError) {
+          console.error('Redis error:', redisError);
+          // Continue even if Redis fails - we can still return the plan
+        }
+      }
+
+      return new Response(JSON.stringify(planObj), { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Error generating plan:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: error.message || 'An error occurred while generating the plan',
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }),
+        { 
+          status: error.message?.includes('timed out') ? 503 : 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
-
-    // Return plan with consistent structure for unauthenticated users
-    return new Response(
-      JSON.stringify({ plan: planObj }),
-      { status: 200 }
-    );
-
   } catch (error) {
     console.error('Error in learn route:', error);
     return new Response(
