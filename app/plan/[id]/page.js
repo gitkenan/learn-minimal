@@ -100,13 +100,25 @@ export default function PlanDetail() {
         body: JSON.stringify({ snippet: text }),
       });
 
+      console.log('Response status:', res.status);
+      console.log('Response headers:', Object.fromEntries(res.headers.entries()));
+
       let data;
       try {
-        data = await res.json();
-        console.log('Response data:', data);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        throw new Error('Failed to parse server response');
+        const rawText = await res.text(); // First get the raw text
+        console.log('Raw response text:', rawText);
+        
+        try {
+          data = JSON.parse(rawText); // Then try to parse it
+          console.log('Parsed response data:', data);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          console.error('Failed to parse text:', rawText);
+          throw new Error('Failed to parse server response');
+        }
+      } catch (error) {
+        console.error('Error reading response:', error);
+        throw new Error('Failed to read server response');
       }
 
       if (!res.ok) {

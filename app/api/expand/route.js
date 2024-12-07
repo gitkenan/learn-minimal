@@ -28,6 +28,7 @@ export async function POST(req) {
 
     console.log('Expanding snippet for user:', userId);
     const expanded = await expandSnippet(body.snippet);
+    console.log('Raw expanded content:', expanded);
     
     if (!expanded) {
       console.error('No expanded content returned from AI');
@@ -40,7 +41,12 @@ export async function POST(req) {
     console.log('Successfully expanded snippet');
     // Ensure we're wrapping the expanded content in a proper JSON object
     const responseData = { expanded: expanded };
-    return new Response(JSON.stringify(responseData), { 
+    console.log('Response data structure:', responseData);
+    
+    const jsonString = JSON.stringify(responseData);
+    console.log('Stringified response:', jsonString);
+    
+    return new Response(jsonString, { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
