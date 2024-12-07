@@ -1,6 +1,7 @@
 // app/api/plans/[id]/progress/route.js
-import { redis } from '../../../../../lib/redis';
+
 import { getAuth } from '@clerk/nextjs/server';
+import { storage } from '../../../../../lib/storage';
 
 export async function POST(req, { params }) {
   try {
@@ -14,18 +15,21 @@ export async function POST(req, { params }) {
 
     const decodedId = decodeURIComponent(id);
 
-    const planData = await redis.hget(`user:${userId}:plans`, decodedId);
+    // Fetch the plan using local storage
+    const plan = storage.getPlan(userId, decodedId);
 
-    if (!planData) {
+    if (!plan) {
       return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
     }
 
-    const plan = typeof planData === 'string' ? JSON.parse(planData) : planData;
+    // Update the progress
     plan.progress = progress;
 
-    await redis.hset(`user:${userId}:plans`, {
-      [decodedId]: JSON.stringify(plan),
-    });
+    // Save the updated plan back to local storage
+    const saved = storage.savePlan(userId, decodedId, plan);
+    if (!saved) {
+      return new Response(JSON.stringify({ error: 'Failed to update progress' }), { status: 500 });
+    }
 
     return new Response(JSON.stringify({ message: 'Progress updated successfully' }), { status: 200 });
   } catch (error) {
