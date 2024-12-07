@@ -100,14 +100,12 @@ export default function PlanDetail() {
         body: JSON.stringify({ snippet: text }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Failed to parse error response' }));
-        console.error('Error response:', errorData);
-        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
-      }
-
       const data = await res.json();
-      console.log('Expansion response:', data);
+      console.log('Response data:', data);
+
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP error! status: ${res.status}`);
+      }
 
       if (!data.expanded) {
         throw new Error('No expanded content in response');
