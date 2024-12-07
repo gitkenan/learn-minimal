@@ -32,28 +32,45 @@ export async function POST(request) {
 
     // For authenticated users, include plan ID for later retrieval
     if (userId) {
-      const planId = `plan:${Date.now()}`;
+      const timestamp = Date.now();
+      const planId = `plan-${timestamp}`; 
       const planObj = {
         id: planId,
+        userId, 
         topic,
         content: plan,
-        createdAt: new Date().toISOString()
+        progress: {}, 
+        createdAt: new Date(timestamp).toISOString()
       };
 
-      // Don't block on Redis - fire and forget
-      redis.hset(`user:${userId}:plans`, {
-        [planId]: JSON.stringify(planObj)
-      }).catch(error => {
-        console.error('Redis error (non-blocking):', error);
-      });
+      try {
+        await redis.hset(`user:${userId}:plans`, {
+          [planId]: JSON.stringify(planObj)
+        });
 
-      return new Response(
-        JSON.stringify({ plan: planObj }), 
-        { 
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
+        return new Response(
+          JSON.stringify({ 
+            plan: planObj,
+            message: 'Plan created successfully' 
+          }), 
+          { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      } catch (error) {
+        console.error('Redis error:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to save plan',
+            details: error.message 
+          }), 
+          { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
     }
 
     // For unauthenticated users, just return the plan content
