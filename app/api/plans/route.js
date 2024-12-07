@@ -3,100 +3,76 @@
 import { getAuth } from '@clerk/nextjs/server';
 import { storage } from '../../../lib/storage';
 
+// GET /api/plans - List all plans for the authenticated user
 export async function GET(req) {
   try {
     const { userId } = getAuth(req);
-
     if (!userId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const { id } = params;
-    const decodedId = decodeURIComponent(id);
-    console.log(`Retrieving plan with ID: ${decodedId} for user: ${userId}`);
-
-    // Fetch the plan using local storage
-    const plan = storage.getPlan(userId, decodedId);
-    
-    if (!plan) {
-      console.log('Plan not found:', { userId, decodedId });
-      return new Response(JSON.stringify({ 
-        error: 'Plan not found',
-        details: 'The requested plan could not be found'
-      }), { 
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // Validate plan structure
-    if (!plan.id || !plan.content) {
-      console.error('Invalid plan structure:', plan);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid plan data',
-        details: 'The plan data is corrupted or invalid'
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Initialize progress if it doesn't exist
-    if (!plan.progress) {
-      plan.progress = {};
-    }
-
-    console.log('Plan retrieved successfully:', { planId: plan.id, topic: plan.topic });
-    
-    return new Response(JSON.stringify({ 
-      plan,
-      message: 'Plan retrieved successfully'
-    }), { 
+    const plans = await storage.getPlans(userId); // Fetch all plans for the user
+    return new Response(JSON.stringify({ plans }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
-    console.error('Error retrieving plan:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error.message
-    }), { 
+    console.error('Error retrieving plans:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
 
+// POST /api/plans - Create a new plan for the authenticated user
 export async function POST(req) {
   try {
     const { userId } = getAuth(req);
-
     if (!userId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const { planId, topic } = await req.json();
-
     if (!planId || !topic) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const newPlan = {
       id: planId,
       topic,
       createdAt: new Date().toISOString(),
+      content: '', // Initialize with empty content or default value
+      progress: {},
     };
 
-    const saved = storage.savePlan(userId, planId, newPlan);
+    const saved = await storage.savePlan(userId, planId, newPlan);
     if (!saved) {
-      return new Response(JSON.stringify({ error: 'Failed to save plan' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'Failed to save plan' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return new Response(JSON.stringify({ message: 'Plan created successfully' }), { status: 201 });
+    return new Response(JSON.stringify({ message: 'Plan created successfully', plan: newPlan }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Error creating plan:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    console.error('Error creating plan:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
