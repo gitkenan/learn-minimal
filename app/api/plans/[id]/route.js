@@ -30,6 +30,8 @@ export async function GET(req, { params }) {
       });
     }
 
+    console.log('Raw plan data from Redis:', planData);
+
     let plan;
     try {
       plan = typeof planData === 'string' ? JSON.parse(planData) : planData;
