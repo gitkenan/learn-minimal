@@ -52,14 +52,14 @@ export async function POST(req) {
           progress: {}
         };
 
-        try {
-          await redis.hset(`user:${userId}:plans`, {
-            [planId]: JSON.stringify(authenticatedPlan)
-          });
-        } catch (redisError) {
-          console.error('Redis error:', redisError);
-          // Continue even if Redis fails - we can still return the plan
-        }
+        // try {
+        //   await redis.hset(`user:${userId}:plans`, {
+        //     [planId]: JSON.stringify(authenticatedPlan)
+        //   });
+        // } catch (redisError) {
+        //   console.error('Redis error:', redisError);
+        //   // Continue even if Redis fails - we can still return the plan
+        // }
 
         return new Response(JSON.stringify({ plan: authenticatedPlan }), { 
           status: 200,
