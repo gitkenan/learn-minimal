@@ -1,12 +1,12 @@
+"use client";
+
 import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { storage } from '../../../../lib/storage';
+import { storage } from '../../../lib/storage';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { CheckIcon } from '@heroicons/react/24/solid';
-import Link from 'next/link';
 
 export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
