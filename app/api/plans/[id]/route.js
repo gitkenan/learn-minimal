@@ -7,6 +7,8 @@ export async function GET(req, { params }) {
     const { userId } = getAuth(req);
     const { id } = params;
 
+    console.log('Fetching plan:', { userId, planId: id });
+
     if (!userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
         status: 401,
@@ -16,6 +18,21 @@ export async function GET(req, { params }) {
 
     const decodedId = decodeURIComponent(id);
     console.log(`Retrieving plan with ID: ${decodedId} for user: ${userId}`);
+
+    // Check if Redis is connected
+    try {
+      await redis.ping();
+      console.log('Redis connection successful');
+    } catch (error) {
+      console.error('Redis connection error:', error);
+      return new Response(JSON.stringify({ 
+        error: 'Database connection error',
+        details: 'Could not connect to the database'
+      }), { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const planData = await redis.hget(`user:${userId}:plans`, decodedId);
     

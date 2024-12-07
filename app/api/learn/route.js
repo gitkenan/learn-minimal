@@ -17,6 +17,8 @@ export async function POST(request) {
 
     const { topic } = await request.json();
 
+    console.log('Generating plan for topic:', topic);
+
     if (!topic) {
       return new Response(
         JSON.stringify({ error: 'Topic is required' }), 
@@ -28,6 +30,7 @@ export async function POST(request) {
     }
 
     const planContent = await generateLearningPlan(topic);
+    console.log('Generated plan content:', !!planContent);
 
     if (!planContent) {
       return new Response(
@@ -48,15 +51,25 @@ export async function POST(request) {
       topic,
       content: planContent,
       createdAt: new Date().toISOString(),
-      progress: {
-        completed: [],
-        current: null,
-        lastUpdated: new Date().toISOString()
-      }
+      progress: {}
     };
 
-    // Store the plan in Redis under the user's plans
-    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(plan));
+    console.log('Saving plan to Redis:', { planId, topic });
+
+    // Save the plan to Redis
+    try {
+      await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(plan));
+      console.log('Plan saved successfully');
+    } catch (error) {
+      console.error('Error saving plan to Redis:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save plan' }), 
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // Return the plan with the consistent structure
     return new Response(
