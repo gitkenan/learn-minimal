@@ -6,103 +6,94 @@ import { storage } from '../../../lib/storage';
 
 export async function POST(request) {
   try {
-    // Check authentication
     const { userId } = getAuth(request);
     if (!userId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }), 
+        { status: 401 }
+      );
     }
 
     const { topic } = await request.json();
-    console.log('Generating plan for topic:', topic);
-
-    if (!topic) {
+    if (!topic?.trim()) {
       return new Response(
         JSON.stringify({ error: 'Topic is required' }), 
-        { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
+        { status: 400 }
       );
     }
 
-    let planContent;
-    try {
-      planContent = await generateLearningPlan(topic);
-    } catch (error) {
-      console.error('Plan generation failed:', error.message);
-      return new Response(
-        JSON.stringify({ 
-          error: error.message || 'Failed to generate plan',
-          details: 'The AI service was unable to generate a plan. Please try again.' 
-        }), 
-        { 
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
+    // Generate the plan content
+    const planContent = await generateLearningPlan(topic);
     if (!planContent) {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to generate plan',
-          details: 'No plan content was generated. Please try again.' 
+          details: 'No plan content was generated' 
         }), 
-        { 
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        }
+        { status: 500 }
       );
     }
 
-    // Generate a unique ID for the plan
-    const planId = uuidv4();
-
     // Create the plan object
+    const planId = uuidv4();
     const plan = {
       id: planId,
-      topic,
+      topic: topic.trim(),
       content: planContent,
       createdAt: new Date().toISOString(),
       progress: {}
     };
 
-    console.log('Saving plan:', { planId, topic });
-
-    // Save the plan using localStorage
-    const saved = storage.savePlan(userId, planId, plan);
-    if (!saved) {
+    // Attempt to save the plan
+    if (!storage.checkStorage()) {
       return new Response(
-        JSON.stringify({ error: 'Failed to save plan' }), 
-        { 
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ 
+          error: 'Storage unavailable',
+          details: 'Browser storage is not available or full' 
+        }), 
+        { status: 500 }
       );
     }
 
-    // Return the plan
+    const saved = storage.savePlan(userId, planId, plan);
+    if (!saved) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to save plan',
+          details: 'Could not save to browser storage' 
+        }), 
+        { status: 500 }
+      );
+    }
+
+    // Verify the plan was saved
+    const savedPlan = storage.getPlan(userId, planId);
+    if (!savedPlan) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Plan verification failed',
+          details: 'Plan was not found after saving' 
+        }), 
+        { status: 500 }
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
-        plan,
+        plan: savedPlan,
         message: 'Plan created successfully' 
       }), 
-      { 
-        status: 201,
-        headers: { 'Content-Type': 'application/json' }
-      }
+      { status: 201 }
     );
+
   } catch (error) {
     console.error('Error in learn route:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }), 
-      { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      }), 
+      { status: 500 }
     );
   }
 }
