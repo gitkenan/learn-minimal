@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaEye, FaEllipsisV, FaTrash, FaShareAlt, FaEdit } from 'react-icons/fa';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function Dashboard() {
@@ -14,7 +13,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -33,9 +32,7 @@ export default function Dashboard() {
           throw new Error(data.error || 'Failed to fetch plans');
         }
 
-        // Ensure plans is always an array
         const planArray = Array.isArray(data.plans) ? data.plans : [];
-        console.log('Fetched plans:', planArray);
         setPlans(planArray);
       } catch (err) {
         console.error('Error fetching plans:', err);
@@ -48,35 +45,7 @@ export default function Dashboard() {
     if (isLoaded && userId) {
       fetchPlans();
     }
-  }, [isLoaded, userId]);
-
-  const handleDelete = async (planId) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
-    
-    try {
-      const res = await fetch('/api/plans', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ planId })
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to delete plan');
-      }
-
-      setPlans(plans.filter(plan => plan.id !== planId));
-    } catch (error) {
-      console.error('Error deleting plan:', error);
-      alert('Failed to delete plan');
-    }
-  };
-
-  // Filter plans based on search term
-  const filteredPlans = plans.filter(plan => 
-    plan?.topic?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  }, [isLoaded, userId, router]);
 
   if (error) {
     return (
@@ -95,9 +64,45 @@ export default function Dashboard() {
     );
   }
 
+  const filteredPlans = plans.filter(plan => 
+    plan?.topic?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-black text-gray-200">
-      {/* Rest of your Dashboard JSX remains the same */}
+      {/* Add UI to display and filter plans as needed */}
+      {loading ? (
+        <div className="flex items-center justify-center h-screen">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="p-4">
+          <input
+            type="text"
+            placeholder="Search topics..."
+            className="mb-4 px-3 py-2 bg-gray-800 text-white rounded"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {filteredPlans.length === 0 ? (
+            <p>No plans found.</p>
+          ) : (
+            <ul className="space-y-2">
+              {filteredPlans.map((plan) => (
+                <li key={plan.id} className="p-4 bg-gray-800 rounded shadow">
+                  <h3 className="text-lg font-bold">{plan.topic}</h3>
+                  <p className="text-sm text-gray-400">{new Date(plan.createdAt).toLocaleString()}</p>
+                  <Link href={`/plan/${plan.id}`}>
+                    <button className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+                      View Plan
+                    </button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }

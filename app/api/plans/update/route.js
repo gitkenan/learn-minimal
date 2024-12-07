@@ -10,21 +10,13 @@ export async function POST(req) {
     }
 
     const { planId, progress } = await req.json();
-
-    // Fetch the plan using local storage
-    const plan = storage.getPlan(userId, planId);
+    const plan = await storage.getPlan(userId, planId);
     if (!plan) {
-      return new Response('Plan not found', { status: 404 });
+      return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
     }
 
-    // Update the progress
     plan.progress = progress;
-
-    // Log the plan object before saving
-    console.log('Updating plan:', plan);
-
-    // Save the updated plan back to local storage
-    const saved = storage.savePlan(userId, planId, plan);
+    const saved = await storage.savePlan(userId, planId, plan);
     if (!saved) {
       return new Response(JSON.stringify({ error: 'Failed to update progress' }), { status: 500 });
     }

@@ -1,5 +1,4 @@
 // app/api/plans/[id]/progress/route.js
-
 import { getAuth } from '@clerk/nextjs/server';
 import { storage } from '../../../../../lib/storage';
 
@@ -14,19 +13,13 @@ export async function POST(req, { params }) {
     }
 
     const decodedId = decodeURIComponent(id);
-
-    // Fetch the plan using local storage
-    const plan = storage.getPlan(userId, decodedId);
-
+    const plan = await storage.getPlan(userId, decodedId);
     if (!plan) {
       return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
     }
 
-    // Update the progress
     plan.progress = progress;
-
-    // Save the updated plan back to local storage
-    const saved = storage.savePlan(userId, decodedId, plan);
+    const saved = await storage.savePlan(userId, decodedId, plan);
     if (!saved) {
       return new Response(JSON.stringify({ error: 'Failed to update progress' }), { status: 500 });
     }
