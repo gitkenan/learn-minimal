@@ -1,8 +1,8 @@
 // app/api/learn/route.js
 import { getAuth } from '@clerk/nextjs/server';
 import { generateLearningPlan } from '../../../lib/ai-client';
-import { redis } from '../../../lib/redis';
 import { v4 as uuidv4 } from 'uuid';
+import { storage } from '../../../lib/storage';
 
 export async function POST(request) {
   try {
@@ -61,7 +61,7 @@ export async function POST(request) {
     // Generate a unique ID for the plan
     const planId = uuidv4();
 
-    // Create the plan object with consistent structure
+    // Create the plan object
     const plan = {
       id: planId,
       topic,
@@ -70,14 +70,11 @@ export async function POST(request) {
       progress: {}
     };
 
-    console.log('Saving plan to Redis:', { planId, topic });
+    console.log('Saving plan:', { planId, topic });
 
-    // Save the plan to Redis
-    try {
-      await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(plan));
-      console.log('Plan saved successfully');
-    } catch (error) {
-      console.error('Error saving plan to Redis:', error);
+    // Save the plan using localStorage
+    const saved = storage.savePlan(userId, planId, plan);
+    if (!saved) {
       return new Response(
         JSON.stringify({ error: 'Failed to save plan' }), 
         { 
@@ -87,7 +84,7 @@ export async function POST(request) {
       );
     }
 
-    // Return the plan with the consistent structure
+    // Return the plan
     return new Response(
       JSON.stringify({ 
         plan,
@@ -98,11 +95,10 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' }
       }
     );
-
   } catch (error) {
     console.error('Error in learn route:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to generate learning plan' }), 
+      JSON.stringify({ error: 'Internal server error' }), 
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
