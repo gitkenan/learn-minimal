@@ -2,7 +2,6 @@
 import { getAuth } from '@clerk/nextjs/server';
 import { generateLearningPlan } from '../../../lib/ai-client';
 import { v4 as uuidv4 } from 'uuid';
-import { storage } from '../../../lib/storage';
 
 export async function POST(request) {
   try {
@@ -44,43 +43,10 @@ export async function POST(request) {
       progress: {}
     };
 
-    // Attempt to save the plan
-    if (!storage.checkStorage()) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Storage unavailable',
-          details: 'Browser storage is not available or full' 
-        }), 
-        { status: 500 }
-      );
-    }
-
-    const saved = storage.savePlan(userId, planId, plan);
-    if (!saved) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to save plan',
-          details: 'Could not save to browser storage' 
-        }), 
-        { status: 500 }
-      );
-    }
-
-    // Verify the plan was saved
-    const savedPlan = storage.getPlan(userId, planId);
-    if (!savedPlan) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Plan verification failed',
-          details: 'Plan was not found after saving' 
-        }), 
-        { status: 500 }
-      );
-    }
-
+    // Return the plan - storage will happen on client side
     return new Response(
       JSON.stringify({ 
-        plan: savedPlan,
+        plan,
         message: 'Plan created successfully' 
       }), 
       { status: 201 }
