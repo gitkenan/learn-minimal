@@ -178,14 +178,17 @@ export default function PlanDetail() {
     .filter(line => line.trim())
     .map((line, index) => {
       const cleanLine = line.trim();
-      const listMarker = cleanLine.match(/^[-*+]\s*/)?.[0] || '';
-      const textContent = cleanLine.replace(/^[-*+]\s*/, '');
+      // Check for both numbered lists and bullet points
+      const isActionItem = /^[*•-]\s/.test(cleanLine) || /^\d+\.\s*[*•-]\s/.test(cleanLine);
+      const textContent = cleanLine
+        .replace(/^\d+\.\s*/, '') // Remove number prefix
+        .replace(/^[*•-]\s*/, ''); // Remove bullet point
       
       return {
         index,
         text: textContent,
         originalText: cleanLine,
-        hasCheckbox: !!listMarker,
+        hasCheckbox: isActionItem,
         isCompleted: progress[index] || false,
         hasLearnMore: true // Make all rows hoverable and expandable
       };
