@@ -60,22 +60,44 @@ export async function POST(req) {
           console.error('Redis error:', redisError);
           // Continue even if Redis fails - we can still return the plan
         }
+
+        return new Response(JSON.stringify({ plan: authenticatedPlan }), { 
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
 
-      return new Response(JSON.stringify(planObj), { 
+      // Return plan with consistent structure for unauthenticated users
+      return new Response(JSON.stringify({ plan: planObj }), { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
       console.error('Error generating plan:', error);
+      
+      // Handle different types of errors
+      let status = 500;
+      let message = 'An error occurred while generating the plan';
+      
+      if (error.message?.includes('timed out')) {
+        status = 503;
+        message = 'The request took too long. Please try again with a simpler topic.';
+      } else if (error.message?.includes('rate limit') || error.status === 429) {
+        status = 429;
+        message = 'Too many requests. Please wait a moment and try again.';
+      }
+
       return new Response(
         JSON.stringify({ 
-          error: error.message || 'An error occurred while generating the plan',
+          error: message,
           details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }),
         { 
-          status: error.message?.includes('timed out') ? 503 : 500,
-          headers: { 'Content-Type': 'application/json' }
+          status,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(status === 429 && { 'Retry-After': '30' }) // Suggest waiting 30 seconds
+          }
         }
       );
     }
