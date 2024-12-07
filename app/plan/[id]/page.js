@@ -1,178 +1,136 @@
+// app/plan/[id]/page.js
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
+import { useRouter, useParams } from 'next/navigation';
 import { storage } from '../../../lib/storage';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 
-export default function Home() {
-  const [topic, setTopic] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const router = useRouter();
+export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
+  const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      once: true,
-    });
-  }, []);
+    if (!isLoaded || !userId || !id) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!userId) {
-      setError('Please sign in to create a learning plan');
-      return;
-    }
-    
-    const trimmedTopic = topic.trim();
-    if (!trimmedTopic) {
-      setError('Please enter a topic to learn about');
-      return;
-    }
-
-    setError('');
-    setSuccessMessage('');
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/learn', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: trimmedTopic }),
-      });
-
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to generate plan');
-      }
-
-      if (data.plan && data.plan.id) {
-        try {
-          // Try to save to local storage
-          const saved = storage.savePlan(userId, data.plan.id, data.plan);
-          if (!saved) {
-            console.warn('Failed to save plan to local storage, continuing anyway...');
+    const fetchPlan = async () => {
+      try {
+        console.log('Fetching plan:', { userId, planId: id });
+        
+        // First try to get from storage
+        if (storage.initStorage()) {
+          const storedPlan = storage.getPlan(userId, id);
+          if (storedPlan) {
+            console.log('Found plan in storage:', storedPlan);
+            setPlan(storedPlan);
+            setLoading(false);
+            return;
           }
-        } catch (storageError) {
-          console.warn('Storage error:', storageError);
-          // Continue even if storage fails - the plan was generated successfully
         }
 
-        setSuccessMessage('Plan generated successfully! Redirecting...');
+        console.log('Plan not found in storage, fetching from API');
+        const res = await fetch(`/api/plans/${id}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch plan');
+        }
+
+        if (!data.plan) {
+          throw new Error('Plan not found');
+        }
+
+        console.log('Received plan from API:', data.plan);
+        setPlan(data.plan);
         
-        // Small delay for UX
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Navigate to the plan
-        router.push(`/plan/${data.plan.id}`);
-      } else {
-        throw new Error('Invalid plan data received');
+        // Save to storage for future
+        if (storage.initStorage()) {
+          storage.savePlan(userId, id, data.plan);
+        }
+      } catch (error) {
+        console.error('Error fetching plan:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error during plan generation:', error);
-      setError(
-        error.message === 'Failed to fetch' 
-          ? 'Network error. Please check your connection and try again.'
-          : error.message || 'An error occurred while generating the plan.'
-      );
-      setSuccessMessage('');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchPlan();
+  }, [isLoaded, userId, id]);
+
+  if (!isLoaded || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
+        <div className="text-center">
+          <h2 className="text-xl mb-4">Error Loading Plan</h2>
+          <p className="text-red-400 mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
+        <div className="text-center">
+          <h2 className="text-xl mb-4">Plan Not Found</h2>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <main className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center" data-aos="fade-up">
-          Learn Anything
-        </h1>
-        
-        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4" data-aos="fade-up" data-aos-delay="200">
-          <div className="relative">
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => {
-                setTopic(e.target.value);
-                setError(''); // Clear error when user types
-              }}
-              placeholder="Enter a topic to learn..."
-              className="w-full px-6 py-4 rounded-full bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-neon-green transition-all duration-300"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 rounded-full 
-                ${isLoading 
-                  ? 'bg-gray-600 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-                } 
-                text-white font-semibold transition-all duration-300`}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <LoadingSpinner />
-                  <span className="ml-2">Generating...</span>
-                </span>
-              ) : (
-                'Generate Plan'
-              )}
-            </button>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-4">{plan.topic}</h1>
+          <div className="space-y-4">
+            {plan.content.split('\n')
+              .filter(line => line.trim())
+              .map((step, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                >
+                  <div 
+                    className="prose prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ 
+                      __html: DOMPurify.sanitize(marked(step))
+                    }}
+                  />
+                </div>
+              ))}
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="text-red-400 text-sm p-3 rounded-lg bg-red-400/10 text-center" role="alert">
-              {error}
-            </div>
-          )}
-
-          {/* Success Message */}
-          {successMessage && (
-            <div className="text-green-400 text-sm p-3 rounded-lg bg-green-400/10 text-center" role="status">
-              {successMessage}
-            </div>
-          )}
-        </form>
-
-        {/* Features Section */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl">
-          {[
-            {
-              title: 'AI-Powered',
-              description: 'Get personalized learning plans generated in seconds'
-            },
-            {
-              title: 'Track Progress',
-              description: 'Monitor your learning journey with interactive checkpoints'
-            },
-            {
-              title: 'Expand Knowledge',
-              description: 'Dive deeper into topics with detailed explanations'
-            }
-          ].map((feature, index) => (
-            <div
-              key={feature.title}
-              className="p-6 bg-gray-800/50 rounded-lg text-center"
-              data-aos="fade-up"
-              data-aos-delay={300 + index * 100}
-            >
-              <h3 className="text-xl font-semibold mb-2 text-neon-green">{feature.title}</h3>
-              <p className="text-gray-300">{feature.description}</p>
-            </div>
-          ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
