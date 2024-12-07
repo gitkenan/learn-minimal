@@ -6,51 +6,75 @@ import { generateLearningPlan } from '../../../lib/ai-client';
 export async function POST(req) {
   try {
     const auth = getAuth(req);
-    const userId = auth.userId || null;
+    const userId = auth.userId;
 
-    const { topic } = await req.json();
+    const body = await req.json();
+    const { topic } = body;
 
-    if (!topic || typeof topic !== 'string') {
+    if (!topic) {
       return new Response(
-        JSON.stringify({ error: 'Invalid topic provided' }),
-        { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Topic is required' }),
+        { status: 400 }
       );
     }
 
-    // Generate the plan using our abstracted AI client
     const planContent = await generateLearningPlan(topic);
+    
+    if (!planContent) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate plan content' }),
+        { status: 500 }
+      );
+    }
 
-    // Save the plan only if the user is authenticated
+    // Create base plan object
+    const planObj = {
+      topic,
+      content: planContent,
+      createdAt: new Date().toISOString()
+    };
+
+    // Add additional fields for authenticated users
     if (userId) {
       const planId = `plan:${Date.now()}`;
-      console.log(`Saving plan with ID: ${planId} for user: ${userId}`);
+      const authenticatedPlan = {
+        ...planObj,
+        id: planId,
+        progress: {}
+      };
 
-      // Save the plan to Redis
-      await redis.hset(`user:${userId}:plans`, {
-        [planId]: JSON.stringify({
-          id: planId,
-          topic,
-          content: planContent,
-          progress: {}, // Initialize empty progress
-        }),
-      });
+      try {
+        await redis.hset(`user:${userId}:plans`, {
+          [planId]: JSON.stringify(authenticatedPlan)
+        });
 
-      console.log(`Plan saved successfully with ID: ${planId}`);
-      return new Response(JSON.stringify({ plan: planContent, planId }), { status: 200 });
-    } else {
-      // For unauthenticated users, just return the plan without saving
-      return new Response(JSON.stringify({ plan: planContent }), { status: 200 });
+        return new Response(
+          JSON.stringify({ plan: authenticatedPlan }),
+          { status: 200 }
+        );
+      } catch (redisError) {
+        console.error('Redis save error:', redisError);
+        // Still return the plan even if saving fails
+        return new Response(
+          JSON.stringify({ 
+            plan: authenticatedPlan,
+            warning: 'Plan generated but failed to save'
+          }),
+          { status: 200 }
+        );
+      }
     }
-  } catch (error) {
-    console.error('Error in POST request:', error);
+
+    // Return basic plan for unauthenticated users
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal Server Error',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined 
-      }), 
+      JSON.stringify({ plan: planObj }),
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Error in learn route:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to generate learning plan' }),
       { status: 500 }
     );
   }

@@ -46,17 +46,18 @@ export default function Home() {
       });
 
       const data = await res.json();
-      if (res.ok) {
-        if (data.plan && data.plan.id) {
-          // User is authenticated, redirect to plan page
-          router.push(`/plan/${data.plan.id}`);
-        } else {
-          // User is not authenticated, display the plan
-          setPlan(data.plan);
-        }
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate plan');
+      }
+
+      if (data.plan && data.plan.id) {
+        // Authenticated user gets a plan with an ID
+        router.push(`/plan/${data.plan.id}`);
+      } else if (data.plan) {
+        // Unauthenticated user gets a plan without an ID
+        setPlan(data.plan);
       } else {
-        console.error('Error generating plan:', data.error);
-        alert(data.error || 'Failed to generate the plan.');
+        throw new Error('Invalid plan data received');
       }
     } catch (error) {
       console.error('Error during fetch:', error);
