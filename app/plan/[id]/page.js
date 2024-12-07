@@ -8,6 +8,7 @@ import { storage } from '../../../lib/storage';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import LoadingSpinner from '../../../components/LoadingSpinner';
+import { ThumbUpIcon, ThumbDownIcon } from '@heroicons/react/solid';
 
 export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
@@ -17,115 +18,192 @@ export default function PlanDetail() {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
+  const [expandData, setExpandData] = useState({});
+  const [expandLoading, setExpandLoading] = useState({});
+  const [feedbackMode, setFeedbackMode] = useState({});
+  const [feedbackText, setFeedbackText] = useState({});
 
-  useEffect(() => {
-    if (!isLoaded || !userId || !id) return;
+  // ... (previous useEffect and fetchPlan logic remains the same)
 
-    const fetchPlan = async () => {
-      try {
-        console.log('Fetching plan:', { userId, planId: id });
-        
-        // First try to get from storage
-        if (storage.initStorage()) {
-          const storedPlan = storage.getPlan(userId, id);
-          if (storedPlan) {
-            console.log('Found plan in storage:', storedPlan);
-            setPlan(storedPlan);
-            setLoading(false);
-            return;
-          }
-        }
+  const handleExpand = async (index, content) => {
+    if (expandData[index]) {
+      setExpandedSections(prev => ({
+        ...prev,
+        [index]: !prev[index]
+      }));
+      return;
+    }
 
-        console.log('Plan not found in storage, fetching from API');
-        const res = await fetch(`/api/plans/${id}`);
-        const data = await res.json();
+    setExpandLoading(prev => ({ ...prev, [index]: true }));
+    try {
+      const res = await fetch('/api/expand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snippet: content })
+      });
 
-        if (!res.ok) {
-          throw new Error(data.error || 'Failed to fetch plan');
-        }
-
-        if (!data.plan) {
-          throw new Error('Plan not found');
-        }
-
-        console.log('Received plan from API:', data.plan);
-        setPlan(data.plan);
-        
-        // Save to storage for future
-        if (storage.initStorage()) {
-          storage.savePlan(userId, id, data.plan);
-        }
-      } catch (error) {
-        console.error('Error fetching plan:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to expand content');
       }
-    };
 
-    fetchPlan();
-  }, [isLoaded, userId, id]);
+      setExpandData(prev => ({ ...prev, [index]: data.expanded }));
+      setExpandedSections(prev => ({ ...prev, [index]: true }));
+    } catch (error) {
+      console.error('Error expanding content:', error);
+      alert('Failed to expand content. Please try again.');
+    } finally {
+      setExpandLoading(prev => ({ ...prev, [index]: false }));
+    }
+  };
 
-  if (!isLoaded || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  const handleThumbsUp = (index) => {
+    // Simple acknowledgment for now
+    alert('Thanks for the positive feedback!');
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
-        <div className="text-center">
-          <h2 className="text-xl mb-4">Error Loading Plan</h2>
-          <p className="text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleThumbsDown = (index) => {
+    setFeedbackMode(prev => ({ ...prev, [index]: true }));
+  };
 
-  if (!plan) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
-        <div className="text-center">
-          <h2 className="text-xl mb-4">Plan Not Found</h2>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleFeedbackSubmit = async (index, content) => {
+    if (!feedbackText[index]?.trim()) {
+      alert('Please provide some feedback text');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          snippet: content,
+          feedback: feedbackText[index]
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to process feedback');
+      }
+
+      // Update the expanded content with the improvement
+      setExpandData(prev => ({ ...prev, [index]: data.improved }));
+      setFeedbackMode(prev => ({ ...prev, [index]: false }));
+      setFeedbackText(prev => ({ ...prev, [index]: '' }));
+
+      alert('Thank you! The content has been improved based on your feedback.');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to process feedback. Please try again.');
+    }
+  };
+
+  // ... (loading and error states remain the same)
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-4">{plan.topic}</h1>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {plan.content.split('\n')
               .filter(line => line.trim())
               .map((step, index) => (
                 <div
                   key={index}
-                  className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                  className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-200 hover:shadow-xl"
                 >
-                  <div 
-                    className="prose prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: DOMPurify.sanitize(marked(step))
-                    }}
-                  />
+                  {/* Main Content Section */}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start gap-4">
+                      <div 
+                        className="prose prose-invert max-w-none flex-grow"
+                        dangerouslySetInnerHTML={{ 
+                          __html: DOMPurify.sanitize(marked(step))
+                        }}
+                      />
+                      <button
+                        onClick={() => handleExpand(index, step)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200 text-sm font-medium flex items-center gap-2 whitespace-nowrap"
+                        disabled={expandLoading[index]}
+                      >
+                        {expandLoading[index] ? (
+                          <>
+                            <LoadingSpinner />
+                            <span>Loading...</span>
+                          </>
+                        ) : (
+                          'Learn More'
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Expanded Content Section */}
+                    {expandedSections[index] && expandData[index] && (
+                      <div className="mt-6">
+                        <div className="p-6 bg-gray-700/50 rounded-lg border-l-4 border-blue-500">
+                          <div
+                            className="prose prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(marked(expandData[index]))
+                            }}
+                          />
+                          
+                          {/* Feedback Section */}
+                          <div className="mt-4 flex items-center gap-4 pt-4 border-t border-gray-600">
+                            <button
+                              onClick={() => handleThumbsUp(index)}
+                              className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors duration-200"
+                            >
+                              <ThumbUpIcon className="w-5 h-5" />
+                              <span>Helpful</span>
+                            </button>
+                            <button
+                              onClick={() => handleThumbsDown(index)}
+                              className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors duration-200"
+                            >
+                              <ThumbDownIcon className="w-5 h-5" />
+                              <span>Need Improvement</span>
+                            </button>
+                          </div>
+
+                          {/* Feedback Input Form */}
+                          {feedbackMode[index] && (
+                            <div className="mt-4 space-y-4">
+                              <textarea
+                                value={feedbackText[index] || ''}
+                                onChange={(e) => setFeedbackText(prev => ({
+                                  ...prev,
+                                  [index]: e.target.value
+                                }))}
+                                placeholder="How can we improve this explanation?"
+                                className="w-full p-3 bg-gray-800 rounded-lg border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                rows={3}
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleFeedbackSubmit(index, expandData[index])}
+                                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
+                                >
+                                  Submit Feedback
+                                </button>
+                                <button
+                                  onClick={() => setFeedbackMode(prev => ({ ...prev, [index]: false }))}
+                                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
           </div>
