@@ -176,13 +176,19 @@ export default function PlanDetail() {
   // Process the plan content to extract steps
   const planSteps = plan.content.split('\n')
     .filter(line => line.trim())
-    .map((line, index) => ({
-      index,
-      text: DOMPurify.sanitize(marked(line)),
-      originalText: line,
-      hasCheckbox: line.match(/^[-*]\s/), // Check if line starts with - or *
-      isCompleted: progress[index] || false,
-    }));
+    .map((line, index) => {
+      const cleanLine = line.trim().replace(/^[-*+]\s*/, ''); // Remove list markers
+      const hasLearnMore = cleanLine.toLowerCase().includes('learn more');
+      
+      return {
+        index,
+        text: cleanLine,
+        originalText: cleanLine,
+        hasCheckbox: line.match(/^[-*+]\s/), // Check if line starts with -, * or +
+        isCompleted: progress[index] || false,
+        hasLearnMore
+      };
+    });
 
   // Calculate completion percentage
   const stepsWithCheckbox = planSteps.filter(step => step.hasCheckbox);
@@ -191,16 +197,28 @@ export default function PlanDetail() {
   const completionPercentage = totalStepsWithCheckboxes === 0 ? 0 : Math.round((completedSteps / totalStepsWithCheckboxes) * 100);
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">{plan.topic}</h1>
-        <div className="bg-gray-800 rounded-lg p-6">
-          <ul className="space-y-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-4">{plan.topic}</h1>
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <span>Progress</span>
+              <span>{completionPercentage}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-blue-500 rounded-full h-2 transition-all duration-300"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
+          <ul className="space-y-2">
             {planSteps.map((step) => (
               <li
                 key={step.index}
                 className={`rounded-md ${
-                  step.text.includes('Learn more') ? 'hover:bg-gray-700/50 transition-colors duration-200 group' : ''
+                  step.hasLearnMore ? 'group hover:bg-gray-800/50 transition-colors duration-200' : ''
                 }`}
               >
                 <div className="flex items-start p-2">
@@ -214,8 +232,8 @@ export default function PlanDetail() {
                   )}
                   <div className="flex-grow">
                     <div className="flex items-start justify-between">
-                      <div className="flex-grow">{step.text}</div>
-                      {step.text.includes('Learn more') && (
+                      <div className="flex-grow prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked(step.text) }} />
+                      {step.hasLearnMore && (
                         <button
                           onClick={() => handleExpand(step.index, step.originalText)}
                           disabled={loadingExpansions[step.index]}
@@ -282,13 +300,6 @@ export default function PlanDetail() {
           </ul>
         </div>
       </div>
-      <div className="w-full bg-gray-800 rounded-full h-2 mt-6">
-        <div
-          className="bg-green-500 h-2 rounded-full"
-          style={{ width: `${completionPercentage}%` }}
-        ></div>
-      </div>
-      <p className="mt-2 text-sm text-gray-400">{`Progress: ${completionPercentage}%`}</p>
     </div>
   );
 }
