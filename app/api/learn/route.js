@@ -9,7 +9,9 @@ export async function POST(request) {
     console.log('Starting learn route...');
     
     const { userId } = getAuth(request);
+    
     if (!userId) {
+      console.log('No user ID found');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -17,29 +19,14 @@ export async function POST(request) {
     }
 
     const { topic } = await request.json();
-    if (!topic?.trim()) {
+    if (!topic) {
+      console.log('No topic provided');
       return new Response(JSON.stringify({ error: 'Topic is required' }), { 
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Test Redis connection first
-    console.log('Testing Redis connection...');
-    const isConnected = await storage.testConnection();
-    if (!isConnected) {
-      console.error('Redis connection test failed');
-      return new Response(JSON.stringify({ 
-        error: 'Database connection error',
-        details: 'Failed to connect to Redis'
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    console.log('Redis connection test passed');
-
-    // Generate the plan content
     console.log('Generating plan for topic:', topic);
     const planContent = await generateLearningPlan(topic);
     if (!planContent) {
@@ -90,34 +77,33 @@ export async function POST(request) {
       planFields: Object.keys(plan)
     });
 
-    const saved = await storage.savePlan(userId, planId, plan);
-    if (!saved) {
-      console.error('Failed to save plan:', {
-        userId,
-        planId,
-        planStructure: {
-          ...plan,
-          content: `${plan.content.substring(0, 100)}...`
-        }
+    try {
+      const saved = await storage.savePlan(userId, planId, plan);
+      if (!saved) {
+        throw new Error('Save operation returned false');
+      }
+      console.log('Plan saved successfully:', planId);
+      return new Response(JSON.stringify({ 
+        plan, 
+        message: 'Plan created successfully',
+        provider: process.env.AI_PROVIDER 
+      }), { 
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (storageError) {
+      console.error('Storage error details:', {
+        message: storageError.message,
+        stack: storageError.stack
       });
       return new Response(JSON.stringify({ 
-        error: 'Failed to save plan to storage',
-        details: 'Check server logs for more information'
+        error: 'Failed to save plan to storage', 
+        details: storageError.message
       }), { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    console.log('Plan saved successfully:', planId);
-    return new Response(JSON.stringify({ 
-      plan, 
-      message: 'Plan created successfully',
-      provider: process.env.AI_PROVIDER 
-    }), { 
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
 
   } catch (error) {
     console.error('Error in learn route:', {
