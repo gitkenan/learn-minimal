@@ -8,7 +8,7 @@ export default function PlanComponent({ plan, fetchSavedPlans }) {
     const newProgress = { ...progress, [index]: !progress[index] };
     setProgress(newProgress);
 
-    await fetch('/api/plans/update', {
+    await fetch('/api/plan/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ planId: plan.id, progress: newProgress }),
