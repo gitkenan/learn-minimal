@@ -1,10 +1,9 @@
-// app/api/plans/[id]/route.js
 import { getAuth } from '@clerk/nextjs/server';
 import { storage } from '../../../../lib/storage';
 
-export async function GET(req, { params }) {
+export async function GET(request, { params }) {
   try {
-    const { userId } = getAuth(req);
+    const { userId } = getAuth(request);
     const { id } = params;
 
     if (!userId) {
@@ -14,29 +13,22 @@ export async function GET(req, { params }) {
       });
     }
 
-    console.log('Attempting to get plan:', id, 'for user:', userId);
-
     const plan = await storage.getPlan(userId, decodeURIComponent(id));
     
     if (!plan) {
-      console.log('Plan not found:', id);
       return new Response(JSON.stringify({ error: 'Plan not found' }), { 
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Successfully retrieved plan:', id);
     return new Response(JSON.stringify({ plan }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Error retrieving plan:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error.message 
-    }), { 
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
