@@ -14,14 +14,16 @@ export async function POST(request) {
     const content = await generateLearningPlan(topic);
     const plan = {
       id: uuidv4(),
+      userId, // Store userId with the plan
       topic: topic.trim(),
       content,
       createdAt: new Date().toISOString()
     };
 
-    await storage.savePlan(userId, plan.id, plan);
+    await storage.savePlan(plan);
     return Response.json({ plan }, { status: 201 });
   } catch (error) {
+    console.error('Plan creation error:', error);
     return Response.json({ error: 'Failed to create plan' }, { status: 500 });
   }
 }

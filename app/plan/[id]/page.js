@@ -1,3 +1,4 @@
+
 // app/plan/[id]/page.js
 'use client';
 
@@ -7,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 export default function PlanDetail() {
   const [plan, setPlan] = useState(null);
+  const [error, setError] = useState(null);
   const { userId } = useAuth();
   const router = useRouter();
   const { id } = useParams();
@@ -17,12 +19,21 @@ export default function PlanDetail() {
       return;
     }
 
-    fetch(`/api/plans/${id}`)
-      .then(res => res.json())
-      .then(data => setPlan(data.plan))
-      .catch(console.error);
+    async function loadPlan() {
+      try {
+        const res = await fetch(`/api/plan/${id}`);
+        if (!res.ok) throw new Error('Failed to load plan');
+        const data = await res.json();
+        setPlan(data.plan);
+      } catch (err) {
+        setError('Could not load plan');
+      }
+    }
+
+    loadPlan();
   }, [id, userId, router]);
 
+  if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
   if (!plan) return null;
 
   return (
