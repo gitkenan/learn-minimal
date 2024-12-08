@@ -35,12 +35,31 @@ export default function PlanDetail() {
     async function fetchPlan() {
       try {
         setLoading(true);
+        setError(null); // Clear any previous errors
+        
         const res = await fetch(`/api/plans/${encodeURIComponent(id)}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch plan');
+        
+        if (!res.ok) {
+          console.error('Failed to fetch plan:', data);
+          throw new Error(data.error || `Failed to fetch plan: ${res.status}`);
+        }
+        
+        if (!data.plan) {
+          console.error('No plan data received:', data);
+          throw new Error('No plan data received');
+        }
+
+        if (!data.plan.content) {
+          console.error('Invalid plan format:', data.plan);
+          throw new Error('Invalid plan format - missing content');
+        }
+        
         setPlan(data.plan);
       } catch (err) {
+        console.error('Error fetching plan:', err);
         setError(err.message);
+        setPlan(null);
       } finally {
         setLoading(false);
       }
