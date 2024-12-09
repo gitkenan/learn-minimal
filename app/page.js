@@ -24,53 +24,97 @@ export default function Home() {
     });
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // app/page.js - Update the handleSubmit function
 
-    if (!userId) {
-      setError('Please sign in to create a learning plan');
-      return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!userId) {
+    setError('Please sign in to create a learning plan');
+    return;
+  }
+  
+  const trimmedTopic = topic.trim();
+  if (!trimmedTopic) {
+    setError('Please enter a topic to learn about');
+    return;
+  }
+
+  setError('');
+  setSuccessMessage('');
+  setIsLoading(true);
+
+  try {
+    // Generate the plan
+    console.log('Generating plan for:', trimmedTopic);
+    const res = await fetch('/api/learn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic: trimmedTopic }),
+    });
+
+    const data = await res.json();
+    console.log('Received data:', data);
+    
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to generate plan');
     }
 
-    const trimmedTopic = topic.trim();
-    if (!trimmedTopic) {
-      setError('Please enter a topic to learn about');
-      return;
+    if (!data.plan || !data.plan.id || !data.plan.content || !data.plan.topic) {
+      console.error('Invalid plan data:', data);
+      throw new Error('Invalid plan data received');
     }
 
-    setError('');
-    setSuccessMessage('');
-    setIsLoading(true);
+    // Create the complete plan object
+    const completesPlan = {
+      id: data.plan.id,
+      topic: trimmedTopic,
+      content: data.plan.content,
+      createdAt: new Date().toISOString(),
+      progress: {}
+    };
 
     try {
-      const res = await fetch('/api/learn', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: trimmedTopic }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to generate plan');
+      console.log('Saving plan to storage:', { userId, planId: data.plan.id });
+      // Save to local storage
+      if (!storage.initStorage()) {
+        console.error('Storage not available');
+        throw new Error('Storage is not available');
+      }
+      
+      const saved = storage.savePlan(userId, data.plan.id, completesPlan);
+      if (!saved) {
+        console.error('Failed to save plan to storage');
+        throw new Error('Failed to save plan to storage');
       }
 
-      if (!data.plan || !data.plan.id) {
-        throw new Error('Invalid plan data received');
+      // Verify the save
+      const verifiedPlan = storage.getPlan(userId, data.plan.id);
+      if (!verifiedPlan) {
+        console.error('Plan verification failed');
+        throw new Error('Failed to verify saved plan');
       }
 
+      console.log('Plan saved successfully:', verifiedPlan);
       setSuccessMessage('Plan created successfully! Redirecting...');
-
+      
+      // Add a small delay to ensure storage is synced
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Redirect to the plan page
       router.push(`/plan/${data.plan.id}`);
-    } catch (error) {
-      console.error('Error generating plan:', error);
-      setError(error.message || 'An error occurred while generating the plan.');
-      setSuccessMessage('');
-    } finally {
-      setIsLoading(false);
-    };
-  };
+    } catch (storageError) {
+      console.error('Storage error:', storageError);
+      throw new Error('Failed to save plan: ' + storageError.message);
+    }
+  } catch (error) {
+    console.error('Error during plan generation:', error);
+    setError(error.message || 'An error occurred while generating the plan.');
+    setSuccessMessage('');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -98,14 +142,13 @@ export default function Home() {
               className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 rounded-full 
                 ${isLoading 
                   ? 'bg-gray-600 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-                } 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'} 
                 text-white font-semibold transition-all duration-300`}
             >
               {isLoading ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center">
                   <LoadingSpinner />
-                  <span>Generating...</span>
+                  <span className="ml-2">Generating...</span>
                 </span>
               ) : (
                 'Generate Plan'
