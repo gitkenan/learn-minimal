@@ -47,9 +47,9 @@ export default function Home() {
 
       const data = await res.json();
       if (res.ok) {
-        if (data.plan && data.plan.id) {
+        if (data.planId) {
           // User is authenticated, redirect to plan page
-          router.push(`/plan/${data.plan.id}`);
+          router.push(`/plan/${data.planId}`);
         } else {
           // User is not authenticated, display the plan
           setPlan(data.plan);
