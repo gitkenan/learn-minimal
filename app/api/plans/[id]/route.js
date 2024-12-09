@@ -1,8 +1,10 @@
-import { auth } from '@clerk/nextjs';
+
+// app/api/plans/[id]/route.js
+import { getAuth } from '@clerk/nextjs/server';
 import { storage } from '../../../../lib/storage';
 
 export async function GET(request, { params }) {
-  const { userId } = auth();
+  const { userId } = getAuth();
   if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
