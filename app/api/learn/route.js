@@ -1,10 +1,10 @@
-import { getAuth } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs';
 import { generateLearningPlan } from '../../../lib/ai-client';
 import { storage } from '../../../lib/storage';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
-  const { userId } = getAuth(request);
+  const { userId } = auth();
   if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { topic } = await request.json();
