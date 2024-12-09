@@ -17,7 +17,7 @@ export default function Dashboard() {
       return;
     }
 
-    fetch('/api/plan')
+    fetch('/api/plans')
       .then(res => res.json())
       .then(data => setPlans(data.plans))
       .catch(console.error);

@@ -1,4 +1,4 @@
-// app/api/plan/update/route.js
+// app/api/plans/update/route.js
 import { getAuth } from '@clerk/nextjs/server';
 import { storage } from '../../../../lib/storage';
 
