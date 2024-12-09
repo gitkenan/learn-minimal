@@ -23,10 +23,8 @@ export async function POST(request) {
     }
 
     // Generate the plan content
-    console.log('Generating plan for topic:', topic);
     const planContent = await generateLearningPlan(topic);
     if (!planContent) {
-      console.error('No plan content generated');
       return new Response(JSON.stringify({ 
         error: 'Failed to generate plan - no content returned',
         provider: process.env.AI_PROVIDER
@@ -46,30 +44,17 @@ export async function POST(request) {
       progress: {}
     };
 
-    console.log('Attempting to save plan:', {
-      userId,
-      planId,
-      topicLength: topic.length,
-      contentLength: planContent.length
-    });
-
     const saved = await storage.savePlan(userId, planId, plan);
     if (!saved) {
-      console.error('Failed to save plan:', {
-        userId,
-        planId,
-        plan: { ...plan, content: `${plan.content.substring(0, 100)}...` }
-      });
       return new Response(JSON.stringify({ 
         error: 'Failed to save plan to storage',
-        details: 'Check server logs for more information'
+        provider: process.env.AI_PROVIDER
       }), { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Plan saved successfully:', planId);
     return new Response(JSON.stringify({ 
       plan, 
       message: 'Plan created successfully',
@@ -85,6 +70,8 @@ export async function POST(request) {
       stack: error.stack,
       provider: process.env.AI_PROVIDER
     });
+
+    // Return a more detailed error message
     return new Response(JSON.stringify({ 
       error: `Error generating plan: ${error.message}`,
       provider: process.env.AI_PROVIDER
