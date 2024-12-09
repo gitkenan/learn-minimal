@@ -1,7 +1,7 @@
 // app/api/plans/route.js
 
+import { redis } from '../../../lib/redis';
 import { getAuth } from '@clerk/nextjs/server';
-import { storage } from '../../../lib/storage';
 
 export async function GET(req) {
   try {
@@ -11,60 +11,51 @@ export async function GET(req) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const { id } = params;
-    const decodedId = decodeURIComponent(id);
-    console.log(`Retrieving plan with ID: ${decodedId} for user: ${userId}`);
+    // Fetch all plans for the user
+    const plansData = await redis.hgetall(`user:${userId}:plans`) || {};
 
-    // Fetch the plan using local storage
-    const plan = storage.getPlan(userId, decodedId);
-    
-    if (!plan) {
-      console.log('Plan not found:', { userId, decodedId });
-      return new Response(JSON.stringify({ 
-        error: 'Plan not found',
-        details: 'The requested plan could not be found'
-      }), { 
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // Initialize an array to hold parsed plans
+    const plans = [];
+
+    // Iterate over each plan in the retrieved data
+    for (const [planId, planValue] of Object.entries(plansData)) {
+      try {
+        let parsedPlan;
+
+        // Check if the plan value is a string
+        if (typeof planValue === 'string') {
+          parsedPlan = JSON.parse(planValue);
+        }
+        // If it's an object, use it directly
+        else if (typeof planValue === 'object' && planValue !== null) {
+          parsedPlan = planValue;
+        }
+        // Handle unexpected types
+        else {
+          throw new Error(`Plan ${planId} is neither a string nor an object.`);
+        }
+
+        // Ensure createdAt is set correctly
+        if (!parsedPlan.createdAt) {
+          parsedPlan.createdAt = new Date().toISOString();
+        }
+
+        // Optional: Log the parsed plan for debugging
+        console.log(`Parsed Plan (${planId}):`, parsedPlan);
+
+        // Add the parsed plan to the plans array
+        plans.push(parsedPlan);
+      } catch (error) {
+        console.error(`Error parsing plan (${planId}):`, error);
+        // Optionally, you can choose to skip this plan or handle it differently
+      }
     }
 
-    // Validate plan structure
-    if (!plan.id || !plan.content) {
-      console.error('Invalid plan structure:', plan);
-      return new Response(JSON.stringify({ 
-        error: 'Invalid plan data',
-        details: 'The plan data is corrupted or invalid'
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Initialize progress if it doesn't exist
-    if (!plan.progress) {
-      plan.progress = {};
-    }
-
-    console.log('Plan retrieved successfully:', { planId: plan.id, topic: plan.topic });
-    
-    return new Response(JSON.stringify({ 
-      plan,
-      message: 'Plan retrieved successfully'
-    }), { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+    // Send the parsed plans back as a JSON response
+    return new Response(JSON.stringify({ plans }), { status: 200 });
   } catch (error) {
-    console.error('Error retrieving plan:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      details: error.message
-    }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error("Error fetching plans:", error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
 
@@ -88,10 +79,7 @@ export async function POST(req) {
       createdAt: new Date().toISOString(),
     };
 
-    const saved = storage.savePlan(userId, planId, newPlan);
-    if (!saved) {
-      return new Response(JSON.stringify({ error: 'Failed to save plan' }), { status: 500 });
-    }
+    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(newPlan));
 
     return new Response(JSON.stringify({ message: 'Plan created successfully' }), { status: 201 });
   } catch (error) {
@@ -108,26 +96,35 @@ export async function PUT(req) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const { planId, updatedPlan } = await req.json();
+    const { planId, topic } = await req.json();
 
-    if (!planId || !updatedPlan) {
+    if (!planId || !topic) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
 
-    // Update the plan using local storage
-    const existingPlan = storage.getPlan(userId, planId);
-    if (!existingPlan) {
+    const existingPlanData = await redis.hget(`user:${userId}:plans`, planId);
+    if (!existingPlanData) {
       return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
     }
 
-    // Merge the updated plan data with the existing plan
-    const updatedData = { ...existingPlan, ...updatedPlan };
-
-    // Save the updated plan back to local storage
-    const saved = storage.savePlan(userId, planId, updatedData);
-    if (!saved) {
-      return new Response(JSON.stringify({ error: 'Failed to update plan' }), { status: 500 });
+    let existingPlan;
+    if (typeof existingPlanData === 'string') {
+      try {
+        existingPlan = JSON.parse(existingPlanData);
+      } catch (error) {
+        console.error("Error parsing existing plan data:", error);
+        return new Response(JSON.stringify({ error: 'Invalid plan data' }), { status: 500 });
+      }
+    } else {
+      existingPlan = existingPlanData;
     }
+
+    const updatedPlan = {
+      ...existingPlan,
+      topic,
+    };
+
+    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(updatedPlan));
 
     return new Response(JSON.stringify({ message: 'Plan updated successfully' }), { status: 200 });
   } catch (error) {
@@ -144,17 +141,19 @@ export async function DELETE(req) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    const { planId } = await req.json();
+    const url = new URL(req.url);
+    const planId = url.pathname.split('/').pop();
 
     if (!planId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'Missing plan ID' }), { status: 400 });
     }
 
-    // Delete the plan using local storage
-    const deleted = storage.deletePlan(userId, planId);
-    if (!deleted) {
-      return new Response(JSON.stringify({ error: 'Failed to delete plan' }), { status: 500 });
+    const existingPlanData = await redis.hget(`user:${userId}:plans`, planId);
+    if (!existingPlanData) {
+      return new Response(JSON.stringify({ error: 'Plan not found' }), { status: 404 });
     }
+
+    await redis.hdel(`user:${userId}:plans`, planId);
 
     return new Response(JSON.stringify({ message: 'Plan deleted successfully' }), { status: 200 });
   } catch (error) {
