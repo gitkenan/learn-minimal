@@ -2,99 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Neon Green Color */
+/* Theme Colors */
 :root {
-    --neon-green: #39FF14;
-    /* Neon Green */
+    --theme-dark: #1a1a1a;
+    --theme-green: #27ae60;
+    --theme-light: #f5f5f5;
+    --theme-accent: #2ecc71;
 }
 
-
-/* Neon Glow Effect for Text */
-.neon-text {
-    color: var(--neon-green);
+/* Professional Glow Effect for Text */
+.theme-text {
+    color: var(--theme-green);
     text-shadow:
-        0 0 0px var(--neon-green),
-        0 0 2px var(--neon-green),
-        0 0 2px var(--neon-green),
-        0 0 0px var(--neon-green);
+        0 0 1px var(--theme-accent),
+        0 0 2px var(--theme-accent);
 }
 
-/* Neon Glow Effect for Buttons */
-.neon-button {
-    background-color: var(--neon-green);
-    color: black;
-    box-shadow:
-        0 0 0px var(--neon-green),
-        0 0 2px var(--neon-green),
-        0 0 0px var(--neon-green),
-        0 0 5px var(--neon-green);
-    transition: background-color 0.3s ease, color 0.3s ease;
+/* Professional Button Style */
+.theme-button {
+    background-color: var(--theme-green);
+    color: white;
+    transition: all 0.3s ease;
 }
 
-.neon-button:hover {
-    background-color: white;
-    color: black;
+.theme-button:hover {
+    background-color: var(--theme-accent);
+    transform: translateY(-1px);
 }
 
-/* Adjust Input Focus Ring to Match Neon Effect */
+/* Input Focus Styles */
 input:focus {
     outline: none;
-    box-shadow:
-        0 0 0px var(--neon-green),
-        0 0 2px var(--neon-green),
-        0 0 5px var(--neon-green),
-        0 0 5px var(--neon-green);
+    border-color: var(--theme-green);
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
 }
 
 /* Global Styles */
 body {
-    @apply bg-black text-gray-200;
+    @apply bg-theme-dark text-theme-light;
     font-family: 'Inter', sans-serif;
 }
 
 /* Input Fields */
 input::placeholder {
-    color: #9ca3af;
-    /* Gray-400 */
+    @apply text-gray-400;
 }
 
 input:focus {
-    @apply ring-2 ring-neon-green;
+    @apply ring-2 ring-theme-green;
 }
 
-/* Neon Green Text */
-.text-neon-green {
-    color: var(--neon-green);
+/* Theme Text Colors */
+.text-theme-green {
+    color: var(--theme-green);
 }
 
-/* Gray Backgrounds */
-.bg-gray-700 {
-    background-color: #374151;
+.text-theme-accent {
+    color: var(--theme-accent);
 }
 
-.bg-gray-800 {
-    background-color: #1f2937;
+/* Transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
 }
 
-.bg-gray-800:hover {
-    background-color: #4b5563;
+/* Hover Effects */
+.hover-lift {
+    transition: transform 0.2s ease;
 }
 
-.bg-gray-900 {
-    background-color: #111827;
-}
-
-/* Gray Text */
-.text-gray-200 {
-    color: #e5e7eb;
-}
-
-.text-gray-400 {
-    color: #9ca3af;
-}
-
-.text-gray-400:hover {
-    color: #e5e7eb;
+.hover-lift:hover {
+    transform: translateY(-2px);
 }
 
 /* Rounded Corners */
@@ -106,75 +86,9 @@ input:focus {
     border-radius: 0.375rem;
 }
 
-/* Spinner Color */
-.animate-spin {
-    color: var(--neon-green);
-}
-
-/* Transition for Links */
-nav a {
-    @apply transition-colors duration-300;
-}
-
-nav a:hover {
-    color: #e5e7eb;
-    /* Gray-200 */
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-    @apply absolute right-0 mt-2 w-32 bg-gray-700 rounded-md shadow-lg z-10;
-}
-
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     main {
         padding: 2rem;
     }
-}
-
-/* Neon Green Color Variable */
-:root {
-    --neon-green: #39FF14;
-}
-
-/* SVG Hover Effect */
-.svg-hover-effect path {
-    fill: black;
-    /* Default color */
-    transition: fill 0.3s ease;
-    /* Smooth transition */
-}
-
-.svg-hover-effect:hover path {
-    fill: var(--neon-green);
-    /* Neon green on hover */
-}
-
-/* Alternatively, if your SVG uses 'currentColor' */
-.svg-hover-effect {
-    color: black;
-    /* Default color */
-    transition: color 0.3s ease;
-}
-
-.svg-hover-effect:hover {
-    color: var(--neon-green);
-    /* Neon green on hover */
-}
-
-svg-hover-effect path,
-.svg-hover-effect rect,
-.svg-hover-effect polygon {
-    fill: black;
-    /* Default color */
-    transition: fill 0.3s ease;
-    /* Smooth transition */
-}
-
-.svg-hover-effect:hover path,
-.svg-hover-effect:hover rect,
-.svg-hover-effect:hover polygon {
-    fill: var(--neon-green);
-    /* Neon green on hover */
 }
