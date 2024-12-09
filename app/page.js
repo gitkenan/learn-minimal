@@ -24,7 +24,6 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const trimmedTopic = topic.trim();
     if (!trimmedTopic) {
       setError('Please enter a topic to learn about');
@@ -36,7 +35,6 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      // Generate the plan
       const res = await fetch('/api/learn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,38 +42,23 @@ export default function Home() {
       });
 
       const data = await res.json();
-      
       if (!res.ok) {
         throw new Error(data.error || 'Failed to generate plan');
       }
 
-      if (!data.plan || !data.plan.id) {
+      if (data.plan && data.plan.id) {
+        setSuccessMessage('Plan created successfully! Redirecting...');
+        setTimeout(() => {
+          router.push(`/plan/${data.plan.id}`);
+        }, 1000);
+      } else {
         throw new Error('Invalid plan data received');
       }
-
-      // Save to local storage
-      const saved = storage.savePlan(userId, data.plan.id, data.plan);
-      if (!saved) {
-        throw new Error('Failed to save plan. Please try again.');
-      }
-
-      // Verify the plan exists before redirecting
-      const verifiedPlan = storage.getPlan(userId, data.plan.id);
-      if (!verifiedPlan) {
-        throw new Error('Failed to verify plan after saving. Please try again.');
-      }
-
-      setSuccessMessage('Plan created successfully! Redirecting...');
-      
-      // Add a small delay to ensure storage is synced
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirect with the verified plan
-      router.push(`/plan/${data.plan.id}`);
     } catch (error) {
       console.error('Error during plan generation:', error);
-      setError(error.message || 'An error occurred while generating the plan.');
-      setSuccessMessage('');
+      setError(error.message === 'Failed to fetch' 
+        ? 'Network error. Please check your connection and try again.'
+        : error.message || 'An error occurred while generating the plan.');
     } finally {
       setIsLoading(false);
     }
