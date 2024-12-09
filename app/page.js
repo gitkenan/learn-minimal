@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { storage } from '../lib/storage';  // Add this import
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -20,17 +19,11 @@ export default function Home() {
   useEffect(() => {
     AOS.init({
       duration: 1000,
-      once: true,
     });
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!userId) {
-      setError('Please sign in to create a learning plan');
-      return;
-    }
     
     const trimmedTopic = topic.trim();
     if (!trimmedTopic) {
@@ -44,7 +37,6 @@ export default function Home() {
 
     try {
       // Generate the plan
-      console.log('Generating plan for:', trimmedTopic);
       const res = await fetch('/api/learn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,7 +44,6 @@ export default function Home() {
       });
 
       const data = await res.json();
-      console.log('Received data:', data);
       
       if (!res.ok) {
         throw new Error(data.error || 'Failed to generate plan');
@@ -62,31 +53,16 @@ export default function Home() {
         throw new Error('Invalid plan data received');
       }
 
-      try {
-        console.log('Saving plan to storage:', { userId, planId: data.plan.id });
-        // Save to local storage
-        if (!storage.initStorage()) {
-          console.error('Storage not available');
-          throw new Error('Storage is not available');
-        }
-        
-        const saved = storage.savePlan(userId, data.plan.id, data.plan);
-        if (!saved) {
-          console.error('Failed to save plan to storage');
-          throw new Error('Failed to save plan to storage');
-        }
+      // Save to local storage
+      const saved = storage.savePlan(userId, data.plan.id, data.plan);
+      if (!saved) {
+        throw new Error('Failed to save plan. Please try again.');
+      }
 
-        // Verify the save
-        const verifiedPlan = storage.getPlan(userId, data.plan.id);
-        if (!verifiedPlan) {
-          console.error('Plan verification failed');
-          throw new Error('Failed to verify saved plan');
-        }
-
-        console.log('Plan saved successfully');
-      } catch (storageError) {
-        console.error('Storage error:', storageError);
-        throw new Error('Failed to save plan: ' + storageError.message);
+      // Verify the plan exists before redirecting
+      const verifiedPlan = storage.getPlan(userId, data.plan.id);
+      if (!verifiedPlan) {
+        throw new Error('Failed to verify plan after saving. Please try again.');
       }
 
       setSuccessMessage('Plan created successfully! Redirecting...');
@@ -94,7 +70,7 @@ export default function Home() {
       // Add a small delay to ensure storage is synced
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Redirect to the plan page
+      // Redirect with the verified plan
       router.push(`/plan/${data.plan.id}`);
     } catch (error) {
       console.error('Error during plan generation:', error);
@@ -104,6 +80,42 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-};
 
-  // Rest of the component remains the same...
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <main className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center" data-aos="fade-up">
+          Learn Anything
+        </h1>
+        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4" data-aos="fade-up" data-aos-delay="200">
+          <div className="relative">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => {
+                setTopic(e.target.value);
+                setError('');
+              }}
+              placeholder="Enter a topic to learn..."
+              className="w-full px-6 py-4 rounded-full bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-neon-green transition-all duration-300"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 rounded-full \
+                ${isLoading 
+                  ? 'bg-gray-600 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'} \
+                text-white font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+            >
+              {isLoading ? <LoadingSpinner /> : 'Generate Plan'}
+            </button>
+          </div>
+          {error && <div className="text-red-400 text-sm p-3 rounded-lg bg-red-400/10 text-center" role="alert">{error}</div>}
+          {successMessage && <div className="text-green-400 text-sm p-3 rounded-lg bg-green-400/10 text-center" role="status">{successMessage}</div>}
+        </form>
+      </main>
+    </div>
+  );
+}
