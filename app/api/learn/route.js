@@ -1,20 +1,9 @@
 // app/api/learn/route.js
 import { getAuth } from '@clerk/nextjs/server';
 import { generateLearningPlan } from '../../../lib/ai-client';
-import { redis } from '../../../lib/redis';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
   try {
-    // Check authentication
-    const { userId } = getAuth(request);
-    if (!userId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
     const { topic } = await request.json();
 
     if (!topic) {
@@ -39,23 +28,9 @@ export async function POST(request) {
       );
     }
 
-    // Generate a unique ID for the plan
-    const planId = uuidv4();
-
-    // Create the plan object
-    const plan = {
-      id: planId,
-      topic,
-      content: planContent,
-      createdAt: new Date().toISOString(),
-      progress: {}
-    };
-
-    // Store the plan in Redis under the user's plans
-    await redis.hset(`user:${userId}:plans`, planId, JSON.stringify(plan));
-
+    // Just return the plan directly, no Redis, no extra logic
     return new Response(
-      JSON.stringify({ plan }), 
+      JSON.stringify({ plan: { content: planContent, topic } }), 
       { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
