@@ -1,12 +1,12 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/router';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { storage } from '../../../../lib/storage';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
+import { useRouter, useParams } from 'next/navigation';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export default function PlanDetail() {
   const { isLoaded, userId } = useAuth();
@@ -14,9 +14,6 @@ export default function PlanDetail() {
   const params = useParams();
   const { id } = params;
   const [plan, setPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
   const [progress, setProgress] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
   const [expandedData, setExpandedData] = useState({});
@@ -26,25 +23,11 @@ export default function PlanDetail() {
   const [feedbackText, setFeedbackText] = useState({});
 
   useEffect(() => {
-    const maxRetries = 3;
-    const retryDelay = 1000; // 1 second
-
     const fetchPlan = async () => {
       try {
-        // First try local storage
-        if (typeof window !== 'undefined') {
-          const localPlan = storage.getPlan(userId, id);
-          if (localPlan) {
-            setPlan(localPlan);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // If not in local storage, try API
         const res = await fetch(`/api/plans/${id}`);
         const data = await res.json();
-
+        
         if (!res.ok) {
           throw new Error(data.error || 'Failed to fetch plan');
         }
@@ -54,28 +37,17 @@ export default function PlanDetail() {
         }
 
         setPlan(data.plan);
-        // Save to local storage for future
-        if (typeof window !== 'undefined') {
-          storage.savePlan(userId, id, data.plan);
-        }
+        // Initialize progress from the plan data if it exists
+        setProgress(data.plan.progress || {});
       } catch (error) {
         console.error('Error fetching plan:', error);
-        if (retryCount < maxRetries) {
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-          }, retryDelay);
-        } else {
-          setError(error.message);
-        }
-      } finally {
-        setLoading(false);
       }
     };
 
-    if (isLoaded && userId && id) {
+    if (id) {
       fetchPlan();
     }
-  }, [isLoaded, userId, id, retryCount]);
+  }, [id]);
 
   const handleCheckboxChange = async (stepIndex) => {
     try {
@@ -193,30 +165,10 @@ export default function PlanDetail() {
     }
   };
 
-  if (error) {
+  if (!plan) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">
-        <div className="text-center">
-          <h2 className="text-xl mb-4">Error Loading Plan</h2>
-          <p className="text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-white">Loading your learning plan...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
