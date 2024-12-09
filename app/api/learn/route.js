@@ -6,8 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
   try {
-    console.log('Starting learn route...');
-    
     const { userId } = getAuth(request);
     if (!userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
@@ -24,21 +22,6 @@ export async function POST(request) {
       });
     }
 
-    // Test Redis connection first
-    console.log('Testing Redis connection...');
-    const isConnected = await storage.testConnection();
-    if (!isConnected) {
-      console.error('Redis connection test failed');
-      return new Response(JSON.stringify({ 
-        error: 'Database connection error',
-        details: 'Failed to connect to Redis'
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    console.log('Redis connection test passed');
-
     // Generate the plan content
     console.log('Generating plan for topic:', topic);
     const planContent = await generateLearningPlan(topic);
@@ -52,7 +35,6 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    console.log('Plan content generated successfully');
 
     // Create and store the plan
     const planId = uuidv4();
@@ -64,30 +46,11 @@ export async function POST(request) {
       progress: {}
     };
 
-    console.log('Validating plan structure...');
-    const requiredFields = ['id', 'topic', 'content', 'createdAt', 'progress'];
-    const missingFields = requiredFields.filter(field => !Object.keys(plan).includes(field));
-    if (missingFields.length > 0) {
-      console.error('Invalid plan structure:', {
-        missingFields,
-        planFields: Object.keys(plan)
-      });
-      return new Response(JSON.stringify({ 
-        error: 'Invalid plan structure',
-        details: `Missing fields: ${missingFields.join(', ')}`
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    console.log('Plan structure is valid');
-
     console.log('Attempting to save plan:', {
       userId,
       planId,
       topicLength: topic.length,
-      contentLength: planContent.length,
-      planFields: Object.keys(plan)
+      contentLength: planContent.length
     });
 
     const saved = await storage.savePlan(userId, planId, plan);
@@ -95,10 +58,7 @@ export async function POST(request) {
       console.error('Failed to save plan:', {
         userId,
         planId,
-        planStructure: {
-          ...plan,
-          content: `${plan.content.substring(0, 100)}...`
-        }
+        plan: { ...plan, content: `${plan.content.substring(0, 100)}...` }
       });
       return new Response(JSON.stringify({ 
         error: 'Failed to save plan to storage',
@@ -121,14 +81,12 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error in learn route:', {
-      error: error.message,
+      message: error.message,
       stack: error.stack,
-      type: error.constructor.name,
       provider: process.env.AI_PROVIDER
     });
     return new Response(JSON.stringify({ 
       error: `Error generating plan: ${error.message}`,
-      type: error.constructor.name,
       provider: process.env.AI_PROVIDER
     }), { 
       status: 500,
