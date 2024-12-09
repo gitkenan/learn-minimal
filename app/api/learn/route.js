@@ -103,16 +103,9 @@ export async function POST(req) {
     }
   } catch (error) {
     console.error('Error in learn route:', error);
-    const errorMessage = error.message === 'The request took too long. Please try again with a simpler topic.' 
-      ? error.message 
-      : 'Failed to generate learning plan';
-      
     return new Response(
-      JSON.stringify({ error: errorMessage }), 
-      { 
-        status: error.message.includes('too long') ? 408 : 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ error: 'Failed to generate learning plan' }),
+      { status: 500 }
     );
   }
 }
