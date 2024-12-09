@@ -1,5 +1,6 @@
 // app/api/learn/route.js
 import { getAuth } from '@clerk/nextjs/server';
+import { redis } from '../../../lib/redis';
 import { generateLearningPlan } from '../../../lib/ai-client';
 
 export async function POST(request) {
@@ -16,9 +17,10 @@ export async function POST(request) {
       );
     }
 
-    const planContent = await generateLearningPlan(topic);
+    const { userId } = getAuth(request);
+    const plan = await generateLearningPlan(topic);
 
-    if (!planContent) {
+    if (!plan) {
       return new Response(
         JSON.stringify({ error: 'Failed to generate plan' }), 
         { 
@@ -28,9 +30,52 @@ export async function POST(request) {
       );
     }
 
-    // Just return the plan directly, no Redis, no extra logic
+    // For authenticated users, include plan ID for later retrieval
+    if (userId) {
+      const timestamp = Date.now();
+      const planId = `plan-${timestamp}`; 
+      const planObj = {
+        id: planId,
+        userId, 
+        topic,
+        content: plan,
+        progress: {}, 
+        createdAt: new Date(timestamp).toISOString()
+      };
+
+      try {
+        await redis.hset(`user:${userId}:plans`, {
+          [planId]: JSON.stringify(planObj)
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            plan: planObj,
+            message: 'Plan created successfully' 
+          }), 
+          { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      } catch (error) {
+        console.error('Redis error:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to save plan',
+            details: error.message 
+          }), 
+          { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
+
+    // For unauthenticated users, just return the plan content
     return new Response(
-      JSON.stringify({ plan: { content: planContent, topic } }), 
+      JSON.stringify({ plan: { content: plan, topic } }), 
       { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -39,10 +84,14 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error in learn route:', error);
+    const errorMessage = error.message === 'The request took too long. Please try again with a simpler topic.' 
+      ? error.message 
+      : 'Failed to generate learning plan';
+      
     return new Response(
-      JSON.stringify({ error: 'Failed to generate learning plan' }), 
+      JSON.stringify({ error: errorMessage }), 
       { 
-        status: 500,
+        status: error.message.includes('too long') ? 408 : 500,
         headers: { 'Content-Type': 'application/json' }
       }
     );
