@@ -20,9 +20,6 @@ export async function POST(req) {
     // Update the progress
     plan.progress = progress;
 
-    // Log the plan object before saving
-    console.log('Updating plan:', plan);
-
     // Save the updated plan back to local storage
     const saved = storage.savePlan(userId, planId, plan);
     if (!saved) {
