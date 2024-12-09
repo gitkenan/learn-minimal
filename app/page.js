@@ -25,13 +25,11 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic })
       });
-      
-      if (!res.ok) throw new Error('Failed to create plan');
-      
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       router.push(`/plan/${data.plan.id}`);
     } catch (error) {
-      alert('Failed to create plan. Please try again.');
+      alert('Failed to create plan');
     } finally {
       setLoading(false);
     }
@@ -45,7 +43,7 @@ export default function Home() {
           type="text"
           value={topic}
           onChange={e => setTopic(e.target.value)}
-          placeholder="Enter a topic to learn..."
+          placeholder="Enter a topic..."
           className="w-full p-2 rounded bg-gray-800 text-white"
           disabled={loading}
         />

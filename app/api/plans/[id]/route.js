@@ -6,20 +6,12 @@ export async function GET(request, { params }) {
   if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const plan = await storage.getPlan(params.id);
+    const rawPlan = await storage.getPlan(userId, params.id);
+    if (!rawPlan) return Response.json({ error: 'Plan not found' }, { status: 404 });
     
-    if (!plan) {
-      return Response.json({ error: 'Plan not found' }, { status: 404 });
-    }
-
-    // Security check - ensure user can only access their own plans
-    if (plan.userId !== userId) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const plan = JSON.parse(rawPlan);
     return Response.json({ plan });
   } catch (error) {
-    console.error('Plan retrieval error:', error);
     return Response.json({ error: 'Failed to fetch plan' }, { status: 500 });
   }
 }
