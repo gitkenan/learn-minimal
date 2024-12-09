@@ -16,6 +16,7 @@ export async function POST(request) {
     }
 
     const { topic } = await request.json();
+
     console.log('Generating plan for topic:', topic);
 
     if (!topic) {
@@ -28,29 +29,12 @@ export async function POST(request) {
       );
     }
 
-    let planContent;
-    try {
-      planContent = await generateLearningPlan(topic);
-    } catch (error) {
-      console.error('Plan generation failed:', error.message);
-      return new Response(
-        JSON.stringify({ 
-          error: error.message || 'Failed to generate plan',
-          details: 'The AI service was unable to generate a plan. Please try again.' 
-        }), 
-        { 
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
+    const planContent = await generateLearningPlan(topic);
+    console.log('Generated plan content:', !!planContent);
 
     if (!planContent) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to generate plan',
-          details: 'No plan content was generated. Please try again.' 
-        }), 
+        JSON.stringify({ error: 'Failed to generate plan' }), 
         { 
           status: 500,
           headers: { 'Content-Type': 'application/json' }
