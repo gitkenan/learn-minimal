@@ -6,94 +6,103 @@ import { storage } from '../../../lib/storage';
 
 export async function POST(request) {
   try {
+    // Check authentication
     const { userId } = getAuth(request);
     if (!userId) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }), 
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const { topic } = await request.json();
-    if (!topic?.trim()) {
+    console.log('Generating plan for topic:', topic);
+
+    if (!topic) {
       return new Response(
         JSON.stringify({ error: 'Topic is required' }), 
-        { status: 400 }
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    // Generate the plan content
-    const planContent = await generateLearningPlan(topic);
+    let planContent;
+    try {
+      planContent = await generateLearningPlan(topic);
+    } catch (error) {
+      console.error('Plan generation failed:', error.message);
+      return new Response(
+        JSON.stringify({ 
+          error: error.message || 'Failed to generate plan',
+          details: 'The AI service was unable to generate a plan. Please try again.' 
+        }), 
+        { 
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     if (!planContent) {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to generate plan',
-          details: 'No plan content was generated' 
+          details: 'No plan content was generated. Please try again.' 
         }), 
-        { status: 500 }
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    // Create the plan object
+    // Generate a unique ID for the plan
     const planId = uuidv4();
+
+    // Create the plan object
     const plan = {
       id: planId,
-      topic: topic.trim(),
+      topic,
       content: planContent,
       createdAt: new Date().toISOString(),
       progress: {}
     };
 
-    // Attempt to save the plan
-    if (!storage.checkStorage()) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Storage unavailable',
-          details: 'Browser storage is not available or full' 
-        }), 
-        { status: 500 }
-      );
-    }
+    console.log('Saving plan:', { planId, topic });
 
+    // Save the plan using localStorage
     const saved = storage.savePlan(userId, planId, plan);
     if (!saved) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to save plan',
-          details: 'Could not save to browser storage' 
-        }), 
-        { status: 500 }
+        JSON.stringify({ error: 'Failed to save plan' }), 
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
-    // Verify the plan was saved
-    const savedPlan = storage.getPlan(userId, planId);
-    if (!savedPlan) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Plan verification failed',
-          details: 'Plan was not found after saving' 
-        }), 
-        { status: 500 }
-      );
-    }
-
+    // Return the plan
     return new Response(
       JSON.stringify({ 
-        plan: savedPlan,
+        plan,
         message: 'Plan created successfully' 
       }), 
-      { status: 201 }
+      { 
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
-
   } catch (error) {
     console.error('Error in learn route:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        details: error.message 
-      }), 
-      { status: 500 }
+      JSON.stringify({ error: 'Internal server error' }), 
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   }
 }
