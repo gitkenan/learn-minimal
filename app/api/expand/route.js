@@ -38,9 +38,7 @@ export async function POST(req) {
     }
 
     console.log('Successfully expanded snippet');
-    // Ensure we're wrapping the expanded content in a proper JSON object
-    const responseData = { expanded: expanded };
-    return new Response(JSON.stringify(responseData), { 
+    return new Response(JSON.stringify({ expanded }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

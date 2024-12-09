@@ -100,14 +100,8 @@ export default function PlanDetail() {
         body: JSON.stringify({ snippet: text }),
       });
 
-      let data;
-      try {
-        data = await res.json();
-        console.log('Response data:', data);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        throw new Error('Failed to parse server response');
-      }
+      const data = await res.json();
+      console.log('Response data:', data);
 
       if (!res.ok) {
         throw new Error(data.error || `HTTP error! status: ${res.status}`);
