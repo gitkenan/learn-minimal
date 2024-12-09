@@ -33,19 +33,17 @@ export async function POST(request) {
       );
     }
 
-    // Create the plan object with topic explicitly included
+    // Create the plan object
     const planId = uuidv4();
     const plan = {
       id: planId,
-      topic: topic.trim(),  // Explicitly include the topic
+      topic: topic.trim(),
       content: planContent,
       createdAt: new Date().toISOString(),
       progress: {}
     };
 
-    console.log('Generated plan:', plan); // Add logging to verify plan structure
-
-    // Return the complete plan
+    // Return the plan - storage will happen on client side
     return new Response(
       JSON.stringify({ 
         plan,

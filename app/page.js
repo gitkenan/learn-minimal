@@ -58,16 +58,18 @@ export default function Home() {
         throw new Error(data.error || 'Failed to generate plan');
       }
 
-      if (!data.plan?.topic) {
-        console.error('Plan missing topic:', data);
-        throw new Error('Invalid plan data: missing topic');
+      if (!data.plan || !data.plan.id || !data.plan.content || !data.plan.topic) {
+        console.error('Invalid plan data:', data);
+        throw new Error('Invalid plan data received');
       }
 
       // Create the complete plan object
       const completePlan = {
-        ...data.plan,
-        progress: {},
-        createdAt: new Date().toISOString()
+        id: data.plan.id,
+        topic: trimmedTopic,
+        content: data.plan.content,
+        createdAt: new Date().toISOString(),
+        progress: {}
       };
 
       try {
