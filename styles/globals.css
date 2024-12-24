@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .search-input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 
+           focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
+           transition duration-200 ease-in-out;
+  }
+
+  .search-button {
+    @apply px-6 py-3 bg-accent text-white rounded-xl
+           hover:bg-accent-hover transition duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2;
+  }
+}
