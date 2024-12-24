@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
-import supabase from '@/lib/supabaseClient';
+import { initializeSupabase } from '@/lib/supabaseClient';
 
 export default function Home() {
   const { user, session, loading } = useAuth();
@@ -93,8 +93,11 @@ export default function Home() {
             <span className="text-secondary">{user.email}</span>
             <button
               onClick={async () => {
-                await supabase.auth.signOut();
-                router.push('/auth');
+                const supabase = initializeSupabase();
+                if (supabase) {
+                  await supabase.auth.signOut();
+                  router.push('/auth');
+                }
               }}
               className="px-4 py-2 text-secondary hover:text-primary transition-colors duration-200"
             >
