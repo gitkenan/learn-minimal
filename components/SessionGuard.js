@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { useAuth } from '@/context/AuthContext'
 
 // Add more public routes as needed
-const PUBLIC_ROUTES = ['/auth', '/login', '/signup', '/dashboard']
+const PUBLIC_ROUTES = ['/auth', '/login', '/signup', '/test/test-session']
 
 export function SessionGuard({ children }) {
   const { user, loading } = useAuth()

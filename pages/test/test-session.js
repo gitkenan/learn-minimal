@@ -1,4 +1,4 @@
-import SessionTest from '../components/SessionTest';
+import SessionTest from '../../components/SessionTest';
 
 export default function TestPage() {
   return (
