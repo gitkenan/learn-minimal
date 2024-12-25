@@ -16,9 +16,6 @@ export default function Home() {
     setIsLoading(true);
     setError('');
 
-    console.log("Session before API call:", session); // Log the session
-    console.log("Access Token before API call:", session?.access_token); // Log the token
-
     try {
       const response = await fetch('/api/generate-plan', {
         method: 'POST',
@@ -36,10 +33,8 @@ export default function Home() {
       }
 
       const data = await response.json();
-      console.log('API Response:', data); // Log the response
       router.push(`/plan/${data.plan.id}`);
     } catch (err) {
-      console.error('Submit error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);

@@ -55,7 +55,6 @@ export const AuthProvider = ({ children }) => {
 
     const authStateChangeSub = supabaseClient?.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log('Auth state changed:', event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setSessionReady(true); // Mark session as ready after initial auth state is known

@@ -15,8 +15,6 @@ export default function Auth() {
       setLoading(true)
       setError(null)
 
-      console.log('Auth - Starting sign in')
-      
       const supabase = initializeSupabase();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -27,8 +25,6 @@ export default function Auth() {
 
       // Get and log the session right after sign in
       const { data: { session } } = await supabase.auth.getSession()
-      console.log('Auth - Session after sign in:', session?.user?.id)
-      console.log('Auth - Access token exists:', !!session?.access_token)
 
       if (session) {
         // Redirect to home page after successful sign in
@@ -55,7 +51,7 @@ export default function Auth() {
         email,
         password,
       })
-      console.log('Sign up response:', data)
+
       if (error) throw error
       // User will receive confirmation email
     } catch (error) {
