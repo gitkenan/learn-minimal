@@ -15,39 +15,42 @@ export default async function handler(req, res) {
     const supabase = createPagesServerClient({ req, res });
     const { data: { session } } = await supabase.auth.getSession();
 
-    const { topic } = req.body;
+    const { topic, timeline } = req.body;
     if (!topic) {
       return res.status(400).json({ error: 'Topic is required' });
     }
+    if (!timeline) {
+      return res.status(400).json({ error: 'Timeline is required' });
+    }
 
     try {
-      // Define the learning plan prompt template
-      const PLAN_PROMPT = `Create a detailed learning plan for studying: ${topic}.
-        The plan should be structured in markdown format with the following sections:
-
-        # Learning Plan for ${topic}
-
-        ## Phase 1: Fundamentals
-        [List the basic concepts and foundational knowledge needed]
-
-        ## Phase 2: Deep Dive
-        [Cover advanced concepts and detailed learning activities]
-
-        ## Phase 3: Application
-        [Include practical applications and hands-on projects]
-
-        ## Resources
-        [List recommended learning resources]
-
-        ## Timeline
-        [Provide estimated completion time and recommended study schedule]
-
-        Important: Format your response exactly as shown above, using markdown headings (##) for each section,
-        and using checkboxes [ ] for each learning activity.`;
       // Initialize the model and generate the plan
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      const prompt = PLAN_PROMPT.replace(/\${topic}/g, topic);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      const prompt = `Create a detailed learning plan for studying: ${topic}. The student has ${timeline} available to learn this topic.
 
+The plan should be structured in markdown format with the following sections:
+
+# Learning Plan for ${topic}
+
+## Phase 1: Fundamentals
+[List the basic concepts and foundational knowledge needed, appropriate for the ${timeline} timeframe]
+
+## Phase 2: Deep Dive
+[Cover advanced concepts and detailed learning activities that can realistically be achieved within ${timeline}]
+
+## Phase 3: Application
+[Include practical applications and hands-on projects scaled to fit within ${timeline}]
+
+## Resources
+[List recommended learning resources]
+
+## Timeline
+[Break down how to use the ${timeline} effectively, with a recommended study schedule]
+
+Important: Format your response exactly as shown above, using markdown headings (##) for each section. Ensure all content and depth is appropriate for the specified timeframe of ${timeline}.
+For each actionable part of the learning plan, start it with a checkbox format [ ]`;
+      
       const result = await model.generateContent(prompt);
       const planContent = result.response.text();
 

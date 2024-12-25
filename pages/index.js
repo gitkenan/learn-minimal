@@ -7,6 +7,7 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 export default function Home() {
   const { user, session, loading } = useAuth();
   const [topic, setTopic] = useState('');
+  const [timeline, setTimeline] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function Home() {
           'Authorization': `Bearer ${session?.access_token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, timeline }),
       });
 
       if (!response.ok) {
@@ -114,12 +115,22 @@ export default function Home() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="relative">
+            <div className="flex flex-col gap-4">
               <input
                 type="text"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Enter a topic to learn about..."
+                className="w-full p-4 text-primary bg-background border border-claude-border 
+                         rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                         transition-colors duration-200"
+                disabled={isLoading}
+              />
+              <input
+                type="text"
+                value={timeline}
+                onChange={(e) => setTimeline(e.target.value)}
+                placeholder="How much time do you have? (e.g., '2 weeks', '3 months')"
                 className="w-full p-4 text-primary bg-background border border-claude-border 
                          rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
                          transition-colors duration-200"
@@ -135,7 +146,7 @@ export default function Home() {
 
             <button
               type="submit"
-              disabled={isLoading || !topic.trim() || loading}
+              disabled={isLoading || !topic.trim() || !timeline.trim() || loading}
               className="w-full p-4 bg-accent hover:bg-accent-hover text-white rounded-lg
                        transition-colors duration-200 disabled:opacity-50
                        font-medium text-base flex items-center justify-center"
