@@ -1,9 +1,11 @@
+// pages/plan/[id].js
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
+import MarkdownPlan from '@/components/MarkdownPlan';
 
 export default function PlanPage() {
   const { user } = useAuth();
@@ -16,19 +18,14 @@ export default function PlanPage() {
 
   useEffect(() => {
     async function fetchPlan() {
-      try {
-        // Don't fetch if we don't have an ID yet
-        if (!id) return;
+      if (!id) return;
 
-        setLoading(true);
-        setError('');
-        
-        // Initialize Supabase client
+      setLoading(true);
+      setError('');
+      
+      try {
         const supabase = initializeSupabase();
-        
-        if (!supabase) {
-          throw new Error('Failed to initialize Supabase client');
-        }
+        if (!supabase) throw new Error('Failed to initialize Supabase client');
 
         const { data, error: supabaseError } = await supabase
           .from('plans')
@@ -37,15 +34,8 @@ export default function PlanPage() {
           .single();
 
         if (supabaseError) throw supabaseError;
-
-        if (!data) {
-          throw new Error('Plan not found');
-        }
-
-        // Make sure the user owns this plan
-        if (data.user_id !== user?.id) {
-          throw new Error('Not authorized to view this plan');
-        }
+        if (!data) throw new Error('Plan not found');
+        if (data.user_id !== user?.id) throw new Error('Not authorized to view this plan');
 
         setPlan(data);
       } catch (err) {
@@ -56,40 +46,25 @@ export default function PlanPage() {
       }
     }
 
-    if (id) {
-      fetchPlan();
-    }
+    if (id) fetchPlan();
   }, [id, user?.id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        Loading plan...
-      </div>
-    );
-  }
+  const handleProgressUpdate = (newProgress) => {
+    setPlan(prev => ({ ...prev, progress: newProgress }));
+  };
 
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading plan...</div>;
   if (error) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <div className="text-red-500">{error}</div>
-        <Link 
-          href="/"
-          className="text-accent hover:text-accent-hover transition-colors duration-200"
-        >
+        <Link href="/" className="text-accent hover:text-accent-hover transition-colors duration-200">
           ← Back to Home
         </Link>
       </div>
     );
   }
-
-  if (!plan) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        Plan not found
-      </div>
-    );
-  }
+  if (!plan) return <div className="min-h-screen bg-background flex items-center justify-center">Plan not found</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,12 +75,8 @@ export default function PlanPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
           <div className="mb-8 flex items-center justify-between">
-            <Link 
-              href="/"
-              className="text-accent hover:text-accent-hover transition-colors duration-200"
-            >
+            <Link href="/" className="text-accent hover:text-accent-hover transition-colors duration-200">
               ← Back to Home
             </Link>
             <span className="text-secondary text-sm">
@@ -113,25 +84,19 @@ export default function PlanPage() {
             </span>
           </div>
 
-          {/* Plan Content */}
           <div className="bg-surface p-8 rounded-lg shadow-claude">
-            <h1 className="text-primary text-3xl font-semibold mb-6">
-              {plan.topic}
-            </h1>
+            <h1 className="text-primary text-3xl font-semibold mb-6">{plan.topic}</h1>
             
-            <div className="prose max-w-none">
-              <pre className="whitespace-pre-wrap text-primary">
-                {plan.content}
-              </pre>
-            </div>
+            <MarkdownPlan 
+              initialContent={plan.content} 
+              planId={plan.id}
+              onProgressUpdate={handleProgressUpdate}
+            />
 
-            {/* Progress section */}
             <div className="mt-8 pt-8 border-t border-claude-border">
               <div className="flex items-center justify-between">
                 <span className="text-secondary">Progress</span>
-                <span className="text-primary font-medium">
-                  {plan.progress}%
-                </span>
+                <span className="text-primary font-medium">{plan.progress}%</span>
               </div>
               <div className="mt-2 bg-gray-200 rounded-full h-2.5">
                 <div 

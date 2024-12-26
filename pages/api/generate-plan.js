@@ -81,7 +81,8 @@ The plan should be structured in markdown format with the following sections:
 [List recommended learning resources]
 
 ## Timeline
-[Break down how to use the ${timeline} effectively, with a recommended study schedule]
+[Give a single-sentence advice  on how to study this topic within the timeline ${timeline} effectively,
+including a brief tip on how a study schedule might look]
 
 Important: Format your response exactly as shown above, using markdown headings (##) for each section. Ensure all content and depth is appropriate for the specified timeframe of ${timeline}.
 For each actionable line of the learning plan, start it with a checkbox format [ ] so that the user can
