@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeSupabase } from '@/lib/supabaseClient';
+import ReactMarkdown from 'react-markdown';
 
 const parseMarkdownPlan = markdown => {
   const lines = markdown.split('\n');
@@ -59,12 +60,12 @@ const parseMarkdownPlan = markdown => {
       continue;
     }
 
-    // Handle regular items starting with -
-    if (line.startsWith('- ') && currentSection) {
+    // Handle regular items starting with - or **
+    if ((line.startsWith('- ') || line.startsWith('**')) && currentSection) {
       currentItems.push({
         id: generateId(),
         type: 'text',
-        content: line.slice(2).trim()
+        content: line.replace(/^\*\*|\*\*$/g, '').replace(/^- /, '').trim()
       });
     }
   }
@@ -149,46 +150,52 @@ const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
   };
 
   const renderJsonContent = () => {
-    if (!parsedContent) return null;
+  if (!parsedContent) return null;
 
-    return (
-      <div className="space-y-6">
-        {parsedContent.sections.map(section => (
-          <div key={section.id} className="space-y-2">
-            <h2 className="text-xl font-semibold">{section.title}</h2>
-            <div className="space-y-2">
-              {section.items.map(item => (
-                <div key={item.id} className="ml-4">
-                  {item.type === 'task' ? (
-                    <div 
-                      className="flex items-start gap-2 cursor-pointer group"
-                      onClick={() => handleCheckboxClick(section.id, item.id)}
-                    >
-                      <div className={`
-                        mt-1 w-4 h-4 border rounded flex items-center justify-center
-                        ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
-                        group-hover:border-accent transition-colors duration-200
-                      `}>
-                        {item.isComplete && (
-                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                          </svg>
-                        )}
-                      </div>
-                      <span className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}>
-                        {item.content}
-                      </span>
+  const phaseSections = parsedContent.sections.filter(s => s.type === 'phase');
+  const otherContent = content.substring(content.indexOf('## Resources'));
+
+  return (
+    <div className="space-y-6">
+      {phaseSections.map(section => (
+        <div key={section.id} className="space-y-2">
+          <h2 className="text-xl font-semibold">{section.title}</h2>
+          <div className="space-y-2">
+            {section.items.map(item => (
+              <div key={item.id} className="ml-4">
+                {item.type === 'task' ? (
+                  <div 
+                    className="flex items-start gap-2 cursor-pointer group"
+                    onClick={() => handleCheckboxClick(section.id, item.id)}
+                  >
+                    <div className={`
+                      mt-1 w-4 h-4 border rounded flex items-center justify-center
+                      ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
+                      group-hover:border-accent transition-colors duration-200
+                    `}>
+                      {item.isComplete && (
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                        </svg>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-gray-900">{item.content}</div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <span className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}>
+                      {item.content}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-gray-900">{item.content}</div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+      ))}
+      <div className="mt-8">
+        <ReactMarkdown>{otherContent}</ReactMarkdown>
       </div>
-    );
+    </div>
+  );
   };
 
   return (
