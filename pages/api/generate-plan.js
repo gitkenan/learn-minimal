@@ -1,6 +1,7 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { validatePlanStructure } from '../../utils/planValidator';
 
 // Initialize Google AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
@@ -129,7 +130,54 @@ export default async function handler(req, res) {
 
       const planContent = result.response.text();
 
-      // Validate generated content
+      // Validate the generated content
+      const validation = validatePlanStructure(planContent);
+      
+      if (!validation.isValid) {
+        console.error('Plan validation failed:', {
+          errors: validation.errors,
+          stats: validation.stats
+        });
+        
+        // If validation fails, try one more time
+        const retryResult = await model.generateContent(prompt);
+        const retryContent = retryResult.response.text();
+        const retryValidation = validatePlanStructure(retryContent);
+        
+        if (!retryValidation.isValid) {
+          throw new PlanGenerationError(
+            'Generated content failed validation after retry',
+            'INVALID_CONTENT',
+            {
+              errors: validation.errors,
+              stats: validation.stats
+            }
+          );
+        }
+        
+        // Use the valid retry content
+        planContent = retryContent;
+      }
+
+      // Log any warnings for monitoring
+      if (validation.warnings.length > 0) {
+        console.warn('Plan generation warnings:', {
+          warnings: validation.warnings,
+          topic,
+          stats: validation.stats
+        });
+      }
+
+      // Additional logging for monitoring prompt effectiveness
+      console.info('Plan generation stats:', {
+        topic,
+        timeline,
+        contentLength: validation.stats.contentLength,
+        totalCheckboxItems: validation.stats.totalCheckboxItems,
+        sectionLengths: validation.stats.sectionLengths
+      });
+
+      // Basic validation checks
       if (!planContent || planContent.trim().length < 50) {
         throw new PlanGenerationError(
           'Generated plan content is too short or empty',
