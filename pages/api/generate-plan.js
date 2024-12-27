@@ -61,35 +61,58 @@ export default async function handler(req, res) {
           'AI_INIT_ERROR'
         );
       }
+
+      const prompt = `
+      You are an expert educator creating a comprehensive, cutting-edge learning plan on the topic: ${topic} 
+      The learner has a timeline of: ${timeline} available. Please generate a markdown-formatted plan with 
+      checkboxes for each actionable item.
       
-      const prompt = `Create a detailed learning plan for studying: ${topic}. The student has ${timeline} available to learn this topic.
-
-The plan should be structured in markdown format with the following sections:
-
-# Learning Plan for ${topic}
-
-## Phase 1: Fundamentals
-[List the basic concepts and foundational knowledge needed, appropriate for the ${timeline} timeframe]
-
-## Phase 2: Deep Dive
-[Cover advanced concepts and detailed learning activities that can realistically be achieved within ${timeline}]
-
-## Phase 3: Application
-[Include practical applications and hands-on projects scaled to fit within ${timeline}]
-
-## Resources
-[List recommended learning resources]
-
-## Timeline
-[Give a single-sentence advice  on how to study this topic within the timeline ${timeline} effectively,
-including a brief tip on how a study schedule might look]
-
-Important: Format your response exactly as shown above, using markdown headings (##) for each section. Ensure all content and depth is appropriate for the specified timeframe of ${timeline}.
-For each actionable line of the learning plan, start it with a checkbox format [ ] so that the user can
-follow the plan step-by-step.
-Ensure to follow the most effective practices for effective learning and to avoid distractions. For example, for learning coding languages, the plan should focus on encouraging the user to build a project after they have learned the basics of the language.`;
+      Goals:
       
-      // Generate the plan with timeout handling
+          The plan must be thorough and in-depth, drawing on current, research-backed methods and examples 
+          from leading professionals in the field.
+          It should include a variety of tasks, avoiding repetitive topics, while truly leveraging the 
+          ${timeline} constraints.
+          The final output must be easy to format:
+              Use markdown headings:
+                  # Learning Plan for ${topic}
+                  ## Phase 1: Fundamentals
+                  ## Phase 2: Deep Dive
+                  ## Phase 3: Application
+                  ## Resources
+                  ## Timeline
+              For each actionable step in the plan, include a checkbox at the beginning of the line ([ ]).
+              Also include these checkboxes for the items in the Resources section: ([ ]), but not the Timeline section. 
+          Under Timeline, provide only one concise sentence describing how to strategize or structure the schedule.
+      
+      Plan Requirements:
+      
+          Phase 1: Fundamentals
+              Introduce advanced yet foundational knowledge—mention practical methods used by top experts 
+              or institutions.
+              Provide tasks that are distinct from each other (avoid repeating the same phrasing).
+          Phase 2: Deep Dive
+              Explore specialized or advanced aspects of the topic, referencing real-world applications 
+              or thought leaders to keep it cutting-edge.
+              Maintain variety in each recommended activity.
+          Phase 3: Application
+              Emphasize hands-on projects or real-life practice to solidify learning in line with the 
+              given ${timeline}.
+              Cite proven approaches from leading professionals if possible, and only if you're 100% certain 
+              about the accuracy of the citation.
+          Resources
+              List recommended books, articles, courses, or other media from recognized authorities if relevant.
+              Only provide a link if you're certain that it's a real link and not a fake one.
+          Timeline
+              In one sentence, give an overview of how to break down the entire ${timeline} efficiently 
+              without repeating earlier instructions.
+      
+      Important:
+      
+          Always keep each bullet point or sub-task unique; avoid repetitive wording across tasks.
+          Reflect the learner's total available time ${timeline} across the whole plan. 
+          Prioritize tasks that are most relevant to the learner's goals and timeline.
+          The final response must be in valid markdown with properly formatted checkboxes.`;     
       const generatePromise = model.generateContent(prompt);
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('AI generation timed out')), 30000)
