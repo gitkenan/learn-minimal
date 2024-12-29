@@ -5,79 +5,119 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 
 export default function LearningChat({ planId, topic }) {
   const { user } = useAuth();
+  const [discussions, setDiscussions] = useState([]);
+  const [currentDiscussion, setCurrentDiscussion] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const [currentDiscussion, setCurrentDiscussion] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [error, setError] = useState(null);
+  const chatContainerRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Load all discussions for this plan
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    const loadOrCreateDiscussion = async () => {
-      const supabase = initializeSupabase();
+    const loadDiscussions = async () => {
+      if (!planId || !user) return;
       
-      // Try to find existing discussion
-      let { data: discussions } = await supabase
-        .from('plan_discussions')
-        .select('*')
-        .eq('plan_id', planId)
-        .single();
-
-      if (!discussions) {
-        // Create new discussion if none exists
-        const { data: newDiscussion } = await supabase
+      try {
+        const supabase = initializeSupabase();
+        const { data, error } = await supabase
           .from('plan_discussions')
-          .insert({
-            plan_id: planId,
-            user_id: user.id,
-            title: `Discussion about ${topic}`
-          })
-          .select()
-          .single();
-        
-        discussions = newDiscussion;
-      }
-
-      setCurrentDiscussion(discussions);
-
-      // Load existing messages
-      if (discussions) {
-        const { data: existingMessages } = await supabase
-          .from('discussion_messages')
           .select('*')
-          .eq('discussion_id', discussions.id)
-          .order('created_at', { ascending: true });
+          .eq('plan_id', planId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-        if (existingMessages) {
-          setMessages(existingMessages);
-        }
+        if (error) throw error;
+        setDiscussions(data || []);
+        setIsInitializing(false);
+      } catch (err) {
+        console.error('Error loading discussions:', err);
+        setError('Failed to load chat history');
+        setIsInitializing(false);
       }
     };
 
-    if (planId && user) {
-      loadOrCreateDiscussion();
+    loadDiscussions();
+  }, [planId, user]);
+
+  // Load messages when a discussion is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!currentDiscussion) {
+        setMessages([]);
+        return;
+      }
+
+      try {
+        const supabase = initializeSupabase();
+        const { data, error } = await supabase
+          .from('discussion_messages')
+          .select('*')
+          .eq('discussion_id', currentDiscussion.id)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        setMessages(data || []);
+
+        // Scroll to bottom after messages load
+        setTimeout(() => {
+          chatContainerRef.current?.scrollTo({
+            top: chatContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+      } catch (err) {
+        console.error('Error loading messages:', err);
+        setError('Failed to load messages');
+      }
+    };
+
+    loadMessages();
+  }, [currentDiscussion]);
+
+  const startNewDiscussion = async () => {
+    try {
+      const supabase = initializeSupabase();
+      const title = `Chat ${discussions.length + 1}`;
+      
+      const { data, error } = await supabase
+        .from('plan_discussions')
+        .insert([{
+          plan_id: planId,
+          user_id: user.id,
+          title,
+          is_active: true
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDiscussions(prev => [data, ...prev]);
+      setCurrentDiscussion(data);
+      setMessages([]);
+      setError(null);
+    } catch (err) {
+      console.error('Error creating new discussion:', err);
+      setError('Failed to start new chat');
     }
-  }, [planId, user, topic]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || isLoading) return;
+    if (!newMessage.trim() || isLoading || !currentDiscussion) return;
 
     setIsLoading(true);
     const messageContent = newMessage;
     setNewMessage('');
+    setError(null);
 
     try {
-      // Save user message
       const supabase = initializeSupabase();
-      const { data: userMessage } = await supabase
+      
+      // Add user message
+      const { data: userMessage, error: messageError } = await supabase
         .from('discussion_messages')
         .insert({
           discussion_id: currentDiscussion.id,
@@ -87,6 +127,7 @@ export default function LearningChat({ planId, topic }) {
         .select()
         .single();
 
+      if (messageError) throw messageError;
       setMessages(prev => [...prev, userMessage]);
 
       // Get AI response
@@ -97,7 +138,7 @@ export default function LearningChat({ planId, topic }) {
           message: messageContent,
           topic,
           discussionId: currentDiscussion.id,
-          planId: planId
+          planId
         })
       });
 
@@ -106,7 +147,7 @@ export default function LearningChat({ planId, topic }) {
       const data = await response.json();
 
       // Save AI response
-      const { data: aiMessage } = await supabase
+      const { data: aiMessage, error: aiError } = await supabase
         .from('discussion_messages')
         .insert({
           discussion_id: currentDiscussion.id,
@@ -116,62 +157,125 @@ export default function LearningChat({ planId, topic }) {
         .select()
         .single();
 
+      if (aiError) throw aiError;
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
-      console.error('Error in chat:', error);
+    } catch (err) {
+      console.error('Error in chat:', err);
+      setError('Failed to send message. Please try again.');
+      setNewMessage(messageContent);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isInitializing) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="text-gray-600 mt-2">Initializing chat...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[600px] bg-white rounded-lg shadow-lg">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Learning Assistant</h2>
-        <p className="text-sm text-gray-600">
-          Ask questions about {topic}
-        </p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
+    <div className="flex flex-col h-full">
+      <div className="flex-none p-4 border-b bg-white">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Learning Assistant</h2>
+          <button
+            onClick={startNewDiscussion}
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.is_ai 
-                  ? 'bg-gray-100 text-gray-800' 
-                  : 'bg-blue-500 text-white'
-              }`}
-            >
-              {message.content}
-            </div>
+            New Chat
+          </button>
+        </div>
+        
+        {discussions.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {discussions.map(discussion => (
+              <button
+                key={discussion.id}
+                onClick={() => setCurrentDiscussion(discussion)}
+                className={`px-3 py-1 text-sm rounded-lg whitespace-nowrap ${
+                  currentDiscussion?.id === discussion.id
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+              >
+                {discussion.title}
+              </button>
+            ))}
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        )}
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
-        <div className="flex gap-2">
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
+      >
+        {currentDiscussion ? (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg p-3 break-words ${
+                  message.is_ai 
+                    ? 'bg-gray-100 text-gray-800' 
+                    : 'bg-blue-500 text-white'
+                }`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <p>Start a new chat or select an existing one</p>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="flex-none p-2 bg-red-50 border-t border-red-100">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      <div className="flex-none p-4 bg-white border-t">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Ask anything about the topic..."
-            disabled={isLoading}
-            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={
+              !currentDiscussion 
+                ? 'Start or select a chat first...' 
+                : isLoading 
+                  ? 'Sending...' 
+                  : 'Ask anything about the topic...'
+            }
+            disabled={isLoading || !currentDiscussion}
+            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
           />
           <button
             type="submit"
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            disabled={isLoading || !currentDiscussion || !newMessage.trim()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 whitespace-nowrap"
           >
-            {isLoading ? '...' : 'Send'}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Sending...</span>
+              </div>
+            ) : (
+              'Send'
+            )}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
