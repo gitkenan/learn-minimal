@@ -83,7 +83,7 @@ export default async function handler(req, res) {
                   ## Resources
                   ## Timeline
               For each actionable step in the plan, include a checkbox at the beginning of the line ([ ]).
-              Also include these checkboxes for the items in the Resources section: ([ ]), but not the Timeline section. 
+              Also include these checkboxes at the start of each line in the Resources section: ([ ]), but not the Timeline section. 
           Under Timeline, provide only one concise sentence describing how to strategize or structure the schedule.
       
       Plan Requirements:
