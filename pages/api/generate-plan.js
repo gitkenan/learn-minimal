@@ -3,10 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
 
-// Initialize Google AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
-// Custom error class for better error handling
 class PlanGenerationError extends Error {
   constructor(message, type, details = null) {
     super(message);
@@ -27,163 +25,102 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get the authenticated session from Supabase
     const supabase = createPagesServerClient({ req, res });
     const { data: { session } } = await supabase.auth.getSession();
 
-    const { topic, timeline } = req.body;
+    const { topic, experience, timeline } = req.body;
 
-    // Enhanced input validation
-    if (!topic && !timeline) {
-      return res.status(400).json({ 
+    // Check all required fields
+    if (!topic || !experience || !timeline) {
+      return res.status(400).json({
         error: 'Missing required fields',
-        message: 'Both topic and timeline are required'
-      });
-    }
-    if (!topic) {
-      return res.status(400).json({ 
-        error: 'Missing topic',
-        message: 'Please provide a topic to learn about'
-      });
-    }
-    if (!timeline) {
-      return res.status(400).json({ 
-        error: 'Missing timeline',
-        message: 'Please specify how much time you have available'
+        message: 'Please provide topic, experience level, and timeline'
       });
     }
 
     try {
-      // Initialize the model and generate the plan
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      
-      // Validate that the model was initialized
       if (!model) {
-        throw new PlanGenerationError(
-          'Failed to initialize AI model',
-          'AI_INIT_ERROR'
-        );
+        throw new PlanGenerationError('Failed to initialize AI model', 'AI_INIT_ERROR');
       }
 
+      // Revised prompt that uses 'experience' to tailor the plan
       const prompt = `
-      You are an expert educator creating a comprehensive, cutting-edge learning plan on the topic: ${topic} 
-      The learner has a timeline of: ${timeline} available. Please generate a markdown-formatted plan with 
-      checkboxes for each actionable item.
-      
-      Goals:
-      
-          The plan must be thorough and in-depth, drawing on current, research-backed methods and examples 
-          from leading professionals in the field.
-          It should include a variety of tasks, avoiding repetitive topics, while truly leveraging the 
-          ${timeline} constraints.
-          The final output must be easy to format:
-              Use markdown headings:
-                  # Learning Plan for ${topic}
-                  ## Phase 1: Fundamentals
-                  ## Phase 2: Deep Dive
-                  ## Phase 3: Application
-                  ## Resources
-                  ## Timeline
-              For each actionable step in the plan, include a checkbox at the beginning of the line ([ ]).
-              Also include these checkboxes at the start of each line in the Resources section: ([ ]), but not the Timeline section. 
-          Under Timeline, provide only one concise sentence describing how to strategize or structure the schedule.
-      
-      Plan Requirements:
-      
-          Phase 1: Fundamentals
-              Introduce advanced yet foundational knowledge—mention practical methods used by top experts 
-              or institutions.
-              Provide tasks that are distinct from each other (avoid repeating the same phrasing).
-          Phase 2: Deep Dive
-              Explore specialized or advanced aspects of the topic, referencing real-world applications 
-              or thought leaders to keep it cutting-edge.
-              Maintain variety in each recommended activity.
-          Phase 3: Application
-              Emphasize hands-on projects or real-life practice to solidify learning in line with the 
-              given ${timeline}.
-              Cite proven approaches from leading professionals if possible, and only if you're 100% certain 
-              about the accuracy of the citation.
-          Resources
-              List recommended books, articles, courses, or other media from recognized authorities if relevant.
-              Only provide a link if you're certain that it's a real link and not a fake one.
-          Timeline
-              In one sentence or a paragraph, give an overview of how to break down the entire ${timeline} efficiently 
-              without repeating earlier instructions. Look into this specific topic, what do experts say about how it should
-              be applied and learned? Should it be applied right away or should one learn the theory first? Give advice 
-              which aligns with expert advice in the field related to ${topic}.
-      
-      Important:
-      
-          Always keep each bullet point or sub-task unique; avoid repetitive wording across tasks.
-          Reflect the learner's total available time ${timeline} across the whole plan. 
-          Prioritize tasks that are most relevant to the learner's goals and timeline.
-          The final response must be in valid markdown with properly formatted checkboxes.`;     
+        You are an expert educator creating a personalized learning plan for someone interested in: ${topic}.
+        The learner has described their experience level as: ${experience}.
+        They have ${timeline} available to learn.
+
+        First, generate a clear, concise title for this learning plan.
+        Then, create the detailed plan following this format:
+
+        # {The generated title}
+
+        IMPORTANT CONTEXT:
+            1. Tailor the plan to both the topic's nature and the learner's background.
+            2. Some topics benefit from hands-on learning from the start, while others need theoretical foundations.
+            3. The plan structure should reflect what works best for this specific topic and learner 
+               (not necessarily "fundamentals → deep dive → application" unless it truly fits).
+            4. Use markdown headings (##) to keep content organized, but feel free to choose how many 
+               sections or phases make sense.
+            5. For any recommended tasks (except the timeline), prepend each line with [ ] for checkboxes.
+            6. Provide a concise "Timeline" section (with no checkboxes) that offers scheduling guidance 
+               based on the learner's background.
+            7. Include a "Resources" section if relevant, with checkboxes ([ ]) for each resource.
+
+        FORMATTING REQUIREMENTS:
+            - The title should be professional and clearly indicate the subject matter
+            - Use markdown formatting like **bold** and *italics* for emphasis
+            - Each task should start with [ ] for checkboxes
+            - The Timeline section should not have checkboxes
+            - Use descriptive section titles that reflect the content
+            - Keep paragraphs concise and well-structured
+
+        GOALS:
+            - The plan should be thorough, referencing proven strategies if you are certain of their accuracy
+            - Avoid repetitive tasks or phrasing
+            - Reflect the learner's experience: advanced learners may skip basics or jump into practice
+            - The final output must be valid markdown and contain checkboxes ([ ]) in appropriate sections, 
+              but not the timeline section
+            - Keep the "Timeline" section to a single sentence or short paragraph
+
+        Please generate the plan now.`.trim();
+
       const generatePromise = model.generateContent(prompt);
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('AI generation timed out')), 30000)
       );
 
       const result = await Promise.race([generatePromise, timeoutPromise]);
-      
       if (!result || !result.response) {
-        throw new PlanGenerationError(
-          'Failed to generate plan content',
-          'AI_GENERATION_ERROR'
-        );
+        throw new PlanGenerationError('Failed to generate plan content', 'AI_GENERATION_ERROR');
       }
 
-      const planContent = result.response.text();
+      let planContent = result.response.text();
 
-      // Validate the generated content
+      // Basic validation
       const validation = validatePlanStructure(planContent);
-      
       if (!validation.isValid) {
-        console.error('Plan validation failed:', {
-          errors: validation.errors,
-          stats: validation.stats
-        });
-        
-        // If validation fails, try one more time with a simpler prompt
-        const retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED. Please ensure your response includes:
-        1. Some section headers (using #)
-        2. At least 3 checkbox tasks using [ ]
-        3. Clear, organized content`;
-
+        // Optional: retry once with a simplified prompt
+        const retryPrompt = `${prompt}\n\nPrevious attempt was missing required structure or tasks. Please ensure:
+1) At least some markdown headings (# or ##)
+2) At least 3 total checkbox tasks ([ ])
+3) A concise timeline section with no checkboxes.
+        `;
         const retryResult = await model.generateContent(retryPrompt);
         const retryContent = retryResult.response.text();
         const retryValidation = validatePlanStructure(retryContent);
-        
+
         if (!retryValidation.isValid) {
           throw new PlanGenerationError(
             'Generated content failed validation after retry',
             'INVALID_CONTENT',
-            {
-              errors: retryValidation.errors,
-              stats: retryValidation.stats
-            }
+            { errors: retryValidation.errors, stats: retryValidation.stats }
           );
         }
-        
-        // Use the valid retry content
         planContent = retryContent;
       }
 
-      // Basic validation checks
-      if (!planContent || planContent.trim().length < 100) {
-        throw new PlanGenerationError(
-          'Generated plan content is too short',
-          'INVALID_CONTENT'
-        );
-      }
-
-      if (!planContent.includes('#')) {
-        throw new PlanGenerationError(
-          'Generated content missing structure',
-          'INVALID_FORMAT'
-        );
-      }
-
-      // Try to insert with regular client first
+      // Insert plan into database
       const { data: plan, error: insertError } = await supabase
         .from('plans')
         .insert({
@@ -199,19 +136,12 @@ export default async function handler(req, res) {
         return res.status(200).json({ plan });
       }
 
-      // If regular insert fails, try with admin client
-      console.log('Regular insert failed, trying admin client:', insertError);
+      // If we get here, normal insert failed; try service role client
       const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
+        { auth: { autoRefreshToken: false, persistSession: false } }
       );
-
       const { data: servicePlan, error: serviceError } = await supabaseAdmin
         .from('plans')
         .insert({
@@ -233,16 +163,12 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ plan: servicePlan });
     } catch (dbError) {
-      console.error('Database operation failed:', dbError);
-      
-      // Handle specific database errors
-      if (dbError.code === '23505') { // Unique violation
+      if (dbError.code === '23505') {
         return res.status(409).json({
           error: 'Duplicate plan',
           message: 'A plan with this topic already exists'
         });
       }
-      
       return res.status(500).json({
         error: dbError instanceof PlanGenerationError ? dbError.type : 'DB_ERROR',
         message: dbError.message,
@@ -250,18 +176,6 @@ export default async function handler(req, res) {
       });
     }
   } catch (error) {
-    console.error('API Route Error:', error);
-    
-    // Enhanced error logging for AI generation errors
-    if (error.response) {
-      console.error('AI Response Error:', {
-        status: error.response.status,
-        message: error.response.statusText,
-        data: error.response.data
-      });
-    }
-
-    // Return appropriate error response based on error type
     if (error instanceof PlanGenerationError) {
       return res.status(500).json({
         error: error.type,
@@ -269,8 +183,6 @@ export default async function handler(req, res) {
         details: error.details
       });
     }
-
-    // Generic error response for unexpected errors
     return res.status(500).json({
       error: 'UNKNOWN_ERROR',
       message: 'An unexpected error occurred while generating your plan',

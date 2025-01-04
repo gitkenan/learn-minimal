@@ -8,8 +8,23 @@ function parseMarkdownPlan(markdown) {
   let currentSection = null;
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
+  
+  // Function to process text content and handle markdown formatting
+  const processContent = (text) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Handle bold
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Handle italics
+      .replace(/`(.*?)`/g, '<code>$1</code>')           // Handle inline code
+      .replace(/\[([\sx])\]/g, '')                     // Replace checkboxes with a nice symbol
+      .trim();
+  };
 
-  lines.forEach((line) => {
+  lines.forEach((line, index) => {
+    // Skip the first h1 heading as it will be used as the title
+    if (index === 0 && line.startsWith('# ')) {
+      return;
+    }
+
     const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     
     if (headingMatch) {
@@ -20,7 +35,7 @@ function parseMarkdownPlan(markdown) {
       currentSection = {
         id: generateId(),
         headingLevel: headingMatch[1].length,
-        title: headingMatch[2].trim(),
+        title: processContent(headingMatch[2].trim()),
         type: detectSectionType(headingMatch[2].trim()),
         items: []
       };
@@ -31,21 +46,21 @@ function parseMarkdownPlan(markdown) {
           id: generateId(),
           type: 'task',
           isComplete: checkboxMatch[1].toLowerCase() === 'x',
-          content: checkboxMatch[2].trim()
+          content: processContent(checkboxMatch[2].trim())
         });
       } 
       else if (line.trim().startsWith('- ')) {
         currentSection.items.push({
           id: generateId(),
           type: 'text',
-          content: line.replace(/^-\s+/, '').trim()
+          content: processContent(line.replace(/^-\s+/, '').trim())
         });
       }
       else if (line.trim()) {
         currentSection.items.push({
           id: generateId(),
           type: 'text',
-          content: line.trim()
+          content: processContent(line.trim())
         });
       }
     }
@@ -90,64 +105,55 @@ function calculateProgress(sections) {
 
 // The React component
 const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
-  const [parsedContent, setParsedContent] = useState(null);
+  const [content, setContent] = useState(initialContent);
+  const [parsedContent, setParsedContent] = useState({ sections: [], progress: 0 });
 
   useEffect(() => {
-    const parsed = parseMarkdownPlan(initialContent);
-    setParsedContent(parsed);
-  }, [initialContent]);
+    setParsedContent(parseMarkdownPlan(content));
+  }, [content]);
 
   const handleCheckboxClick = async (sectionId, itemId) => {
-    if (!parsedContent) return;
-
-    const newParsedContent = {
-      ...parsedContent,
-      sections: parsedContent.sections.map(section => {
-        if (section.id !== sectionId) return section;
-        
+    const newSections = parsedContent.sections.map(section => {
+      if (section.id === sectionId) {
         return {
           ...section,
           items: section.items.map(item => {
-            if (item.id !== itemId) return item;
-            return { ...item, isComplete: !item.isComplete };
+            if (item.id === itemId && item.type === 'task') {
+              return { ...item, isComplete: !item.isComplete };
+            }
+            return item;
           })
         };
-      })
+      }
+      return section;
+    });
+
+    const newParsedContent = {
+      sections: newSections,
+      progress: calculateProgress(newSections)
     };
 
-    const newProgress = calculateProgress(newParsedContent.sections);
-
-    try {
-      const supabase = initializeSupabase();
-      const { error } = await supabase
-        .from('plans')
-        .update({ 
-          content: JSON.stringify(newParsedContent),
-          progress: newProgress 
-        })
-        .eq('id', planId);
-
-      if (error) throw error;
-      
-      setParsedContent(newParsedContent);
-      if (onProgressUpdate) {
-        onProgressUpdate(newProgress);
-      }
-    } catch (error) {
-      console.error('Failed to update progress:', error);
+    setParsedContent(newParsedContent);
+    
+    if (onProgressUpdate) {
+      onProgressUpdate(newParsedContent.progress);
     }
   };
-
-  if (!parsedContent) return <div>Loading...</div>;
 
   return (
     <div className="space-y-8">
       {parsedContent.sections.map(section => (
         <div key={section.id} className="space-y-4">
-          {section.headingLevel === 1 ? (
-            <h1 className="text-3xl font-bold">{section.title}</h1>
+          {section.headingLevel === 2 ? (
+            <h2 
+              className="text-2xl font-semibold"
+              dangerouslySetInnerHTML={{ __html: section.title }}
+            />
           ) : (
-            <h2 className="text-2xl font-semibold">{section.title}</h2>
+            <h3 
+              className="text-xl font-semibold"
+              dangerouslySetInnerHTML={{ __html: section.title }}
+            />
           )}
 
           <div className="space-y-2 ml-4">
@@ -169,12 +175,16 @@ const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
                         </svg>
                       )}
                     </div>
-                    <span className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}>
-                      {item.content}
-                    </span>
+                    <span 
+                      className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}
+                      dangerouslySetInnerHTML={{ __html: item.content }}
+                    />
                   </div>
                 ) : (
-                  <div className="text-gray-900 ml-6">{item.content}</div>
+                  <div 
+                    className="text-gray-900 ml-6"
+                    dangerouslySetInnerHTML={{ __html: item.content }}
+                  />
                 )}
               </div>
             ))}

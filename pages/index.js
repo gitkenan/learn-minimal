@@ -8,32 +8,33 @@ export default function Home() {
   const { user, session, loading } = useAuth();
   const [topic, setTopic] = useState('');
   const [timeline, setTimeline] = useState('');
+  const [experience, setExperience] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/generate-plan', {
+      const res = await fetch('/api/generate-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({ topic, timeline }),
+        body: JSON.stringify({ topic, timeline, experience }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!res.ok) {
+        const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to generate plan');
       }
 
-      const data = await response.json();
+      const data = await res.json();
       router.push(`/plan/${data.plan.id}`);
     } catch (err) {
       setError(err.message);
@@ -126,6 +127,15 @@ export default function Home() {
                          transition-colors duration-200"
                 disabled={isLoading}
               />
+              <textarea
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+                placeholder="Tell us about your experience with this topic... (e.g., 'I'm completely new to this' or 'I've been studying this for 2 years')"
+                className="w-full p-4 text-primary bg-background border border-claude-border 
+                         rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                         transition-colors duration-200 min-h-[100px]"
+                disabled={isLoading}
+              />
               <input
                 type="text"
                 value={timeline}
@@ -146,7 +156,7 @@ export default function Home() {
 
             <button
               type="submit"
-              disabled={isLoading || !topic.trim() || !timeline.trim() || loading}
+              disabled={isLoading || !topic.trim() || !timeline.trim() || !experience.trim() || loading}
               className="w-full p-4 bg-accent hover:bg-accent-hover text-white rounded-lg
                        transition-colors duration-200 disabled:opacity-50
                        font-medium text-base flex items-center justify-center"
