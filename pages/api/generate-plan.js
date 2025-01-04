@@ -1,7 +1,7 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { validatePlanStructure } from '../../utils/planValidator';
+import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
 
 // Initialize Google AI with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
@@ -15,6 +15,8 @@ class PlanGenerationError extends Error {
     this.details = details;
   }
 }
+
+const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -105,8 +107,10 @@ export default async function handler(req, res) {
               List recommended books, articles, courses, or other media from recognized authorities if relevant.
               Only provide a link if you're certain that it's a real link and not a fake one.
           Timeline
-              In one sentence, give an overview of how to break down the entire ${timeline} efficiently 
-              without repeating earlier instructions.
+              In one sentence or a paragraph, give an overview of how to break down the entire ${timeline} efficiently 
+              without repeating earlier instructions. Look into this specific topic, what do experts say about how it should
+              be applied and learned? Should it be applied right away or should one learn the theory first? Give advice 
+              which aligns with expert advice in the field related to ${topic}.
       
       Important:
       
@@ -139,8 +143,13 @@ export default async function handler(req, res) {
           stats: validation.stats
         });
         
-        // If validation fails, try one more time
-        const retryResult = await model.generateContent(prompt);
+        // If validation fails, try one more time with a simpler prompt
+        const retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED. Please ensure your response includes:
+        1. Some section headers (using #)
+        2. At least 3 checkbox tasks using [ ]
+        3. Clear, organized content`;
+
+        const retryResult = await model.generateContent(retryPrompt);
         const retryContent = retryResult.response.text();
         const retryValidation = validatePlanStructure(retryContent);
         
@@ -149,8 +158,8 @@ export default async function handler(req, res) {
             'Generated content failed validation after retry',
             'INVALID_CONTENT',
             {
-              errors: validation.errors,
-              stats: validation.stats
+              errors: retryValidation.errors,
+              stats: retryValidation.stats
             }
           );
         }
@@ -159,35 +168,17 @@ export default async function handler(req, res) {
         planContent = retryContent;
       }
 
-      // Log any warnings for monitoring
-      if (validation.warnings.length > 0) {
-        console.warn('Plan generation warnings:', {
-          warnings: validation.warnings,
-          topic,
-          stats: validation.stats
-        });
-      }
-
-      // Additional logging for monitoring prompt effectiveness
-      console.info('Plan generation stats:', {
-        topic,
-        timeline,
-        contentLength: validation.stats.contentLength,
-        totalCheckboxItems: validation.stats.totalCheckboxItems,
-        sectionLengths: validation.stats.sectionLengths
-      });
-
       // Basic validation checks
-      if (!planContent || planContent.trim().length < 50) {
+      if (!planContent || planContent.trim().length < 100) {
         throw new PlanGenerationError(
-          'Generated plan content is too short or empty',
+          'Generated plan content is too short',
           'INVALID_CONTENT'
         );
       }
 
-      if (!planContent.includes('# Learning Plan')) {
+      if (!planContent.includes('#')) {
         throw new PlanGenerationError(
-          'Generated content does not match expected format',
+          'Generated content missing structure',
           'INVALID_FORMAT'
         );
       }
