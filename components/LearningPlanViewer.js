@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
-import { initializeSupabase } from '@/lib/supabaseClient';
 import TaskNotes from './TaskNotes';
+import { usePlan } from '@/hooks/usePlan';
+
+// Helper function to validate JSON structure
+function isValidPlanStructure(content) {
+  return content?.sections?.length > 0 && 
+         content.sections.every(section => 
+           section.id && section.title && Array.isArray(section.items));
+}
 
 // Parser function that converts markdown to structured data
-function parseLearningPlanViewer(markdown) {
+export function parseMarkdownPlan(markdown) {
   const lines = markdown.split('\n');
   const sections = [];
   let currentSection = null;
@@ -88,7 +95,7 @@ function detectSectionType(title) {
   return 'section';
 }
 
-function calculateProgress(sections) {
+export function calculateProgress(sections) {
   let totalTasks = 0;
   let completedTasks = 0;
 
@@ -104,205 +111,81 @@ function calculateProgress(sections) {
   return totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 }
 
-// Helper function to merge concurrent changes
-function mergeChanges(currentContent, newContent) {
-  // Create a map of all items by ID for easier lookup
-  const currentItems = new Map();
-  currentContent.sections.forEach(section => {
-    section.items.forEach(item => {
-      currentItems.set(item.id, item);
-    });
-  });
-
-  // Merge by preserving structure but updating completion states
-  return {
-    ...newContent,
-    sections: newContent.sections.map(section => ({
-      ...section,
-      items: section.items.map(item => {
-        const currentItem = currentItems.get(item.id);
-        // If item exists in current version, use its completion state
-        return currentItem ? { ...item, isComplete: currentItem.isComplete } : item;
-      })
-    }))
-  };
-}
-
 const LearningPlanViewer = ({ 
   initialContent, 
   planId, 
   onProgressUpdate,
   contentType = 'json'
 }) => {
+  const { 
+    plan,
+    notes,  // Now getting notes from the hook
+    loading,
+    error,
+    updating,
+    toggleTask,
+    saveNote
+  } = usePlan(planId);
+  
   const [parsedContent, setParsedContent] = useState(null);
-  const [notes, setNotes] = useState({}); // Map of taskId -> notes array
-  const [loading, setLoading] = useState(true);
 
-  // Fetch notes for all tasks when component mounts
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const supabase = initializeSupabase();
-        const { data: noteData, error } = await supabase
-          .from('plan_item_notes')
-          .select('*')
-          .eq('plan_id', planId)
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        // Group notes by task_id
-        const notesByTask = noteData.reduce((acc, note) => {
-          if (!acc[note.task_id]) {
-            acc[note.task_id] = [];
-          }
-          acc[note.task_id].push(note);
-          return acc;
-        }, {});
-
-        setNotes(notesByTask);
-      } catch (error) {
-        console.error('Error fetching notes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (planId) {
-      fetchNotes();
-    }
-  }, [planId]);
-
-  // Helper to validate JSON structure
-  const isValidPlanStructure = (content) => {
-    return content?.sections?.length > 0 && 
-           content.sections.every(section => 
-             section.id && section.title && Array.isArray(section.items));
-  };
-
+  // Process initial content
   useEffect(() => {
     let processedContent;
     try {
       if (contentType === 'json') {
-        // Handle JSON content
         processedContent = typeof initialContent === 'string' 
           ? JSON.parse(initialContent)
           : initialContent;
           
         if (!isValidPlanStructure(processedContent)) {
           console.warn('Invalid JSON structure, falling back to markdown parsing');
-          processedContent = parseLearningPlanViewer(
+          processedContent = parseMarkdownPlan(
             typeof initialContent === 'string' ? initialContent : ''
           );
         }
       } else {
-        // Handle markdown content
-        processedContent = parseLearningPlanViewer(initialContent);
+        processedContent = parseMarkdownPlan(initialContent);
       }
 
       setParsedContent(processedContent);
     } catch (e) {
       console.warn('Content processing failed:', e);
-      // Fall back to markdown parsing if anything goes wrong
-      const fallbackContent = parseLearningPlanViewer(
+      const fallbackContent = parseMarkdownPlan(
         typeof initialContent === 'string' ? initialContent : ''
       );
       setParsedContent(fallbackContent);
     }
   }, [initialContent, contentType]);
 
+  // Update progress callback
+  useEffect(() => {
+    if (plan && onProgressUpdate) {
+      onProgressUpdate(plan.progress);
+    }
+  }, [plan?.progress, onProgressUpdate]);
+
+  // Loading state
+  if (loading) {
+    return <div className="animate-pulse">Loading plan...</div>;
+  }
+
+  // Error state
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
   const handleCheckboxClick = async (sectionId, itemId) => {
-    if (!parsedContent) return;
-
-    let newParsedContent = {
-      ...parsedContent,
-      sections: parsedContent.sections.map(section => {
-        if (section.id !== sectionId) return section;
-        
-        return {
-          ...section,
-          items: section.items.map(item => {
-            if (item.id !== itemId) return item;
-            return { ...item, isComplete: !item.isComplete };
-          })
-        };
-      })
-    };
-
-    let newProgress = calculateProgress(newParsedContent.sections);
-
     try {
-      const supabase = initializeSupabase();
-      
-      // First get the latest version to check for conflicts
-      const { data: currentPlan, error: fetchError } = await supabase
-        .from('plans')
-        .select('json_content, progress')
-        .eq('id', planId)
-        .single();
-        
-      if (fetchError) throw fetchError;
-      
-      // Compare current vs our local version to detect conflicts
-      if (currentPlan.json_content?.version !== parsedContent.version) {
-        // Conflict detected - fetch latest and merge changes
-        console.warn('Detected concurrent update, merging changes');
-        newParsedContent = mergeChanges(currentPlan.json_content, newParsedContent);
-        newProgress = calculateProgress(newParsedContent.sections);
-
-        // Then increment the merged version
-        let localVersion = (currentPlan.json_content.version || 0) + 1;
-        newParsedContent.version = localVersion;
-      } else {
-        // No conflict - increment our local version
-        let localVersion = (parsedContent.version || 0) + 1;
-        newParsedContent.version = localVersion;
-      }
-      
-      const { error } = await supabase
-        .from('plans')
-        .update({
-          json_content: newParsedContent,
-          progress: newProgress
-        })
-        .eq('id', planId);
-
-      if (!error) {
-        // Now store it in React state
-        setParsedContent(newParsedContent);
-        if (onProgressUpdate) {
-          onProgressUpdate(newProgress);
-        }
-      } else {
-        throw error;
-      }
+      await toggleTask(sectionId, itemId);
     } catch (error) {
-      console.error('Failed to update progress:', error);
+      console.error('Failed to toggle task:', error);
     }
   };
 
   const handleSaveNote = async (taskId, content) => {
     try {
-      const supabase = initializeSupabase();
-      
-      const { data: newNote, error } = await supabase
-        .from('plan_item_notes')
-        .insert({
-          plan_id: planId,
-          task_id: taskId,
-          content
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update local state
-      setNotes(prev => ({
-        ...prev,
-        [taskId]: [...(prev[taskId] || []), newNote]
-      }));
-
+      await saveNote(taskId, content);
     } catch (error) {
       console.error('Error saving note:', error);
       throw error;
@@ -331,7 +214,8 @@ const LearningPlanViewer = ({
                 {item.type === 'task' ? (
                   <div className="relative">
                     <div 
-                      className="flex items-start gap-2 cursor-pointer group"
+                      className={`flex items-start gap-2 cursor-pointer group
+                        ${updating ? 'opacity-50 pointer-events-none' : ''}`}
                       onClick={() => handleCheckboxClick(section.id, item.id)}
                     >
                       <div className={`
@@ -351,7 +235,6 @@ const LearningPlanViewer = ({
                       />
                     </div>
                     
-                    {/* Add TaskNotes component */}
                     <TaskNotes
                       taskId={item.id}
                       notes={notes[item.id] || []}
@@ -374,4 +257,3 @@ const LearningPlanViewer = ({
 };
 
 export default LearningPlanViewer;
-export { parseLearningPlanViewer, calculateProgress };

@@ -1,75 +1,46 @@
 // pages/plan/[id].js
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { initializeSupabase } from '@/lib/supabaseClient';
 import LearningPlanViewer from '@/components/LearningPlanViewer';
 import LearningChat from '@/components/LearningChat';
+import { usePlan } from '@/hooks/usePlan';
 
 export default function PlanPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { id } = router.query;
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [plan, setPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    async function fetchPlan() {
-      if (!id) return;
+  const { 
+    plan,
+    loading,
+    error
+  } = usePlan(id);
 
-      setLoading(true);
-      setError('');
-      
-      try {
-        const supabase = initializeSupabase();
-        if (!supabase) throw new Error('Failed to initialize Supabase client');
+  // Loading state
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Loading plan...</div>;
+  }
 
-        const { data, error: supabaseError } = await supabase
-          .from('plans')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (supabaseError) throw supabaseError;
-        if (!data) throw new Error('Plan not found');
-        if (data.user_id !== user?.id) throw new Error('Not authorized to view this plan');
-
-        setPlan(data);
-      } catch (err) {
-        console.error('Error fetching plan:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (id) fetchPlan();
-  }, [id, user?.id]);
-
-  const handleProgressUpdate = (newProgress) => {
-    setPlan(prev => ({ ...prev, progress: newProgress }));
-  };
-
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading plan...</div>;
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <div className="text-red-500">{error}</div>
-        <Link href="/" className="text-accent hover:text-accent-hover transition-colors duration-200">
-          ← Back to Home
+        <Link href="/dashboard" className="text-accent hover:text-accent-hover transition-colors duration-200">
+          ← Back to Dashboard
         </Link>
       </div>
     );
   }
-  if (!plan) return <div className="min-h-screen bg-background flex items-center justify-center">Plan not found</div>;
 
-  // Determine which content to use - prefer json_content over content
-  const planContent = plan.json_content || plan.content;
-  const contentType = plan.json_content ? 'json' : 'markdown';
+  // Not found state
+  if (!plan) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Plan not found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,8 +105,11 @@ export default function PlanPage() {
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-3xl mx-auto">
               <div className="mb-8 flex items-center justify-between">
-                <Link href="/" className="text-accent hover:text-accent-hover transition-colors duration-200">
-                  ← Back to Home
+                <Link 
+                  href="/dashboard" 
+                  className="text-accent hover:text-accent-hover transition-colors duration-200"
+                >
+                  ← Back to Dashboard
                 </Link>
                 <span className="text-secondary text-sm">
                   Created {new Date(plan.created_at).toLocaleDateString()}
@@ -146,10 +120,9 @@ export default function PlanPage() {
                 <h1 className="text-primary text-3xl font-semibold mb-6">{plan.topic}</h1>
                 
                 <LearningPlanViewer 
-                  initialContent={planContent}
+                  initialContent={plan.json_content || plan.content}
                   planId={plan.id}
-                  onProgressUpdate={handleProgressUpdate}
-                  contentType={contentType}
+                  contentType={plan.json_content ? 'json' : 'markdown'}
                 />
 
                 <div className="mt-8 pt-8 border-t border-claude-border">
