@@ -74,8 +74,8 @@ export default async function handler(req, res) {
                 don't overdo this.
             - Each task should start with [ ] for checkboxes
             - The Timeline and Resources sections should not have checkboxes
-            - The Resources section shouldn't be 100% accurate and should not include resources which are 
-                not appropriate for the learner's experience level
+            - The Resources section should not contain links, nor should any of the plan, however it should 
+                contain general terms that the user can search on Google to find useful resources
             - Use descriptive section titles that reflect the content but are designed to be incremental
             - Keep paragraphs concise and well-structured, designed to provoke thought and deeper research
 

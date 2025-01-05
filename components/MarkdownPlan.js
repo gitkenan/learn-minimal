@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initializeSupabase } from '@/lib/supabaseClient';
+import TaskNotes from './TaskNotes';
 
 // Parser function that converts markdown to structured data
 function parseMarkdownPlan(markdown) {
@@ -131,18 +132,55 @@ const MarkdownPlan = ({
   initialContent, 
   planId, 
   onProgressUpdate,
-  contentType = 'json' // New prop to specify content type
+  contentType = 'json'
 }) => {
   const [parsedContent, setParsedContent] = useState(null);
+  const [notes, setNotes] = useState({}); // Map of taskId -> notes array
+  const [loading, setLoading] = useState(true);
 
+  // Fetch notes for all tasks when component mounts
   useEffect(() => {
-    // Helper to validate JSON structure
-    const isValidPlanStructure = (content) => {
-      return content?.sections?.length > 0 && 
-             content.sections.every(section => 
-               section.id && section.title && Array.isArray(section.items));
+    const fetchNotes = async () => {
+      try {
+        const supabase = initializeSupabase();
+        const { data: noteData, error } = await supabase
+          .from('plan_item_notes')
+          .select('*')
+          .eq('plan_id', planId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        // Group notes by task_id
+        const notesByTask = noteData.reduce((acc, note) => {
+          if (!acc[note.task_id]) {
+            acc[note.task_id] = [];
+          }
+          acc[note.task_id].push(note);
+          return acc;
+        }, {});
+
+        setNotes(notesByTask);
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
+    if (planId) {
+      fetchNotes();
+    }
+  }, [planId]);
+
+  // Helper to validate JSON structure
+  const isValidPlanStructure = (content) => {
+    return content?.sections?.length > 0 && 
+           content.sections.every(section => 
+             section.id && section.title && Array.isArray(section.items));
+  };
+
+  useEffect(() => {
     let processedContent;
     try {
       if (contentType === 'json') {
@@ -243,6 +281,34 @@ const MarkdownPlan = ({
     }
   };
 
+  const handleSaveNote = async (taskId, content) => {
+    try {
+      const supabase = initializeSupabase();
+      
+      const { data: newNote, error } = await supabase
+        .from('plan_item_notes')
+        .insert({
+          plan_id: planId,
+          task_id: taskId,
+          content
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setNotes(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), newNote]
+      }));
+
+    } catch (error) {
+      console.error('Error saving note:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="space-y-8">
       {parsedContent?.sections.map(section => (
@@ -263,24 +329,33 @@ const MarkdownPlan = ({
             {section.items.map(item => (
               <div key={item.id}>
                 {item.type === 'task' ? (
-                  <div 
-                    className="flex items-start gap-2 cursor-pointer group"
-                    onClick={() => handleCheckboxClick(section.id, item.id)}
-                  >
-                    <div className={`
-                      mt-1 w-4 h-4 border rounded flex items-center justify-center
-                      ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
-                      group-hover:border-accent transition-colors duration-200
-                    `}>
-                      {item.isComplete && (
-                        <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                        </svg>
-                      )}
+                  <div>
+                    <div 
+                      className="flex items-start gap-2 cursor-pointer group"
+                      onClick={() => handleCheckboxClick(section.id, item.id)}
+                    >
+                      <div className={`
+                        mt-1 w-4 h-4 border rounded flex items-center justify-center
+                        ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
+                        group-hover:border-accent transition-colors duration-200
+                      `}>
+                        {item.isComplete && (
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span 
+                        className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}
+                        dangerouslySetInnerHTML={{ __html: item.content }}
+                      />
                     </div>
-                    <span 
-                      className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}
-                      dangerouslySetInnerHTML={{ __html: item.content }}
+                    
+                    {/* Add TaskNotes component */}
+                    <TaskNotes
+                      taskId={item.id}
+                      notes={notes[item.id] || []}
+                      onSaveNote={(content) => handleSaveNote(item.id, content)}
                     />
                   </div>
                 ) : (

@@ -25,8 +25,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Verify discussion belongs to user and get plan content
-    const [discussionResult, planResult] = await Promise.all([
+    // Verify discussion belongs to user and get plan content and messages
+    const [discussionResult, planResult, messagesResult] = await Promise.all([
       supabase
         .from('plan_discussions')
         .select('*')
@@ -38,7 +38,12 @@ export default async function handler(req, res) {
         .select('*')
         .eq('id', planId)
         .eq('user_id', session.user.id)
-        .single()
+        .single(),
+      supabase
+        .from('discussion_messages')
+        .select('*')
+        .eq('discussion_id', discussionId)
+        .order('created_at', { ascending: true })
     ]);
 
     if (!discussionResult.data || !planResult.data) {
@@ -46,43 +51,41 @@ export default async function handler(req, res) {
     }
 
     const planContent = planResult.data.content;
+    const previousMessages = messagesResult.data || [];
 
-    // Initialize AI model
+    // Initialize AI model with chat functionality
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{
+            text: `You are a learning assistant helping with ${topic}. Here is the learning plan: ${planContent}
 
-    // Enhanced prompt with plan context and accuracy requirements
-    const prompt = `You are a knowledgeable and encouraging learning assistant helping someone understand ${topic}. You have access to their learning plan, which is provided below.
+IMPORTANT INSTRUCTIONS:
+1. Always respond in plain text without any formatting
+2. Don't segregate responses into sections
+3. Keep responses conversational and natural
+4. Don't use any markdown formatting
+5. Don't take any formatting examples from the learning plan
+6. Stay focused on helping the user learn ${topic}`
+          }]
+        },
+        {
+          role: "model",
+          parts: [{
+            text: "I understand. I'll help you learn about this topic in a conversational way, using plain text without any special formatting or sections. I'll keep the learning plan in mind while we chat."
+          }]
+        },
+        // Add previous messages to history
+        ...previousMessages.map(msg => ({
+          role: msg.is_ai ? "model" : "user",
+          parts: [{ text: msg.content }]
+        }))
+      ]
+    });
 
-LEARNING PLAN CONTEXT:
-${planContent}
-
-CHAT HISTORY CONTEXT:
-The user is actively working through this learning plan and has a question.
-
-THEIR QUESTION:
-${message}
-
-RESPONSE REQUIREMENTS:
-1. Directly address their question while considering where they are in their learning journey based on the plan.
-2. If relevant, reference specific parts of their learning plan to help connect concepts.
-3. Include practical examples that align with their learning goals.
-4. If you mention any facts, statistics, specific tools, resources, or quote anyone:
-   - ONLY include information you are 100% certain is accurate
-   - If you're not entirely sure about a specific detail, explain the concept without citing specific facts
-   - Never make up or guess at statistics, quotes, or specific resource details
-5. When suggesting resources:
-   - Only recommend widely-known, verified resources
-   - Avoid mentioning specific URLs unless you're absolutely certain they're correct
-   - Focus on describing what makes a good resource rather than naming specific ones if you're unsure
-6. Encourage exploration while staying within the scope of their learning plan
-
-FORMAT YOUR RESPONSE:
-- Be clear and concise while being thorough
-- Use examples when helpful
-- If relevant, indicate which phase of their learning plan this connects to
-- End with a thought-provoking question or suggestion that encourages deeper exploration of the topic`;
-
-    const result = await model.generateContent(prompt);
+    const result = await chat.sendMessage([{ text: message }]);
     const response = result.response.text();
 
     return res.status(200).json({ response });
