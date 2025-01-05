@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { parseMarkdownPlan } from '@/components/MarkdownPlan';
+import { parseLearningPlanViewer } from '@/components/LearningPlanViewer';
 
 const testCases = [
   {
@@ -85,7 +85,7 @@ export default function ParserTest() {
   const runTest = (index) => {
     try {
       setSelectedTest(index);
-      const result = parseMarkdownPlan(testCases[index].content);
+      const result = parseLearningPlanViewer(testCases[index].content);
       setParsedResult(result);
       setError(null);
     } catch (err) {

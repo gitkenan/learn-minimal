@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
-import MarkdownPlan from '@/components/MarkdownPlan';
+import LearningPlanViewer from '@/components/LearningPlanViewer';
 import LearningChat from '@/components/LearningChat';
 
 export default function PlanPage() {
@@ -145,7 +145,7 @@ export default function PlanPage() {
               <div className="bg-surface p-8 rounded-lg shadow-claude">
                 <h1 className="text-primary text-3xl font-semibold mb-6">{plan.topic}</h1>
                 
-                <MarkdownPlan 
+                <LearningPlanViewer 
                   initialContent={planContent}
                   planId={plan.id}
                   onProgressUpdate={handleProgressUpdate}

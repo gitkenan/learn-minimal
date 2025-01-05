@@ -3,7 +3,7 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 import TaskNotes from './TaskNotes';
 
 // Parser function that converts markdown to structured data
-function parseMarkdownPlan(markdown) {
+function parseLearningPlanViewer(markdown) {
   const lines = markdown.split('\n');
   const sections = [];
   let currentSection = null;
@@ -128,7 +128,7 @@ function mergeChanges(currentContent, newContent) {
   };
 }
 
-const MarkdownPlan = ({ 
+const LearningPlanViewer = ({ 
   initialContent, 
   planId, 
   onProgressUpdate,
@@ -191,20 +191,20 @@ const MarkdownPlan = ({
           
         if (!isValidPlanStructure(processedContent)) {
           console.warn('Invalid JSON structure, falling back to markdown parsing');
-          processedContent = parseMarkdownPlan(
+          processedContent = parseLearningPlanViewer(
             typeof initialContent === 'string' ? initialContent : ''
           );
         }
       } else {
         // Handle markdown content
-        processedContent = parseMarkdownPlan(initialContent);
+        processedContent = parseLearningPlanViewer(initialContent);
       }
 
       setParsedContent(processedContent);
     } catch (e) {
       console.warn('Content processing failed:', e);
       // Fall back to markdown parsing if anything goes wrong
-      const fallbackContent = parseMarkdownPlan(
+      const fallbackContent = parseLearningPlanViewer(
         typeof initialContent === 'string' ? initialContent : ''
       );
       setParsedContent(fallbackContent);
@@ -373,5 +373,5 @@ const MarkdownPlan = ({
   );
 };
 
-export default MarkdownPlan;
-export { parseMarkdownPlan, calculateProgress };
+export default LearningPlanViewer;
+export { parseLearningPlanViewer, calculateProgress };

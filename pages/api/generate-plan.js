@@ -2,7 +2,7 @@ import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
-import { parseMarkdownPlan } from '../../components/MarkdownPlan';
+import { parseLearningPlanViewer } from '../../components/LearningPlanViewer';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
       }
 
       // Parse the markdown to JSON structure before saving
-      const parsedPlan = parseMarkdownPlan(planContent);
+      const parsedPlan = parseLearningPlanViewer(planContent);
       
       // Try to store both formats, but don't fail if json_content column doesn't exist yet
       const planData = {
