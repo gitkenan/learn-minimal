@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { MessageSquarePlus, ChevronDown, ChevronUp } from 'lucide-react';
 
 const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSave = async () => {
     if (!newNote.trim()) return;
@@ -17,6 +17,7 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
       await onSaveNote(newNote);
       setNewNote('');
       setIsAddingNote(false);
+      setIsExpanded(true);
     } catch (error) {
       console.error('Failed to save note:', error);
     } finally {
@@ -24,95 +25,107 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
     }
   };
 
-  if (notes.length === 0 && !isAddingNote) {
-    return (
-      <button
-        onClick={() => setIsAddingNote(true)}
-        className="flex items-center text-xs text-gray-500 hover:text-accent mt-1 ml-6"
-      >
-        <MessageSquarePlus className="w-4 h-4 mr-1" />
-        Add note
-      </button>
-    );
-  }
+  // Only render add note button if there are no notes and we're not currently adding one
+  const showAddNoteButton = !isAddingNote && !notes.length;
 
   return (
-    <div className="ml-6 mt-1">
-      {(notes.length > 0 || isAddingNote) && (
-        <div className="border-l-2 border-gray-200 pl-3">
-          {/* Notes toggle */}
-          {notes.length > 0 && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center text-xs text-gray-500 hover:text-accent mb-2"
+    <div className="mt-2">
+      {/* Note count and toggle - only show if there are notes */}
+      {notes.length > 0 && !isAddingNote && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+        >
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+          <span>{notes.length} note{notes.length !== 1 ? 's' : ''}</span>
+        </button>
+      )}
+
+      {/* Add note button - in margin */}
+      {showAddNoteButton && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsAddingNote(true);
+          }}
+          className="ml-2 flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200"
+          title="Add note"
+        >
+          <MessageSquarePlus className="w-4 h-4" />
+          <span>Add note</span>
+        </button>
+      )}
+
+      {/* Expanded notes view */}
+      {isExpanded && notes.length > 0 && (
+        <div className="ml-6 mt-2 space-y-3">
+          {notes.map((note) => (
+            <div 
+              key={note.id} 
+              className="bg-gray-50 p-3 rounded-lg"
+              onClick={(e) => e.stopPropagation()}
             >
-              {isExpanded ? (
-                <ChevronUp className="w-4 h-4 mr-1" />
-              ) : (
-                <ChevronDown className="w-4 h-4 mr-1" />
-              )}
-              {notes.length} note{notes.length !== 1 ? 's' : ''}
+              <p className="text-sm text-gray-700">{note.content}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {new Date(note.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+          
+          {/* Add another note button */}
+          {!isAddingNote && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAddingNote(true);
+              }}
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            >
+              <MessageSquarePlus className="w-3 h-3" />
+              <span>Add another note</span>
             </button>
           )}
+        </div>
+      )}
 
-          {/* Existing notes */}
-          {isExpanded && (
-            <div className="space-y-2 mb-2">
-              {notes.map((note) => (
-                <div 
-                  key={note.id}
-                  className="bg-gray-50 p-2 rounded text-sm text-gray-600"
-                >
-                  {note.content}
-                  <div className="text-xs text-gray-400 mt-1">
-                    {new Date(note.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add note form */}
-          {(isAddingNote || notes.length === 0) && (
-            <div className="space-y-2">
-              <Textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Add a note..."
-                className="min-h-20 text-sm"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving || !newNote.trim()}
-                  size="sm"
-                >
-                  {isSaving ? 'Saving...' : 'Save Note'}
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsAddingNote(false);
-                    setNewNote('');
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Add note button */}
-          {!isAddingNote && notes.length > 0 && (
-            <button
-              onClick={() => setIsAddingNote(true)}
-              className="flex items-center text-xs text-gray-500 hover:text-accent mt-2"
+      {/* Add note form */}
+      {isAddingNote && (
+        <div 
+          className="ml-6 mt-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Textarea
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Add a note..."
+            className="text-sm mb-2"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !newNote.trim()}
+              size="sm"
             >
-              <MessageSquarePlus className="w-4 h-4 mr-1" />
-              Add another note
-            </button>
-          )}
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button
+              onClick={() => {
+                setIsAddingNote(false);
+                setNewNote('');
+              }}
+              variant="outline"
+              size="sm"
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       )}
     </div>

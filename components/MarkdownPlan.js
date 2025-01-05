@@ -329,7 +329,7 @@ const MarkdownPlan = ({
             {section.items.map(item => (
               <div key={item.id}>
                 {item.type === 'task' ? (
-                  <div>
+                  <div className="relative">
                     <div 
                       className="flex items-start gap-2 cursor-pointer group"
                       onClick={() => handleCheckboxClick(section.id, item.id)}
