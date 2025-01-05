@@ -49,32 +49,35 @@ export default async function handler(req, res) {
       const prompt = `
         You are an expert educator creating a personalized learning plan for someone interested in: ${topic}.
         The learner has described their experience level as: ${experience}.
-        They have ${timeline} available to learn.
+        They have described their timeline as: ${timeline}.
 
-        First, generate a clear, concise title for this learning plan.
-        Then, create the detailed plan following this format:
-
+        First, generate a clear, concise title for this learning plan that captures the essence of the topic.
+        Then, generate a personalized learning plan based on the title and the learner's experience level, timeline, and background knowledge.
+        The plan should 
         # {The generated title}
 
         IMPORTANT CONTEXT:
             1. Tailor the plan to both the topic's nature and the learner's background.
-            2. Some topics benefit from hands-on learning from the start, while others need theoretical foundations.
-            3. The plan structure should reflect what works best for this specific topic and learner 
-               (not necessarily "fundamentals → deep dive → application" unless it truly fits).
-            4. Use markdown headings (##) to keep content organized, but feel free to choose how many 
-               sections or phases make sense.
-            5. For any recommended tasks (except the timeline), prepend each line with [ ] for checkboxes.
+            2. The plan should be somewhat incremental. That is, it should start with the basics and move upwards 
+               from there, encouraging active learning (learning by doing) in each point.
+            3. The plan structure should reflect what works best for this specific topic and learner.
+            4. Use markdown headings (##) for sub-sections to keep content organized.
+            5. For any recommended tasks (except the timeline and resources sections), prepend each line with 
+                [ ] for checkboxes.
             6. Provide a concise "Timeline" section (with no checkboxes) that offers scheduling guidance 
-               based on the learner's background.
-            7. Include a "Resources" section if relevant, with checkboxes ([ ]) for each resource.
+               based on the learner's background, giving any common advice for following the proceding plan.
+            7. Include a "Resources" section if relevant, without checkboxes for each resource.
 
         FORMATTING REQUIREMENTS:
             - The title should be professional and clearly indicate the subject matter
-            - Use markdown formatting like **bold** and *italics* for emphasis
+            - Use markdown formatting like **bold** and *italics* for emphasis wherever appropriate, but 
+                don't overdo this.
             - Each task should start with [ ] for checkboxes
-            - The Timeline section should not have checkboxes
-            - Use descriptive section titles that reflect the content
-            - Keep paragraphs concise and well-structured
+            - The Timeline and Resources sections should not have checkboxes
+            - The Resources section shouldn't be 100% accurate and should not include resources which are 
+                not appropriate for the learner's experience level
+            - Use descriptive section titles that reflect the content but are designed to be incremental
+            - Keep paragraphs concise and well-structured, designed to provoke thought and deeper research
 
         GOALS:
             - The plan should be thorough, referencing proven strategies if you are certain of their accuracy
@@ -82,7 +85,9 @@ export default async function handler(req, res) {
             - Reflect the learner's experience: advanced learners may skip basics or jump into practice
             - The final output must be valid markdown and contain checkboxes ([ ]) in appropriate sections, 
               but not the timeline section
-            - Keep the "Timeline" section to a single sentence or short paragraph
+            - Keep the "Timeline" section to a single sentence or short paragraph if needed
+            - Try to keep things generally in a consecutive order, so the plan feels like it should be done
+              in order, top-to-bottom, following authentic and expert progression patterns for the topic.
 
         Please generate the plan now.`.trim();
 
@@ -123,14 +128,16 @@ export default async function handler(req, res) {
 
       // Parse the markdown to JSON structure before saving
       const parsedPlan = parseMarkdownPlan(planContent);
-
+      
       // Try to store both formats, but don't fail if json_content column doesn't exist yet
       const planData = {
         user_id: session.user.id,
         topic,
-        experience,
-        timeline,
         content: planContent,           // Keep original markdown
+        json_content: {
+          ...parsedPlan,
+          version: 1 // Initialize version number
+        },
         progress: 0,
         validation_result: validation   // Store validation results
       };
@@ -164,8 +171,6 @@ export default async function handler(req, res) {
           .insert({
             user_id: session.user.id,
             topic,
-            experience,
-            timeline,
             content: planContent,           // Keep original markdown
             progress: 0,
             validation_result: validation   // Store validation results

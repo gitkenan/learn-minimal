@@ -127,7 +127,12 @@ function mergeChanges(currentContent, newContent) {
   };
 }
 
-const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
+const MarkdownPlan = ({ 
+  initialContent, 
+  planId, 
+  onProgressUpdate,
+  contentType = 'json' // New prop to specify content type
+}) => {
   const [parsedContent, setParsedContent] = useState(null);
 
   useEffect(() => {
@@ -138,28 +143,35 @@ const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
                section.id && section.title && Array.isArray(section.items));
     };
 
-    // Check if initialContent is already JSON
+    let processedContent;
     try {
-      const content = typeof initialContent === 'string' 
-        ? JSON.parse(initialContent)
-        : initialContent;
-      
-      if (content && isValidPlanStructure(content)) {
-        // It's valid JSON with the expected structure
-        setParsedContent(content);
+      if (contentType === 'json') {
+        // Handle JSON content
+        processedContent = typeof initialContent === 'string' 
+          ? JSON.parse(initialContent)
+          : initialContent;
+          
+        if (!isValidPlanStructure(processedContent)) {
+          console.warn('Invalid JSON structure, falling back to markdown parsing');
+          processedContent = parseMarkdownPlan(
+            typeof initialContent === 'string' ? initialContent : ''
+          );
+        }
       } else {
-        // JSON is invalid or missing required structure
-        console.warn('Invalid JSON structure, falling back to markdown parsing');
-        const parsed = parseMarkdownPlan(initialContent);
-        setParsedContent(parsed);
+        // Handle markdown content
+        processedContent = parseMarkdownPlan(initialContent);
       }
+
+      setParsedContent(processedContent);
     } catch (e) {
-      // If JSON.parse fails, treat as markdown
-      console.warn('JSON parse failed, falling back to markdown:', e);
-      const parsed = parseMarkdownPlan(initialContent);
-      setParsedContent(parsed);
+      console.warn('Content processing failed:', e);
+      // Fall back to markdown parsing if anything goes wrong
+      const fallbackContent = parseMarkdownPlan(
+        typeof initialContent === 'string' ? initialContent : ''
+      );
+      setParsedContent(fallbackContent);
     }
-  }, [initialContent]);
+  }, [initialContent, contentType]);
 
   const handleCheckboxClick = async (sectionId, itemId) => {
     if (!parsedContent) return;

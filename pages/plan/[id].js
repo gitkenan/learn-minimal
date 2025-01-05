@@ -13,7 +13,6 @@ export default function PlanPage() {
   const router = useRouter();
   const { id } = router.query;
   const [isChatOpen, setIsChatOpen] = useState(false);
-
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,6 +66,10 @@ export default function PlanPage() {
     );
   }
   if (!plan) return <div className="min-h-screen bg-background flex items-center justify-center">Plan not found</div>;
+
+  // Determine which content to use - prefer json_content over content
+  const planContent = plan.json_content || plan.content;
+  const contentType = plan.json_content ? 'json' : 'markdown';
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,9 +146,10 @@ export default function PlanPage() {
                 <h1 className="text-primary text-3xl font-semibold mb-6">{plan.topic}</h1>
                 
                 <MarkdownPlan 
-                  initialContent={plan.content} 
+                  initialContent={planContent}
                   planId={plan.id}
                   onProgressUpdate={handleProgressUpdate}
+                  contentType={contentType}
                 />
 
                 <div className="mt-8 pt-8 border-t border-claude-border">
