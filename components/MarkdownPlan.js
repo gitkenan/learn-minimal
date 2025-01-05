@@ -103,46 +103,131 @@ function calculateProgress(sections) {
   return totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 }
 
-// The React component
+// Helper function to merge concurrent changes
+function mergeChanges(currentContent, newContent) {
+  // Create a map of all items by ID for easier lookup
+  const currentItems = new Map();
+  currentContent.sections.forEach(section => {
+    section.items.forEach(item => {
+      currentItems.set(item.id, item);
+    });
+  });
+
+  // Merge by preserving structure but updating completion states
+  return {
+    ...newContent,
+    sections: newContent.sections.map(section => ({
+      ...section,
+      items: section.items.map(item => {
+        const currentItem = currentItems.get(item.id);
+        // If item exists in current version, use its completion state
+        return currentItem ? { ...item, isComplete: currentItem.isComplete } : item;
+      })
+    }))
+  };
+}
+
 const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
-  const [content, setContent] = useState(initialContent);
-  const [parsedContent, setParsedContent] = useState({ sections: [], progress: 0 });
+  const [parsedContent, setParsedContent] = useState(null);
 
   useEffect(() => {
-    setParsedContent(parseMarkdownPlan(content));
-  }, [content]);
+    // Helper to validate JSON structure
+    const isValidPlanStructure = (content) => {
+      return content?.sections?.length > 0 && 
+             content.sections.every(section => 
+               section.id && section.title && Array.isArray(section.items));
+    };
+
+    // Check if initialContent is already JSON
+    try {
+      const content = typeof initialContent === 'string' 
+        ? JSON.parse(initialContent)
+        : initialContent;
+      
+      if (content && isValidPlanStructure(content)) {
+        // It's valid JSON with the expected structure
+        setParsedContent(content);
+      } else {
+        // JSON is invalid or missing required structure
+        console.warn('Invalid JSON structure, falling back to markdown parsing');
+        const parsed = parseMarkdownPlan(initialContent);
+        setParsedContent(parsed);
+      }
+    } catch (e) {
+      // If JSON.parse fails, treat as markdown
+      console.warn('JSON parse failed, falling back to markdown:', e);
+      const parsed = parseMarkdownPlan(initialContent);
+      setParsedContent(parsed);
+    }
+  }, [initialContent]);
 
   const handleCheckboxClick = async (sectionId, itemId) => {
-    const newSections = parsedContent.sections.map(section => {
-      if (section.id === sectionId) {
+    if (!parsedContent) return;
+
+    const newParsedContent = {
+      ...parsedContent,
+      sections: parsedContent.sections.map(section => {
+        if (section.id !== sectionId) return section;
+        
         return {
           ...section,
           items: section.items.map(item => {
-            if (item.id === itemId && item.type === 'task') {
-              return { ...item, isComplete: !item.isComplete };
-            }
-            return item;
+            if (item.id !== itemId) return item;
+            return { ...item, isComplete: !item.isComplete };
           })
         };
-      }
-      return section;
-    });
-
-    const newParsedContent = {
-      sections: newSections,
-      progress: calculateProgress(newSections)
+      })
     };
 
-    setParsedContent(newParsedContent);
-    
-    if (onProgressUpdate) {
-      onProgressUpdate(newParsedContent.progress);
+    const newProgress = calculateProgress(newParsedContent.sections);
+
+    try {
+      const supabase = initializeSupabase();
+      
+      // First get the latest version to check for conflicts
+      const { data: currentPlan, error: fetchError } = await supabase
+        .from('plans')
+        .select('json_content, progress')
+        .eq('id', planId)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      // Compare current vs our local version to detect conflicts
+      if (currentPlan.json_content?.version !== parsedContent.version) {
+        // Conflict detected - fetch latest and merge changes
+        console.warn('Detected concurrent update, merging changes');
+        const mergedContent = mergeChanges(currentPlan.json_content, newParsedContent);
+        newParsedContent = mergedContent;
+        newProgress = calculateProgress(mergedContent.sections);
+      }
+      
+      // Update with version number
+      const { error } = await supabase
+        .from('plans')
+        .update({ 
+          json_content: { 
+            ...newParsedContent,
+            version: (parsedContent.version || 0) + 1
+          },
+          progress: newProgress 
+        })
+        .eq('id', planId);
+
+      if (error) throw error;
+      
+      setParsedContent(newParsedContent);
+      if (onProgressUpdate) {
+        onProgressUpdate(newProgress);
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
     }
   };
 
   return (
     <div className="space-y-8">
-      {parsedContent.sections.map(section => (
+      {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
           {section.headingLevel === 2 ? (
             <h2 
@@ -195,6 +280,5 @@ const MarkdownPlan = ({ initialContent, planId, onProgressUpdate }) => {
   );
 };
 
-// Make sure we have both a default export and named exports
 export default MarkdownPlan;
 export { parseMarkdownPlan, calculateProgress };
