@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
 IMPORTANT INSTRUCTIONS:
 1. Keep responses conversational and natural
-2. Add proper spacing between paragraphs using blank lines
+2. Add proper spacing between paragraphs using blank lines, two blamk lines inbetween major parts.
 3. Don't use headers, sections, or special formatting
 4. Use simple lists when needed, but keep them natural
 5. Stay focused on helping the user learn ${topic}
