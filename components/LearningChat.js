@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
+import ReactMarkdown from 'react-markdown';
 
 export default function LearningChat({ planId, topic }) {
   const { user } = useAuth();
@@ -221,13 +222,13 @@ export default function LearningChat({ planId, topic }) {
               className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 break-words ${
+                className={`max-w-[80%] rounded-lg p-3 break-words prose prose-invert ${
                   message.is_ai 
-                    ? 'bg-gray-100 text-gray-800' 
-                    : 'bg-blue-500 text-white'
+                    ? 'bg-gray-100 text-gray-800 prose-headings:text-gray-900 prose-a:text-blue-600' 
+                    : 'bg-blue-500 text-white prose-headings:text-white prose-a:text-white'
                 }`}
               >
-                {message.content}
+                <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             </div>
           ))

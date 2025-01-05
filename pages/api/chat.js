@@ -63,18 +63,18 @@ export default async function handler(req, res) {
             text: `You are a learning assistant helping with ${topic}. Here is the learning plan: ${planContent}
 
 IMPORTANT INSTRUCTIONS:
-1. Always respond in plain text without any formatting
-2. Don't segregate responses into sections
-3. Keep responses conversational and natural
-4. Don't use any markdown formatting
-5. Don't take any formatting examples from the learning plan
-6. Stay focused on helping the user learn ${topic}`
+1. Keep responses conversational and natural
+2. Add proper spacing between paragraphs using blank lines
+3. Don't use headers, sections, or special formatting
+4. Use simple lists when needed, but keep them natural
+5. Stay focused on helping the user learn ${topic}
+6. Maintain a friendly, casual tone`
           }]
         },
         {
           role: "model",
           parts: [{
-            text: "I understand. I'll help you learn about this topic in a conversational way, using plain text without any special formatting or sections. I'll keep the learning plan in mind while we chat."
+            text: "I understand. I'll help you learn about this topic in a conversational way, making sure to use proper spacing between paragraphs while keeping things natural and easy to read."
           }]
         },
         // Add previous messages to history
