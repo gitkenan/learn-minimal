@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
         First, generate a clear, concise title for this learning plan that captures the essence of the topic.
         Then, generate a personalized learning plan based on the title and the learner's experience level, timeline, and background knowledge.
-        The plan should 
+        The plan should start with a clear and concise title that captures the essence of the topic, like this:
         # {The generated title}
 
         IMPORTANT CONTEXT:

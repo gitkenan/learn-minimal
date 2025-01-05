@@ -176,7 +176,7 @@ const MarkdownPlan = ({
   const handleCheckboxClick = async (sectionId, itemId) => {
     if (!parsedContent) return;
 
-    const newParsedContent = {
+    let newParsedContent = {
       ...parsedContent,
       sections: parsedContent.sections.map(section => {
         if (section.id !== sectionId) return section;
@@ -191,7 +191,7 @@ const MarkdownPlan = ({
       })
     };
 
-    const newProgress = calculateProgress(newParsedContent.sections);
+    let newProgress = calculateProgress(newParsedContent.sections);
 
     try {
       const supabase = initializeSupabase();
@@ -209,28 +209,34 @@ const MarkdownPlan = ({
       if (currentPlan.json_content?.version !== parsedContent.version) {
         // Conflict detected - fetch latest and merge changes
         console.warn('Detected concurrent update, merging changes');
-        const mergedContent = mergeChanges(currentPlan.json_content, newParsedContent);
-        newParsedContent = mergedContent;
-        newProgress = calculateProgress(mergedContent.sections);
+        newParsedContent = mergeChanges(currentPlan.json_content, newParsedContent);
+        newProgress = calculateProgress(newParsedContent.sections);
+
+        // Then increment the merged version
+        let localVersion = (currentPlan.json_content.version || 0) + 1;
+        newParsedContent.version = localVersion;
+      } else {
+        // No conflict - increment our local version
+        let localVersion = (parsedContent.version || 0) + 1;
+        newParsedContent.version = localVersion;
       }
       
-      // Update with version number
       const { error } = await supabase
         .from('plans')
-        .update({ 
-          json_content: { 
-            ...newParsedContent,
-            version: (parsedContent.version || 0) + 1
-          },
-          progress: newProgress 
+        .update({
+          json_content: newParsedContent,
+          progress: newProgress
         })
         .eq('id', planId);
 
-      if (error) throw error;
-      
-      setParsedContent(newParsedContent);
-      if (onProgressUpdate) {
-        onProgressUpdate(newProgress);
+      if (!error) {
+        // Now store it in React state
+        setParsedContent(newParsedContent);
+        if (onProgressUpdate) {
+          onProgressUpdate(newProgress);
+        }
+      } else {
+        throw error;
       }
     } catch (error) {
       console.error('Failed to update progress:', error);
