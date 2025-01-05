@@ -30,7 +30,14 @@ export default function LearningChat({ planId, topic }) {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setDiscussions(data || []);
+        
+        if (!data || data.length === 0) {
+          // Automatically start first chat if no discussions exist
+          await startNewDiscussion();
+        } else {
+          setDiscussions(data);
+          setCurrentDiscussion(data[0]); // Set the most recent discussion as current
+        }
         setIsInitializing(false);
       } catch (err) {
         console.error('Error loading discussions:', err);
@@ -185,7 +192,7 @@ export default function LearningChat({ planId, topic }) {
           <h2 className="text-lg font-semibold">Learning Assistant</h2>
           <button
             onClick={startNewDiscussion}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="px-3 py-1 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover"
           >
             New Chat
           </button>
@@ -224,8 +231,8 @@ export default function LearningChat({ planId, topic }) {
               <div
                 className={`max-w-[80%] rounded-lg p-3 break-words prose prose-invert ${
                   message.is_ai 
-                    ? 'bg-gray-100 text-gray-800 prose-headings:text-gray-900 prose-a:text-blue-600' 
-                    : 'bg-blue-500 text-white prose-headings:text-white prose-a:text-white'
+                    ? 'bg-background text-primary prose-headings:text-primary prose-a:text-accent' 
+                    : 'bg-accent text-white prose-headings:text-white prose-a:text-white'
                 }`}
               >
                 <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -264,7 +271,7 @@ export default function LearningChat({ planId, topic }) {
           <button
             type="submit"
             disabled={isLoading || !currentDiscussion || !newMessage.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 whitespace-nowrap"
+            className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:hover:bg-accent whitespace-nowrap"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
