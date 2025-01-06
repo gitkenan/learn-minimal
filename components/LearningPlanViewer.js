@@ -175,7 +175,11 @@ const LearningPlanViewer = ({
     return <div className="text-red-500">Error: {error}</div>;
   }
 
-  const handleCheckboxClick = async (sectionId, itemId) => {
+  const handleTaskInteraction = async (e, sectionId, itemId) => {
+    // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
+
     try {
       await toggleTask(sectionId, itemId);
     } catch (error) {
@@ -210,18 +214,22 @@ const LearningPlanViewer = ({
 
           <div className="space-y-2 ml-4">
             {section.items.map(item => (
-              <div key={item.id}>
+              <div key={item.id} className="relative">
                 {item.type === 'task' ? (
-                  <div className="relative">
-                    <div 
-                      className={`flex items-start gap-2 cursor-pointer group
-                        ${updating ? 'opacity-50 pointer-events-none' : ''}`}
-                      onClick={() => handleCheckboxClick(section.id, item.id)}
+                  <div>
+                    <button
+                      className={`w-full text-left flex items-start gap-2 p-2 rounded
+                        ${updating ? 'opacity-50' : 'hover:bg-gray-50 active:bg-gray-100'}
+                        transition-colors duration-200 touch-manipulation`}
+                      onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
+                      disabled={updating}
+                      role="checkbox"
+                      aria-checked={item.isComplete}
                     >
                       <div className={`
-                        mt-1 w-4 h-4 border rounded flex items-center justify-center
+                        mt-1 min-w-4 h-4 border rounded flex items-center justify-center
                         ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
-                        group-hover:border-accent transition-colors duration-200
+                        transition-colors duration-200
                       `}>
                         {item.isComplete && (
                           <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -230,10 +238,10 @@ const LearningPlanViewer = ({
                         )}
                       </div>
                       <span 
-                        className={item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}
+                        className={`flex-1 ${item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}`}
                         dangerouslySetInnerHTML={{ __html: item.content }}
                       />
-                    </div>
+                    </button>
                     
                     <TaskNotes
                       taskId={item.id}
