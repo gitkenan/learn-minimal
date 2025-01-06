@@ -1,4 +1,3 @@
-// pages/auth/confirm.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { initializeSupabase } from '@/lib/supabaseClient';
@@ -24,7 +23,7 @@ export default function ConfirmEmail() {
         });
 
         if (verifyError) throw verifyError;
-
+        
         setMessage('Email verified successfully! Redirecting...');
         setTimeout(() => {
           router.push('/dashboard');
@@ -42,17 +41,15 @@ export default function ConfirmEmail() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="max-w-md w-full bg-surface p-8 rounded-lg shadow-claude">
+      <div className="max-w-md w-full bg-surface p-8 rounded-lg shadow-claude text-center">
+        <h2 className="text-2xl font-bold mb-4">Email Confirmation</h2>
         {error ? (
-          <div className="text-red-500 text-center">
+          <div className="text-red-500">
             <p className="font-medium">Error</p>
             <p className="mt-1">{error}</p>
           </div>
         ) : (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Email Confirmation</h2>
-            <p>{message}</p>
-          </div>
+          <p>{message}</p>
         )}
       </div>
     </div>

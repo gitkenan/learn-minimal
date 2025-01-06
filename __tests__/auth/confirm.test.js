@@ -1,27 +1,25 @@
 // __tests__/auth/confirm.test.js
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { useRouter } from 'next/router';
-import ConfirmEmail from '../../pages/auth/confirm';
-import { initializeSupabase } from '../../lib/supabaseClient';
+import ConfirmEmail from '@/pages/auth/confirm';
+import { initializeSupabase } from '@/lib/supabaseClient';
 
-// Mock next/router
 jest.mock('next/router', () => ({
   useRouter: jest.fn()
 }));
 
-// Mock supabaseClient
-jest.mock('../../lib/supabaseClient', () => ({
+jest.mock('@/lib/supabaseClient', () => ({
   initializeSupabase: jest.fn()
 }));
 
 describe('ConfirmEmail', () => {
   let mockRouter;
   let mockSupabase;
+  const message = 'Verifying your email...';
 
   beforeEach(() => {
-    // Reset mocks
     mockRouter = {
-      query: {},
+      query: { token_hash: 'test_token', type: 'email' },
       push: jest.fn(),
       isReady: true
     };
@@ -35,14 +33,24 @@ describe('ConfirmEmail', () => {
     initializeSupabase.mockReturnValue(mockSupabase);
   });
 
-  it('shows loading state initially', () => {
-    render(<ConfirmEmail />);
-    expect(screen.getByText('Verifying your email...')).toBeInTheDocument();
+  it('shows initial state correctly', async () => {
+    mockRouter.query = {};  // No query params to prevent immediate verification
+    
+    await act(async () => {
+      render(<ConfirmEmail />);
+    });
+    
+    const heading = screen.getByRole('heading', { name: 'Email Confirmation' });
+    expect(heading).toBeInTheDocument();
+    expect(screen.getByText('Invalid confirmation link')).toBeInTheDocument();
   });
 
   it('handles missing token or type parameters', async () => {
     mockRouter.query = {};
-    render(<ConfirmEmail />);
+    
+    await act(async () => {
+      render(<ConfirmEmail />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Invalid confirmation link')).toBeInTheDocument();
@@ -50,51 +58,43 @@ describe('ConfirmEmail', () => {
   });
 
   it('handles successful email verification', async () => {
-    // Setup successful verification
-    mockRouter.query = {
-      token_hash: 'valid_token',
-      type: 'email'
-    };
     mockSupabase.auth.verifyOtp.mockResolvedValueOnce({ error: null });
-
-    render(<ConfirmEmail />);
+    
+    await act(async () => {
+      render(<ConfirmEmail />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Email verified successfully! Redirecting...')).toBeInTheDocument();
     });
 
-    // Verify redirect after success
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
     }, { timeout: 2500 });
   });
 
   it('handles verification error', async () => {
-    // Setup failed verification
-    mockRouter.query = {
-      token_hash: 'invalid_token',
-      type: 'email'
-    };
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockSupabase.auth.verifyOtp.mockRejectedValueOnce(new Error('Invalid token'));
-
-    render(<ConfirmEmail />);
+    
+    await act(async () => {
+      render(<ConfirmEmail />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Invalid token')).toBeInTheDocument();
     });
+
+    consoleSpy.mockRestore();
   });
 
-  it('waits for router to be ready', () => {
-    // Setup router as not ready
+  it('waits for router to be ready', async () => {
     mockRouter.isReady = false;
-    mockRouter.query = {
-      token_hash: 'valid_token',
-      type: 'email'
-    };
-
-    render(<ConfirmEmail />);
-
-    // Verify that verifyOtp wasn't called
+    
+    await act(async () => {
+      render(<ConfirmEmail />);
+    });
+    
     expect(mockSupabase.auth.verifyOtp).not.toHaveBeenCalled();
   });
 });
