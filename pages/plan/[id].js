@@ -1,11 +1,11 @@
 // pages/plan/[id].js
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import Head from 'next/head';
 import { usePlan } from '@/hooks/usePlan';
 import LearningChat from '@/components/LearningChat';
 import LearningPlanViewer from '@/components/LearningPlanViewer';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import Header from '@/components/Header';
 
 export default function PlanPage() {
   const router = useRouter();
@@ -80,11 +80,9 @@ export default function PlanPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Head>
-        <title>{plan.topic} - Learning Plan</title>
-      </Head>
-
-      <div className="flex min-h-screen">
+      <Header />
+      
+      <div className="flex min-h-screen pt-20">
         {/* Desktop Chat Side Panel */}
         {!isMobile && (
           <div

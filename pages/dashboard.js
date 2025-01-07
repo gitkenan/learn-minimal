@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
-import Head from 'next/head';
+import Header from '@/components/Header';
 import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
 import { FaCheck, FaTrashAlt, FaTimes } from 'react-icons/fa';
@@ -109,11 +109,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Head>
-        <title>Dashboard - Learn Minimal</title>
-        <meta name="description" content="Your learning plans dashboard" />
-      </Head>
-
+      <Header />
+      
       {showToast && (
         <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-lg shadow-lg border border-green-100 animate-slide-up z-[60]">
           <div className="bg-green-100 rounded-full p-1">
@@ -125,37 +122,38 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="px-4 py-6">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <input
+            type="text"
+            placeholder="Search plans..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border mb-6"
+          />
 
-        <input
-          type="text"
-          placeholder="Search plans..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg border mb-6"
-        />
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {filteredPlans.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredPlans.map((plan) => (
-              <PlanCard 
-                key={plan.id} 
-                plan={plan} 
-                onDelete={handleDeleteConfirmation}
-              />
-            ))}
-          </div>
-        )}
+          {filteredPlans.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredPlans.map((plan) => (
+                <PlanCard 
+                  key={plan.id} 
+                  plan={plan} 
+                  onDelete={handleDeleteConfirmation}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {isDeleting && (

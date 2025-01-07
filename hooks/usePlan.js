@@ -1,8 +1,8 @@
 // hooks/usePlan.js
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { initializeSupabase } from '@/lib/supabaseClient';
-import { parseMarkdownPlan, calculateProgress } from '@/components/LearningPlanViewer';
+import { useAuth } from '../context/AuthContext';
+import { initializeSupabase } from '../lib/supabaseClient';
+import { parseMarkdownPlan, calculateProgress } from '../components/LearningPlanViewer';
 
 export function usePlan(planId) {
   const { user, session } = useAuth();
