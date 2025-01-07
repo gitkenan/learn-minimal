@@ -43,7 +43,6 @@ export default function Home() {
     }
   };
 
-  // Render welcome screen for non-authenticated users
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -76,33 +75,6 @@ export default function Home() {
         <meta name="description" content="Generate personalized learning plans" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <nav className="bg-surface shadow-claude">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-primary font-semibold">Learn Minimal</h1>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 text-secondary hover:text-primary transition-colors duration-200"
-            >
-              Dashboard
-            </button>
-            <span className="text-secondary">{user.email}</span>
-            <button
-              onClick={async () => {
-                const supabase = initializeSupabase();
-                if (supabase) {
-                  await supabase.auth.signOut();
-                  router.push('/auth');
-                }
-              }}
-              className="px-4 py-2 text-secondary hover:text-primary transition-colors duration-200"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </nav>
 
       <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
