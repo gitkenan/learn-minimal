@@ -124,7 +124,8 @@ const LearningPlanViewer = ({
     error,
     updating,
     toggleTask,
-    saveNote
+    saveNote,
+    deleteNote
   } = usePlan(planId);
   
   const [parsedContent, setParsedContent] = useState(null);
@@ -267,11 +268,14 @@ const LearningPlanViewer = ({
                       />
                     </button>
                     
-                    <TaskNotes
-                      taskId={item.id}
-                      notes={notes[item.id] || []}
-                      onSaveNote={(content) => handleSaveNote(item.id, content)}
-                    />
+                    <div key={item.id} className="mt-2">
+                      <TaskNotes
+                        taskId={item.id}
+                        notes={notes[item.id] || []}
+                        onSaveNote={(content) => handleSaveNote(item.id, content)}
+                        onDeleteNote={deleteNote}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div 

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus, ChevronDown, ChevronUp } from 'lucide-react';
+import { MessageSquarePlus, ChevronDown, ChevronUp, Trash2, X } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
+const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleSave = async () => {
     if (!newNote.trim()) return;
@@ -22,6 +25,18 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
       console.error('Failed to save note:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!noteToDelete) return;
+    
+    try {
+      await onDeleteNote(noteToDelete.id);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+    } finally {
+      setNoteToDelete(null);
     }
   };
 
@@ -69,13 +84,22 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
           {notes.map((note) => (
             <div 
               key={note.id} 
-              className="bg-gray-50 p-3 rounded-lg"
+              className="bg-gray-50 p-3 rounded-lg relative group"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-sm text-gray-700">{note.content}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(note.created_at).toLocaleDateString()}
-              </p>
+              <p className="text-sm text-gray-700 pr-8">{note.content}</p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-gray-400">
+                  {new Date(note.created_at).toLocaleDateString()}
+                </p>
+                <button
+                  onClick={() => setNoteToDelete(note)}
+                  className={`${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200 text-gray-400 hover:text-red-500`}
+                  title="Delete note"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
           
@@ -125,6 +149,52 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote }) => {
             >
               Cancel
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Bottom Sheet */}
+      {noteToDelete && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center"
+          onClick={() => setNoteToDelete(null)}
+        >
+          <div 
+            className={`
+              bg-white w-full md:w-96 rounded-t-lg md:rounded-lg p-4
+              transform transition-transform duration-200 ease-out
+              ${isMobile ? 'translate-y-0' : 'translate-y-0'}
+            `}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Delete Note</h3>
+              <button
+                onClick={() => setNoteToDelete(null)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete this note? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                onClick={() => setNoteToDelete(null)}
+                variant="outline"
+                size="sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteConfirm}
+                variant="destructive"
+                size="sm"
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       )}

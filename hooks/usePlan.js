@@ -165,6 +165,40 @@ export function usePlan(planId) {
     }
   };
 
+  // Delete note
+  const deleteNote = async (noteId) => {
+    if (!session || !plan) return;
+
+    try {
+      const supabase = initializeSupabase();
+      
+      const { error } = await supabase
+        .from('plan_item_notes')
+        .delete()
+        .eq('id', noteId);
+
+      if (error) throw error;
+
+      // Update local notes state
+      setNotes(prev => {
+        const newNotes = { ...prev };
+        // Find and remove the note from the appropriate task
+        Object.keys(newNotes).forEach(taskId => {
+          newNotes[taskId] = newNotes[taskId].filter(note => note.id !== noteId);
+          // Remove the task key if it has no more notes
+          if (newNotes[taskId].length === 0) {
+            delete newNotes[taskId];
+          }
+        });
+        return newNotes;
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      setError(error.message);
+      throw error;
+    }
+  };
+
   // Toggle task completion
   const toggleTask = async (sectionId, itemId) => {
     await updatePlan((currentPlan) => {
@@ -201,6 +235,7 @@ export function usePlan(planId) {
     updating,
     toggleTask,
     saveNote,
+    deleteNote,
     updatePlan,
     refresh: fetchPlanAndNotes
   };
