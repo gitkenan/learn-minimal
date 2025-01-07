@@ -240,7 +240,7 @@ export default function LearningChat({ planId, topic }) {
             </div>
           ))
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+          <div className="text-center text-gray-500">
             <p>Start a new chat or select an existing one</p>
           </div>
         )}

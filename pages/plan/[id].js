@@ -1,65 +1,79 @@
 // pages/plan/[id].js
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import LearningPlanViewer from '@/components/LearningPlanViewer';
-import LearningChat from '@/components/LearningChat';
 import { usePlan } from '@/hooks/usePlan';
+import LearningChat from '@/components/LearningChat';
+import LearningPlanViewer from '@/components/LearningPlanViewer';
 
 export default function PlanPage() {
-  const { user } = useAuth();
   const router = useRouter();
   const { id } = router.query;
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatWidth, setChatWidth] = useState(384);
+  const [isDragging, setIsDragging] = useState(false);
+  const minWidth = 384;
+  const maxWidth = 768;
 
-  const {
-    plan,
-    loading,
-    error
-  } = usePlan(id);
+  const { plan, loading, error } = usePlan(id);
 
-  // Loading state
-  if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading plan...</div>;
-  }
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <div className="text-red-500">{error}</div>
-        <Link href="/dashboard" className="text-accent hover:text-accent-hover transition-colors duration-200">
-          ← Back to Dashboard
-        </Link>
-      </div>
-    );
-  }
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const newWidth = Math.max(minWidth, Math.min(maxWidth, e.clientX));
+    setChatWidth(newWidth);
+  };
 
-  // Not found state
-  if (!plan) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Plan not found</div>;
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  if (loading || !plan) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+      {loading ? 'Loading plan...' : 'Error loading plan'}
+    </div>;
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Head>
-        <title>{plan.topic} - Learn Minimal</title>
-        <meta name="description" content={`Learning plan for ${plan.topic}`} />
+        <title>{plan.topic} - Learning Plan</title>
       </Head>
 
       <div className="flex min-h-screen">
         {/* Chat Side Panel */}
         <div
-          className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-10
-          ${isChatOpen ? 'w-96' : 'w-12'} flex flex-col`}
+          className={`fixed left-0 top-0 h-full bg-white shadow-lg ${isChatOpen ? '' : 'w-12'} flex flex-col`}
+          style={{ width: isChatOpen ? `${chatWidth}px` : undefined }}
         >
+          {/* Resize Handle - now pointer-events-none except for the handle itself */}
+          {isChatOpen && (
+            <div className="absolute right-0 top-0 bottom-0 w-2 pointer-events-none">
+              <div 
+                className="w-full h-full cursor-ew-resize z-50 hover:bg-accent/10 pointer-events-auto"
+                onMouseDown={handleMouseDown}
+              />
+            </div>
+          )}
+
           {/* Toggle Button */}
           <button
             onClick={() => setIsChatOpen(!isChatOpen)}
-            className="absolute -right-4 top-4 bg-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center"
-            style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+            className="absolute -right-4 top-4 bg-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center z-10"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -90,18 +104,18 @@ export default function PlanPage() {
           )}
 
           {/* Chat Component */}
-          <div
-            className={`absolute inset-0 transition-opacity duration-300 
-            ${isChatOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-          >
-            {isChatOpen && (
+          {isChatOpen && (
+            <div className="flex-1 overflow-hidden">
               <LearningChat planId={plan.id} topic={plan.topic} />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${isChatOpen ? 'ml-96' : 'ml-12'}`}>
+        <main 
+          className="flex-1 transition-all duration-300"
+          style={{ marginLeft: isChatOpen ? `${chatWidth}px` : '3rem' }}
+        >
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-3xl mx-auto">
               <div className="bg-surface p-8 rounded-lg shadow-claude">
