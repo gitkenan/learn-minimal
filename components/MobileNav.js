@@ -10,7 +10,7 @@ export default function MobileNav() {
 
   return (
     <nav className="bg-white shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-end px-4 py-3 gap-2">
         <button 
           onClick={() => router.push('/dashboard')}
           className="text-sm text-gray-600"
