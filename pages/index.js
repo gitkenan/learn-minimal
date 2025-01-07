@@ -102,7 +102,7 @@ export default function Home() {
               <textarea
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
-                placeholder="Tell us about your experience with this topic... (e.g., 'I'm completely new to this' or 'I've been studying this for 2 years')"
+                placeholder="Tell us about your experience with this topic (e.g., 'I'm completely new to this')"
                 className="w-full p-4 text-primary bg-background border border-claude-border 
                          rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
                          transition-colors duration-200 min-h-[100px]"

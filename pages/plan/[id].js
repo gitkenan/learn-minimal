@@ -104,16 +104,14 @@ export default function PlanPage() {
         <main className={`flex-1 transition-all duration-300 ${isChatOpen ? 'ml-96' : 'ml-12'}`}>
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-3xl mx-auto">
-              {/* Creation Date */}
-              <div className="mb-4 text-right">
-                <span className="text-secondary text-sm">
-                  Created {new Date(plan.created_at).toLocaleDateString()}
-                </span>
-              </div>
-
               <div className="bg-surface p-8 rounded-lg shadow-claude">
-                <h1 className="text-primary text-3xl font-semibold mb-6">{plan.topic}</h1>
-
+                <div className="flex flex-col gap-2 mb-8">
+                  <h1 className="text-primary text-3xl font-semibold">{plan.topic}</h1>
+                  <span className="text-gray-400 text-sm">
+                    Created {new Date(plan.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                
                 <LearningPlanViewer
                   initialContent={plan.json_content || plan.content}
                   planId={plan.id}

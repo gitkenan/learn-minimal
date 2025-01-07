@@ -7,25 +7,29 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Claude-like colors
-        background: '#F8F8F8', // Light gray background
-        surface: '#FFFFFF',    // White surface
-        primary: '#1A1A1A',    // Almost black
-        secondary: '#666666',  // Medium gray
-        'claude-border': '#E5E5E5', // Light border color
-        accent: '#4F46E5',     // Indigo (our version of Claude's orange)
-        'accent-hover': '#4338CA',
+        background: '#F8F8F8',
+        surface: '#FFFFFF',    
+        primary: '#1A1A1A',   
+        secondary: '#4A4A4A',  
+        accent: {
+          DEFAULT: '#7FB069', // Soft sage green
+          hover: '#6A9557',
+          secondary: '#94B49F', // Lighter sage
+          muted: '#ABC4A1'     // Most muted sage
+        },
+        chat: {
+          background: '#2F3B2F',
+          surface: '#3A463A',
+          text: '#FFFFFF',
+          accent: '#7FB069'
+        }
       },
       fontFamily: {
-        sans: [
-          'Inter',
-          'system-ui',
-          '-apple-system',
-          'sans-serif'
-        ],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {
-        'claude': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'soft': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'strong': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
       },
     },
   },

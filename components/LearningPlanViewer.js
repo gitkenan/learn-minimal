@@ -119,7 +119,7 @@ const LearningPlanViewer = ({
 }) => {
   const { 
     plan,
-    notes,  // Now getting notes from the hook
+    notes,
     loading,
     error,
     updating,
@@ -226,43 +226,43 @@ const LearningPlanViewer = ({
         <div key={section.id} className="space-y-4">
           {section.headingLevel === 2 ? (
             <h2 
-              className="text-2xl font-semibold"
+              className="text-2xl font-semibold text-gray-900"
               dangerouslySetInnerHTML={{ __html: section.title }}
             />
           ) : (
             <h3 
-              className="text-xl font-semibold"
+              className="text-xl font-semibold text-gray-900"
               dangerouslySetInnerHTML={{ __html: section.title }}
             />
           )}
 
-          <div className="space-y-2 ml-4">
+          <div className="space-y-1">
             {section.items.map(item => (
-              <div key={item.id} className="relative">
+              <div key={item.id} className="group">
                 {item.type === 'task' ? (
-                  <div>
+                  <div className="relative">
                     <button
-                      className={`w-full text-left flex items-start gap-2 p-2 rounded
-                        ${updating ? 'opacity-50' : 'hover:bg-gray-50 active:bg-gray-100'}
-                        transition-colors duration-200 touch-manipulation`}
+                      className={`w-full text-left flex items-start gap-3 py-2 px-3 -ml-3
+                        rounded-lg transition-colors duration-200
+                        ${updating ? 'opacity-50' : 'hover:bg-gray-50/50'}`}
                       onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
                       disabled={updating}
                       role="checkbox"
                       aria-checked={item.isComplete}
                     >
                       <div className={`
-                        mt-1 min-w-4 h-4 border rounded flex items-center justify-center
-                        ${item.isComplete ? 'bg-accent border-accent' : 'border-gray-300'}
+                        mt-1 flex-shrink-0 w-4 h-4 border rounded
+                        ${item.isComplete ? 'bg-accent border-accent' : 'border-accent-muted'}
                         transition-colors duration-200
                       `}>
                         {item.isComplete && (
-                          <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="w-3 h-3 text-white m-0.5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
                           </svg>
                         )}
                       </div>
                       <span 
-                        className={`flex-1 ${item.isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}`}
+                        className={`flex-grow text-gray-900 ${item.isComplete ? 'line-through text-accent-muted' : ''}`}
                         dangerouslySetInnerHTML={{ __html: item.content }}
                       />
                     </button>
@@ -275,7 +275,7 @@ const LearningPlanViewer = ({
                   </div>
                 ) : (
                   <div 
-                    className="text-gray-900 ml-6"
+                    className="text-gray-700 py-1"
                     dangerouslySetInnerHTML={{ __html: item.content }}
                   />
                 )}
