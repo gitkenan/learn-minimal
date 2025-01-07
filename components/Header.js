@@ -77,18 +77,16 @@ export default function Header() {
           <MobileMenu />
         ) : (
           <div className="flex items-center justify-between h-16 px-8">
-            {/* Navigation */}
-            <nav className="flex space-x-6">
-              <Link href="/" className="text-gray-500 hover:text-gray-700">
-                Home
-            </Link>
-              <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
-                Dashboard
-              </Link>
-            </nav>
-
-            {/* User Section */}
-            <div className="flex items-center space-x-4">
+            {/* Combined Navigation and User Section */}
+            <div className="flex items-center gap-6 ml-auto">
+              <nav className="flex gap-4">
+                <Link href="/" className="text-gray-500 hover:text-gray-700">
+                  Home
+                </Link>
+                <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
+                  Dashboard
+                </Link>
+              </nav>
               {!user ? (
                 <Link
                   href="/auth"
