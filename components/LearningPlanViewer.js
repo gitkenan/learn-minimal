@@ -176,13 +176,37 @@ const LearningPlanViewer = ({
   }
 
   const handleTaskInteraction = async (e, sectionId, itemId) => {
-    // Prevent event bubbling
     e.preventDefault();
     e.stopPropagation();
 
+    // Find and update the item immediately in local state
+    const updatedSections = parsedContent.sections.map(section => {
+      if (section.id !== sectionId) return section;
+      return {
+        ...section,
+        items: section.items.map(item => {
+          if (item.id !== itemId) return item;
+          return { ...item, isComplete: !item.isComplete };
+        })
+      };
+    });
+
+    // Update local state immediately
+    setParsedContent({
+      ...parsedContent,
+      sections: updatedSections,
+      progress: calculateProgress(updatedSections)
+    });
+
+    // Then sync with backend
     try {
       await toggleTask(sectionId, itemId);
     } catch (error) {
+      // Revert on error
+      setParsedContent({
+        ...parsedContent,
+        sections: parsedContent.sections
+      });
       console.error('Failed to toggle task:', error);
     }
   };
