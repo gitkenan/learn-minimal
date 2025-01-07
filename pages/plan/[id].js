@@ -146,18 +146,11 @@ export default function PlanPage() {
           </div>
         )}
 
-        {/* Mobile Bottom Drawer */}
+        {/* Mobile Bottom Sheet */}
         {isMobile && (
-          <div
-            className={`fixed left-0 right-0 bottom-0 bg-white shadow-lg-up transition-transform duration-300 z-50
-              ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}
-            style={{ 
-              height: '80vh',
-              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
-          >
+          <div className={`bottom-sheet ${isChatOpen ? 'bottom-sheet--open' : 'bottom-sheet--closed'}`}>
             {/* Mobile Header */}
-            <div className="absolute top-0 left-0 right-0 h-12 bg-gray-100 flex items-center justify-between px-4 border-b border-gray-200">
+            <div className="bottom-sheet__header">
               <button
                 onClick={() => setIsChatOpen(false)}
                 className="p-2 hover:bg-gray-200 rounded-full"
@@ -182,7 +175,7 @@ export default function PlanPage() {
             </div>
 
             {/* Mobile Chat Component */}
-            <div className="h-full pt-12 overflow-hidden bg-white">
+            <div className="bottom-sheet__content">
               <LearningChat planId={plan.id} topic={plan.topic} />
             </div>
           </div>
