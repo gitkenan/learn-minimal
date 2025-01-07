@@ -36,4 +36,18 @@
       #93C5FD 100%   /* Blue-300 */
     );
   }
+
+  /* Code block styles */
+  pre[class*='language-'] {
+    @apply text-sm leading-relaxed !important;
+    max-height: 400px;
+  }
+
+  :not(pre) > code {
+    @apply font-mono text-sm;
+  }
+
+  .prose pre {
+    @apply bg-chat-background text-chat-text p-4 rounded-lg overflow-x-auto;
+  }
 }

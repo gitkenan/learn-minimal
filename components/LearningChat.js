@@ -189,6 +189,7 @@ export default function LearningChat({ planId, topic }) {
     <div className="flex flex-col h-full">
       <div className="flex-none p-4 border-b bg-white">
         <div className="flex justify-between items-center mb-4">
+          <h2 className="gradient-text text-lg font-semibold">Learning Assistant</h2>
           <button
             onClick={startNewDiscussion}
             className="px-3 py-1 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover"
