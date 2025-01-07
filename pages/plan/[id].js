@@ -81,7 +81,7 @@ export default function PlanPage() {
           {!isChatOpen && (
             <div className="h-full flex items-center justify-center">
               <span
-                className="text-gray-600 text-sm font-medium whitespace-nowrap transform -rotate-90"
+                className="gradient-text-blue whitespace-nowrap transform -rotate-90"
                 style={{ transformOrigin: 'center' }}
               >
                 Learning Assistant
