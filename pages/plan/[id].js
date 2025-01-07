@@ -12,35 +12,43 @@ export default function PlanPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatWidth, setChatWidth] = useState(384);
   const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
   const minWidth = 384;
   const maxWidth = 768;
 
   const { plan, loading, error } = usePlan(id);
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    const newWidth = Math.max(minWidth, Math.min(maxWidth, e.clientX));
-    setChatWidth(newWidth);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-
   useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      const delta = e.clientX - startX;
+      const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+      setChatWidth(newWidth);
     };
-  }, [isDragging]);
+
+    const onMouseUp = () => {
+      setIsDragging(false);
+      setStartX(0);
+      setStartWidth(0);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDragging, startX, startWidth, minWidth, maxWidth]);
+
+  const handleMouseDown = (e) => {
+    setStartX(e.clientX);
+    setStartWidth(chatWidth);
+    setIsDragging(true);
+  };
 
   if (loading || !plan) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,7 +65,8 @@ export default function PlanPage() {
       <div className="flex min-h-screen">
         {/* Chat Side Panel */}
         <div
-          className={`fixed left-0 top-0 h-full bg-white shadow-lg ${isChatOpen ? '' : 'w-12'} flex flex-col`}
+          className={`fixed left-0 top-0 h-full bg-white shadow-lg ${isChatOpen ? '' : 'w-12'} flex flex-col
+            ${isDragging ? '' : 'transition-all duration-300'}`}
           style={{ width: isChatOpen ? `${chatWidth}px` : undefined }}
         >
           {/* Resize Handle - now pointer-events-none except for the handle itself */}
@@ -113,7 +122,7 @@ export default function PlanPage() {
 
         {/* Main Content */}
         <main 
-          className="flex-1 transition-all duration-300"
+          className={`flex-1 ${isDragging ? '' : 'transition-all duration-300'}`}
           style={{ marginLeft: isChatOpen ? `${chatWidth}px` : '3rem' }}
         >
           <div className="container mx-auto px-4 py-8">
