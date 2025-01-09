@@ -53,14 +53,24 @@ describe("Home Page Input Handling", () => {
 
   it("should update experience state when textarea changes", async () => {
     render(<Home />);
-    const experienceInput = screen.getByPlaceholderText(/Tell us about your experience/);
+    
+    // Show advanced options
+    const showAdvancedButton = screen.getByText("Show Advanced Options");
+    await userEvent.click(showAdvancedButton);
+    
+    const experienceInput = screen.getByPlaceholderText("Tell us about your experience with this topic (optional)");
     await userEvent.type(experienceInput, "I have some experience");
     expect(experienceInput.value).toBe("I have some experience");
   });
 
   it("should update timeline state when input changes", async () => {
     render(<Home />);
-    const timelineInput = screen.getByPlaceholderText(/How much time do you have/);
+    
+    // Show advanced options
+    const showAdvancedButton = screen.getByText("Show Advanced Options");
+    await userEvent.click(showAdvancedButton);
+    
+    const timelineInput = screen.getByPlaceholderText("How much time do you have? (optional)");
     await userEvent.type(timelineInput, "2 weeks");
     expect(timelineInput.value).toBe("2 weeks");
   });
@@ -94,10 +104,14 @@ describe("Home Page Input Handling", () => {
 
     render(<Home />);
     
+    // Show advanced options
+    const showAdvancedButton = screen.getByText("Show Advanced Options");
+    await userEvent.click(showAdvancedButton);
+    
     // Fill out form
     const topicInput = screen.getByPlaceholderText("Enter a topic to learn about...");
-    const experienceInput = screen.getByPlaceholderText(/Tell us about your experience/);
-    const timelineInput = screen.getByPlaceholderText(/How much time do you have/);
+    const experienceInput = screen.getByPlaceholderText("Tell us about your experience with this topic (optional)");
+    const timelineInput = screen.getByPlaceholderText("How much time do you have? (optional)");
     const submitButton = screen.getByRole("button", { name: /Generate Learning Plan/ });
 
     await userEvent.type(topicInput, "React testing");
