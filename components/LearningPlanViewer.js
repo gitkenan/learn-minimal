@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import TaskNotes from './TaskNotes';
 import { usePlan } from '@/hooks/usePlan';
 
+import { 
+  detectSectionType,
+  calculateProgress,
+  baseMarkdownParser
+} from '@/utils/planParserUtils';
+
 // Helper function to validate JSON structure
 function isValidPlanStructure(content) {
   return content?.sections?.length > 0 && 
@@ -9,106 +15,32 @@ function isValidPlanStructure(content) {
            section.id && section.title && Array.isArray(section.items));
 }
 
+// Function to process text content and handle markdown formatting
+const processContent = (text) => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Handle bold
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Handle italics
+    .replace(/`(.*?)`/g, '<code>$1</code>')           // Handle inline code
+    .replace(/\[([\sx])\]/g, '')                     // Replace checkboxes with a nice symbol
+    .trim();
+};
+
 // Parser function that converts markdown to structured data
 export function parseMarkdownPlan(markdown) {
   const lines = markdown.split('\n');
-  const sections = [];
-  let currentSection = null;
-
-  const generateId = () => Math.random().toString(36).substr(2, 9);
   
-  // Function to process text content and handle markdown formatting
-  const processContent = (text) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Handle bold
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Handle italics
-      .replace(/`(.*?)`/g, '<code>$1</code>')           // Handle inline code
-      .replace(/\[([\sx])\]/g, '')                     // Replace checkboxes with a nice symbol
-      .trim();
-  };
+  // Skip the first h1 heading as it will be used as the title
+  const filteredLines = lines[0]?.startsWith('# ') 
+    ? lines.slice(1) 
+    : lines;
 
-  lines.forEach((line, index) => {
-    // Skip the first h1 heading as it will be used as the title
-    if (index === 0 && line.startsWith('# ')) {
-      return;
-    }
-
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-    
-    if (headingMatch) {
-      if (currentSection) {
-        sections.push(currentSection);
-      }
-
-      currentSection = {
-        id: generateId(),
-        headingLevel: headingMatch[1].length,
-        title: processContent(headingMatch[2].trim()),
-        type: detectSectionType(headingMatch[2].trim()),
-        items: []
-      };
-    } else if (currentSection) {
-      const checkboxMatch = line.match(/^-?\s*\[([\sx])\]\s*(.+)/);
-      if (checkboxMatch) {
-        currentSection.items.push({
-          id: generateId(),
-          type: 'task',
-          isComplete: checkboxMatch[1].toLowerCase() === 'x',
-          content: processContent(checkboxMatch[2].trim())
-        });
-      } 
-      else if (line.trim().startsWith('- ')) {
-        currentSection.items.push({
-          id: generateId(),
-          type: 'text',
-          content: processContent(line.replace(/^-\s+/, '').trim())
-        });
-      }
-      else if (line.trim()) {
-        currentSection.items.push({
-          id: generateId(),
-          type: 'text',
-          content: processContent(line.trim())
-        });
-      }
-    }
-  });
-
-  if (currentSection) {
-    sections.push(currentSection);
-  }
-
+  const sections = baseMarkdownParser(filteredLines.join('\n'), processContent);
   const progress = calculateProgress(sections);
 
   return {
     sections,
     progress
   };
-}
-
-function detectSectionType(title) {
-  const lowerTitle = title.toLowerCase();
-  
-  if (lowerTitle.includes('phase')) return 'phase';
-  if (lowerTitle.includes('resource')) return 'resources';
-  if (lowerTitle.includes('timeline')) return 'timeline';
-  return 'section';
-}
-
-export function calculateProgress(sections) {
-  let totalTasks = 0;
-  let completedTasks = 0;
-
-  sections.forEach(section => {
-    section.items.forEach(item => {
-      if (item.type === 'task') {
-        totalTasks++;
-        if (item.isComplete) completedTasks++;
-      }
-    });
-  });
-
-  return totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 }
 
 const LearningPlanViewer = ({ 

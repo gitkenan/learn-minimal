@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { initializeSupabase } from '../lib/supabaseClient';
-import { parseMarkdownPlan, calculateProgress } from '../components/LearningPlanViewer';
+import { parseMarkdownPlan, calculateProgress } from '../utils/planParserUtils';
 
 export function usePlan(planId) {
   const { user, session } = useAuth();
