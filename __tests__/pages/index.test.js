@@ -65,23 +65,21 @@ describe("Home Page Input Handling", () => {
     expect(timelineInput.value).toBe("2 weeks");
   });
 
-  it("should disable submit button when any field is empty", () => {
-    render(<Home />);
-    const submitButton = screen.getByRole("button", { name: /Generate Learning Plan/ });
-    expect(submitButton).toBeDisabled();
-  });
-
-  it("should enable submit button when all fields have values", async () => {
+  it("should enable submit button when topic is filled", async () => {
     render(<Home />);
     const topicInput = screen.getByPlaceholderText("Enter a topic to learn about...");
-    const experienceInput = screen.getByPlaceholderText(/Tell us about your experience/);
-    const timelineInput = screen.getByPlaceholderText(/How much time do you have/);
     const submitButton = screen.getByRole("button", { name: /Generate Learning Plan/ });
 
     await userEvent.type(topicInput, "React testing");
-    await userEvent.type(experienceInput, "Some experience");
-    await userEvent.type(timelineInput, "2 weeks");
+    expect(submitButton).not.toBeDisabled();
+  });
 
+  it("should allow submission with optional fields empty", async () => {
+    render(<Home />);
+    const topicInput = screen.getByPlaceholderText("Enter a topic to learn about...");
+    const submitButton = screen.getByRole("button", { name: /Generate Learning Plan/ });
+
+    await userEvent.type(topicInput, "React testing");
     expect(submitButton).not.toBeDisabled();
   });
 

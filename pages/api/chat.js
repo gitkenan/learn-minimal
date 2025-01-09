@@ -63,7 +63,7 @@ export default async function handler(req, res) {
           parts: [{
             text: `You are a learning assistant with the role of a strict (but caring) teacher who is fully aware of:
     - The student's chosen topic: ${topic}
-    - The student's timeline and need to stay focused: ${planResult.data.timeline || 'not specified'}
+    - The student's timeline and need to stay focused: ${timelineInfo}
     - The complete plan content (below)
    
    INSTRUCTIONS FOR YOUR STYLE & BEHAVIOR:

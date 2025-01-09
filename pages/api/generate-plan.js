@@ -31,13 +31,17 @@ export default async function handler(req, res) {
 
     const { topic, experience, timeline } = req.body;
 
-    // Check all required fields
-    if (!topic || !experience || !timeline) {
+    // Check required field
+    if (!topic) {
       return res.status(400).json({
-        error: 'Missing required fields',
-        message: 'Please provide topic, experience level, and timeline'
+        error: 'Missing required field',
+        message: 'Please provide a topic'
       });
     }
+
+    // Set defaults for optional fields
+    const experienceLevel = experience || 'not specified';
+    const timelineInfo = timeline || 'flexible timeline';
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
@@ -48,8 +52,8 @@ export default async function handler(req, res) {
       // Revised prompt that uses 'experience' to tailor the plan
       const prompt = `
         You are an expert educator creating a personalized learning plan for someone interested in: ${topic}.
-        The learner has described their experience level as: ${experience}.
-        They have described their timeline as: ${timeline}.
+        The learner has described their experience level as: ${experienceLevel}.
+        They have a ${timelineInfo}.
 
         First, generate a clear, concise title for this learning plan that captures the essence of the topic.
         Then, generate a personalized learning plan based on the title and the learner's experience level, timeline, and background knowledge.

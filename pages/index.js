@@ -11,6 +11,7 @@ export default function Home() {
   const [experience, setExperience] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -26,7 +27,11 @@ export default function Home() {
           'Authorization': `Bearer ${session?.access_token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({ topic, timeline, experience }),
+        body: JSON.stringify({ 
+          topic, 
+          timeline: timeline.trim() || 'flexible timeline',
+          experience: experience.trim() || 'not specified'
+        }),
       });
 
       if (!res.ok) {
@@ -95,25 +100,45 @@ export default function Home() {
                          transition-colors duration-200"
                 disabled={isLoading}
               />
-              <textarea
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                placeholder="Tell us about your experience with this topic (e.g., 'I'm completely new to this')"
-                className="w-full p-4 text-primary bg-background border border-claude-border 
-                         rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors duration-200 min-h-[100px]"
-                disabled={isLoading}
-              />
-              <input
-                type="text"
-                value={timeline}
-                onChange={(e) => setTimeline(e.target.value)}
-                placeholder="How much time do you have? (e.g., '2 weeks', '3 months')"
-                className="w-full p-4 text-primary bg-background border border-claude-border 
-                         rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors duration-200"
-                disabled={isLoading}
-              />
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center justify-center gap-2 text-accent hover:text-accent-hover transition-colors duration-200"
+              >
+                <span>{showAdvanced ? 'Hide' : 'Show'} Advanced Options</span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showAdvanced && (
+                <>
+                  <textarea
+                    value={experience}
+                    onChange={(e) => setExperience(e.target.value)}
+                    placeholder="Tell us about your experience with this topic (optional)"
+                    className="w-full p-4 text-primary bg-background border border-claude-border 
+                             rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                             transition-colors duration-200 min-h-[100px]"
+                    disabled={isLoading}
+                  />
+                  <input
+                    type="text"
+                    value={timeline}
+                    onChange={(e) => setTimeline(e.target.value)}
+                    placeholder="How much time do you have? (optional)"
+                    className="w-full p-4 text-primary bg-background border border-claude-border 
+                             rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                             transition-colors duration-200"
+                    disabled={isLoading}
+                  />
+                </>
+              )}
             </div>
 
             {error && (
@@ -124,7 +149,7 @@ export default function Home() {
 
             <button
               type="submit"
-              disabled={isLoading || !topic.trim() || !timeline.trim() || !experience.trim() || loading}
+              disabled={isLoading || !topic.trim() || loading}
               className="w-full p-4 bg-accent hover:bg-accent-hover text-white rounded-lg
                        transition-colors duration-200 disabled:opacity-50
                        font-medium text-base flex items-center justify-center"

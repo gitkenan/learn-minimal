@@ -4,7 +4,7 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
-import { FaCheck, FaTrashAlt, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaTrashAlt, FaTimes, FaCog } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { user, session, loading: authLoading, sessionReady } = useAuth();
@@ -16,6 +16,9 @@ export default function Dashboard() {
   const [planToDelete, setPlanToDelete] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [deletedPlanName, setDeletedPlanName] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [experience, setExperience] = useState('');
+  const [timeline, setTimeline] = useState('');
 
   useEffect(() => {
     const fetchPlans = async () => {
