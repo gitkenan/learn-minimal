@@ -23,6 +23,16 @@ export function calculateProgress(sections) {
   return totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 }
 
+export function parseLearningPlanViewer(markdown) {
+  const sections = baseMarkdownParser(markdown);
+  const progress = calculateProgress(sections);
+
+  return {
+    sections,
+    progress
+  };
+}
+
 export function baseMarkdownParser(markdown, processContent = (text) => text) {
   const lines = markdown.split('\n');
   const sections = [];
