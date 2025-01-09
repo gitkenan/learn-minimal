@@ -1,4 +1,4 @@
-import EnhancedSessionTest from '../../components/EnhancedSessionTest';
+import EnhancedSessionTest from '../../components/test_pages/EnhancedSessionTest';
 
 export default function TestEnhancedPage() {
   return (

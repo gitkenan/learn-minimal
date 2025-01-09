@@ -1,5 +1,5 @@
 // pages/test/test-plan-generation.js
-import PlanGenerationTest from '../../components/PlanGenerationTest';
+import PlanGenerationTest from '../../components/test_pages/PlanGenerationTest';
 
 export default function TestPlanGeneration() {
   return (

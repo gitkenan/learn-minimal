@@ -1,4 +1,4 @@
-import CookieTest from '@/components/CookieTest';
+import CookieTest from '@/components/test_pages/CookieTest';
 
 export default function TestCookiePage() {
   return (

@@ -1,5 +1,5 @@
 // pages/test/test-parser.js
-import ParserTest from '../../components/ParserTest';
+import ParserTest from '../../components/test_pages/ParserTest';
 
 export default function TestParserPage() {
   return (

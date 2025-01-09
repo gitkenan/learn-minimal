@@ -1,4 +1,4 @@
-import PlanTest from '@/components/PlanTest';
+import PlanTest from '@/components/test_pages/PlanTest';
 
 export default function TestPlanPage() {
   return (
