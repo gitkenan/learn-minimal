@@ -9,6 +9,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Declare variables outside try block for error handling
+  let message, topic, discussionId, planId;
+  
   try {
     // Get the authenticated session
     const supabase = createPagesServerClient({ req, res });
@@ -18,7 +21,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { message, topic, discussionId, planId } = req.body;
+    ({ message, topic, discussionId, planId } = req.body);
 
     // Validate input
     if (!message || !topic || !discussionId || !planId) {
@@ -53,8 +56,36 @@ export default async function handler(req, res) {
     const planContent = planResult.data.content;
     const previousMessages = messagesResult.data || [];
 
+    // Extract timeline info from plan content
+    const timelineMatch = planContent.match(/Timeline:([\s\S]*?)(?:\n\n|$)/i);
+    const timelineInfo = timelineMatch ? timelineMatch[1].trim() : 'No specific timeline provided';
+
     // Initialize AI model with chat functionality
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-pro",
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_NONE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_NONE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_NONE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_NONE"
+        },
+        {
+          category: "HARM_CATEGORY_CIVIC_INTEGRITY",
+          threshold: "BLOCK_NONE"
+        }
+      ]
+    });
 
     const chat = model.startChat({
       history: [
@@ -75,10 +106,10 @@ export default async function handler(req, res) {
    6. You must reference or tie your advice back to the plan content (shown below) when appropriate, providing incremental steps. Use simple lists if needed, but again, no large headers.
    7. If the user asks questions that align with the plan and timeline, go into detail. If they ask something irrelevant, respond briefly, and encourage them to remain on track.
    
-   Here is the learning plan content you should keep in mind for the conversation:
+   Here is the learning plan content:
    ${planContent}
    
-   Now, let's begin.`
+   Let's have a productive conversation!`
           }]
         },
         {
@@ -96,11 +127,51 @@ export default async function handler(req, res) {
     });
 
     const result = await chat.sendMessage([{ text: message }]);
-    const response = result.response.text();
+    
+    if (!result || !result.response) {
+      console.error('Invalid AI response format:', result);
+      return res.status(502).json({ 
+        error: 'Invalid AI response format',
+        details: 'The AI returned an invalid response format',
+        code: 'AI_RESPONSE_FORMAT_ERROR'
+      });
+    }
 
-    return res.status(200).json({ response });
+    const responseText = result.response.text();
+    if (!responseText || typeof responseText !== 'string') {
+      console.error('Empty or invalid AI response:', responseText);
+      return res.status(502).json({ 
+        error: 'Empty or invalid AI response',
+        details: 'The AI returned an empty or invalid response',
+        code: 'AI_RESPONSE_CONTENT_ERROR'
+      });
+    }
+
+    return res.status(200).json({ response: responseText });
   } catch (error) {
-    console.error('Chat API error:', error);
-    return res.status(500).json({ error: 'Failed to process chat message' });
+    console.error('Chat API error:', {
+      message: error.message,
+      stack: error.stack,
+      request: {
+        message,
+        topic,
+        discussionId,
+        planId
+      }
+    });
+    
+    if (error.message.includes('SAFETY')) {
+      return res.status(403).json({ 
+        error: 'Message blocked by content safety filters',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        code: 'CONTENT_SAFETY_ERROR'
+      });
+    }
+
+    return res.status(500).json({ 
+      error: 'Failed to process chat message',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      code: 'INTERNAL_SERVER_ERROR'
+    });
   }
 }
