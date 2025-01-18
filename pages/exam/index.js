@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import ReactMarkdown from 'react-markdown';
 import Header from '@/components/Header';
 
 export default function AIExaminerPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [subject, setSubject] = useState('');
   const [experience, setExperience] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
   const [questionType, setQuestionType] = useState('short-answer');
+  const [systemInstructions, setSystemInstructions] = useState('');
   const [messages, setMessages] = useState([]);
   const [userAnswer, setUserAnswer] = useState('');
   const [showQuiz, setShowQuiz] = useState(false);
@@ -38,10 +41,10 @@ export default function AIExaminerPage() {
     setShowQuiz(true);
     
     await handleAIRequest(
-      `You are an AI examiner. The student wants to test themselves on: ${subject}.
+      `You are an AI examiner. ${systemInstructions ? `Special instructions: ${systemInstructions}. ` : ''}The student wants to test themselves on: ${subject}.
       They have ${experience || 'no declared'} experience. 
       The difficulty level is ${difficulty}, and question type is ${questionType}.
-      Begin by asking a single question, no answer yet. Stay instructive and direct.`
+      ${systemInstructions ? 'Follow the special instructions while maintaining the specified difficulty level. Begin by asking a single question or task, NO answer yet.' : 'Begin by asking a single question, no answer yet.'} Stay instructive and direct.`
     );
   };
 
@@ -84,17 +87,81 @@ export default function AIExaminerPage() {
     setUserAnswer('');
     await handleAIRequest(
       `The student answered: ${userAnswer}.
-      Evaluate or continue questioning. Keep track of performance but do not reveal it yet.`,
+      Provide immediate feedback on this answer and ask the next question.
+      Do not evaluate overall performance yet.`,
       newChat
     );
   };
 
   const finalizeExam = async () => {
     const fullHistory = messages.map((m) => (m.isAI ? `AI: ${m.text}` : `Student: ${m.text}`)).join('\n');
-    await handleAIRequest(
-      `Here is the entire Q&A:\n${fullHistory}\n\nNow provide an overall analysis with a final summary of performance.`,
-      messages
-    );
+    
+    try {
+      const response = await fetch('/api/exam-endpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `Here is the complete Q&A session:\n${fullHistory}\n\n
+          You are an AI examiner conducting a final analysis. ${systemInstructions ? `This was a specialized exam with instructions: "${systemInstructions}". ` : ''}
+          Based ONLY on the actual exchanges above, provide a comprehensive analysis of the student's performance.
+          
+          Structure your analysis as follows:
+          1. EXAM OVERVIEW
+          - Subject matter and format
+          - Difficulty level
+          ${systemInstructions ? '- Special examination focus\n' : ''}
+          
+          2. DETAILED ANALYSIS
+          - List each question asked and the student's response
+          - Evaluate the accuracy and completeness of each answer
+          
+          3. PERFORMANCE ASSESSMENT
+          - Key strengths demonstrated
+          - Specific areas needing improvement
+          - Understanding of core concepts
+          ${systemInstructions ? '- Performance in relation to the specialized focus\n' : ''}
+          
+          4. RECOMMENDATIONS
+          - Specific topics to review
+          - Suggested study resources or practice areas
+          
+          Format your response with clear headings and bullet points for readability.
+          Be specific and reference actual answers given. Do not make assumptions about knowledge not demonstrated in the exchanges.`,
+          messages
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get final analysis');
+      }
+
+      const data = await response.json();
+      
+      if (!data?.response) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Create final messages array with the analysis
+      const finalMessages = [
+        ...messages,
+        { isAI: true, text: data.response }
+      ];
+
+      const examResults = {
+        subject,
+        difficulty,
+        questionType,
+        messages: finalMessages,
+        finishedAt: new Date().toISOString(),
+      };
+
+      // Save to localStorage and navigate
+      localStorage.setItem('examResults', JSON.stringify(examResults));
+      router.push('/exam/results');
+    } catch (err) {
+      setError(err.message || 'Failed to complete exam');
+      console.error('Error:', err);
+    }
   };
   if (!user) {
     return (
@@ -186,6 +253,16 @@ export default function AIExaminerPage() {
                   <option value="multiple-choice">Multiple Choice</option>
                   <option value="essay">Essay</option>
                 </select>
+
+                <textarea
+                  placeholder="System Instructions (optional) - e.g., 'give me medical cases to diagnose'"
+                  className="w-full p-4 text-primary bg-background border border-claude-border 
+                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
+                           transition-colors duration-200 min-h-[100px]"
+                  value={systemInstructions}
+                  onChange={(e) => setSystemInstructions(e.target.value)}
+                  disabled={isLoading}
+                />
 
                 <button 
                   onClick={startQuiz}
