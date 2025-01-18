@@ -5,65 +5,47 @@ import Header from '@/components/Header';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
-export default function ExamResultsPage() {
+export default function SavedExamResultPage() {
   const router = useRouter();
+  const { id } = router.query;
   const { user } = useAuth();
-  const [examResults, setExamResults] = useState(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [saving, setSaving] = useState(true);
+  const [examResult, setExamResult] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    async function saveExamResults() {
-      if (typeof window === 'undefined' || !user) return;
+    async function fetchExamResult() {
+      if (!id || !user) return;
 
-      const stored = localStorage.getItem('examResults');
-      if (!stored) {
-        router.replace('/exam');
-        return;
-      }
-
-      const results = JSON.parse(stored);
-      
       try {
         const supabase = initializeSupabase();
         const { data, error } = await supabase
           .from('exam_results')
-          .insert([
-            {
-              user_id: user.id,
-              subject: results.subject,
-              difficulty: results.difficulty,
-              question_type: results.questionType,
-              messages: results.messages,
-              final_analysis: results.messages.slice().reverse().find(m => m.isAI)?.text || null,
-            },
-          ])
-          .select()
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;
+        if (!data) throw new Error('Result not found');
 
-        // Clear localStorage after successful save
-        localStorage.removeItem('examResults');
-        
-        // Redirect to the saved result page
-        router.replace(`/exam/results/${data.id}`);
+        setExamResult(data);
       } catch (err) {
-        console.error('Error saving exam results:', err);
+        console.error('Error fetching exam result:', err);
         setError(err.message);
-        setExamResults(results);
-        setSaving(false);
+      } finally {
+        setLoading(false);
       }
     }
 
-    saveExamResults();
-  }, [router, user]);
+    fetchExamResult();
+  }, [id, user]);
 
-  if (saving && !error) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Saving your results...</p>
+        <p>Loading result...</p>
       </div>
     );
   }
@@ -73,32 +55,17 @@ export default function ExamResultsPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-4 py-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
-              Error saving results: {error}
-            </div>
-            {examResults && <ExamResultDisplay examResults={examResults} />}
+          <div className="max-w-3xl mx-auto bg-red-50 text-red-600 p-4 rounded-lg">
+            {error}
           </div>
         </main>
       </div>
     );
   }
 
-  return null;
-}
-
-function ExamResultDisplay({ examResults }) {
-  const [showHistory, setShowHistory] = useState(false);
-  
-  // Create a copy of messages first to avoid mutating the original
-  const messagesCopy = [...examResults.messages];
-  
-  // Get the final AI message from the original order (last AI message)
-  const finalAiMessage = messagesCopy.slice().reverse().find((m) => m.isAI);
-  
-  // Filter and display only analysis-related messages in reverse chronological order
-  const chatMessages = [...messagesCopy]
-    .reverse()
+  const messages = examResult.messages || [];
+  const finalAiMessage = messages.slice().reverse().find((m) => m.isAI);
+  const chatMessages = messages
     .filter(m => 
       m.text.includes('PERFORMANCE ASSESSMENT') || 
       m.text.includes('Clinical Case') ||
@@ -112,16 +79,16 @@ function ExamResultDisplay({ examResults }) {
         <div className="space-y-6">
           <div className="mb-8">
             <h1 className="text-3xl font-semibold mb-6">
-              Exam Results: {examResults.subject}
+              Exam Results: {examResult.subject}
             </h1>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
               <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
                 <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
-                <p className="font-medium text-gray-900">{examResults.difficulty}</p>
+                <p className="font-medium text-gray-900">{examResult.difficulty}</p>
               </div>
               <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
                 <span className="text-gray-500 text-sm block mb-1">Type</span>
-                <p className="font-medium text-gray-900">{examResults.questionType}</p>
+                <p className="font-medium text-gray-900">{examResult.question_type}</p>
               </div>
             </div>
           </div>

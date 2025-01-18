@@ -4,11 +4,13 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 import Header from '@/components/Header';
 import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
-import { FaCheck, FaTrashAlt, FaTimes, FaCog } from 'react-icons/fa';
+import ExamResults from '@/components/ExamResults';
+import { FaCheck, FaTrashAlt, FaTimes, FaCog, FaGraduationCap } from 'react-icons/fa';
 
 export default function Dashboard() {
   const { user, session, loading: authLoading, sessionReady } = useAuth();
   const [plans, setPlans] = useState([]);
+  const [examResults, setExamResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,8 +23,8 @@ export default function Dashboard() {
   const [timeline, setTimeline] = useState('');
 
   useEffect(() => {
-    const fetchPlans = async () => {
-      console.log('fetchPlans called');
+    const fetchData = async () => {
+      console.log('fetchData called');
       try {
         setLoading(true);
         setError('');
@@ -33,20 +35,28 @@ export default function Dashboard() {
           throw new Error('Failed to initialize Supabase client');
         }
 
-        const { data, error: supabaseError } = await supabase
+        // Fetch plans
+        const { data: plansData, error: plansError } = await supabase
           .from('plans')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        console.log('fetchPlans data:', data);
-        console.log('fetchPlans error:', supabaseError);
+        if (plansError) throw plansError;
+        setPlans(plansData || []);
 
-        if (supabaseError) throw supabaseError;
+        // Fetch exam results
+        const { data: examData, error: examError } = await supabase
+          .from('exam_results')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-        setPlans(data || []);
+        if (examError) throw examError;
+        setExamResults(examData || []);
+
       } catch (err) {
-        console.error('Error fetching plans:', err);
+        console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -54,7 +64,7 @@ export default function Dashboard() {
     };
 
     if (sessionReady) {
-      fetchPlans();
+      fetchData();
     }
   }, [sessionReady, user?.id]);
 
@@ -141,21 +151,42 @@ export default function Dashboard() {
             </div>
           )}
 
-          {filteredPlans.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
+          <div className="space-y-8">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <FaGraduationCap className="text-gray-600" />
+                  <span>Exam Results</span>
+                </h2>
+                <Link
+                  href="/exam"
+                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Take New Exam
+                </Link>
+              </div>
+              <ExamResults examResults={examResults} />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredPlans.map((plan) => (
-                <PlanCard 
-                  key={plan.id} 
-                  plan={plan} 
-                  onDelete={handleDeleteConfirmation}
-                />
-              ))}
+
+            <div>
+              <h2 className="text-2xl font-semibold mb-6">Learning Plans</h2>
+              {filteredPlans.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredPlans.map((plan) => (
+                    <PlanCard 
+                      key={plan.id} 
+                      plan={plan} 
+                      onDelete={handleDeleteConfirmation}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
