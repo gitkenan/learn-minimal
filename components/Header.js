@@ -39,26 +39,35 @@ function MobileMenu() {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-48 bg-white shadow-lg rounded-lg py-2 z-50">
-              <button
-                onClick={() => handleNavigation('/dashboard')}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => handleNavigation('/')}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Create New Plan
-              </button>
-              <button
-                onClick={signOut}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Sign Out
-              </button>
-            </div>
+            <>
+              <div className="bottom-sheet-enhanced__overlay" />
+              <div className="absolute right-0 top-12 w-48 bg-white shadow-strong rounded-lg py-2 z-50 fade-in">
+                <button
+                  onClick={() => handleNavigation('/dashboard')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => handleNavigation('/exam')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                >
+                  Exam
+                </button>
+                <button
+                  onClick={() => handleNavigation('/')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                >
+                  Create New Plan
+                </button>
+                <button
+                  onClick={signOut}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -77,27 +86,42 @@ export default function Header() {
           <MobileMenu />
         ) : (
           <div className="flex items-center justify-between h-16 px-8">
-            {/* Combined Navigation and User Section */}
+            <Link href="/" className="gradient-text-accent text-lg font-bold">
+              Learn Minimal
+            </Link>
+            
             <div className="flex items-center gap-6 ml-auto">
               <nav className="flex gap-4">
-                <Link href="/" className="text-gray-500 hover:text-gray-700">
+                <Link 
+                  href="/" 
+                  className="text-gray-500 hover:text-primary interactive"
+                >
                   Home
                 </Link>
-                <Link href="/dashboard" className="text-gray-500 hover:text-gray-700">
+                <Link 
+                  href="/dashboard" 
+                  className="text-gray-500 hover:text-primary interactive"
+                >
                   Dashboard
+                </Link>
+                <Link 
+                  href="/exam" 
+                  className="text-gray-500 hover:text-primary interactive"
+                >
+                  Exam
                 </Link>
               </nav>
               {!user ? (
                 <Link
                   href="/auth"
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-primary interactive"
                 >
                   Sign In
                 </Link>
               ) : (
                 <button
                   onClick={signOut}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-primary interactive"
                 >
                   Sign Out
                 </button>

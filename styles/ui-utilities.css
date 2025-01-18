@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Enhanced interactive states */
+  .interactive {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .interactive:hover {
+    @apply scale-[1.02] shadow-strong;
+  }
+
+  .interactive:active {
+    @apply scale-[0.98];
+  }
+
+  /* Expanded gradient text */
+  .gradient-text-accent {
+    @apply bg-clip-text text-transparent font-semibold;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.accent.DEFAULT') 0%,
+      theme('colors.accent.secondary') 50%,
+      theme('colors.accent.muted') 100%
+    );
+  }
+
+  .gradient-text-primary {
+    @apply bg-clip-text text-transparent font-semibold;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.primary') 0%,
+      theme('colors.secondary') 50%,
+      theme('colors.primary') 100%
+    );
+  }
+
+  /* Typography enhancements */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Enhanced bottom sheet */
+  .bottom-sheet-enhanced {
+    @apply bottom-sheet;
+    box-shadow: theme('boxShadow.lg-up');
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bottom-sheet-enhanced__overlay {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  /* Fade animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* Pulse animation for loading states */
+  .pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
