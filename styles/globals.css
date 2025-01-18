@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './ui-utilities.css';
-
 @layer components {
   .search-input {
     @apply w-full px-4 py-3 rounded-xl border border-gray-200 
@@ -19,13 +17,27 @@
 }
 
 @layer utilities {
+  /* Enhanced interactive states */
+  .interactive {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .interactive:hover {
+    @apply scale-[1.02] shadow-strong;
+  }
+
+  .interactive:active {
+    @apply scale-[0.98];
+  }
+
+  /* Gradient text utilities */
   .gradient-text {
     @apply bg-clip-text text-transparent font-semibold text-xl;
     background-image: linear-gradient(
       90deg,
-      #7FB069 0%,    /* Sage green */
-      #94B49F 50%,   /* Lighter sage */
-      #ABC4A1 100%   /* Muted sage */
+      theme('colors.accent.DEFAULT') 0%,
+      theme('colors.accent.secondary') 50%,
+      theme('colors.accent.muted') 100%
     );
   }
 
@@ -33,9 +45,29 @@
     @apply bg-clip-text text-transparent font-semibold text-sm;
     background-image: linear-gradient(
       90deg,
-      #3B82F6 0%,    /* Blue-500 */
-      #60A5FA 50%,   /* Blue-400 */
-      #93C5FD 100%   /* Blue-300 */
+      #3B82F6 0%,
+      #60A5FA 50%,
+      #93C5FD 100%
+    );
+  }
+
+  .gradient-text-accent {
+    @apply bg-clip-text text-transparent font-semibold;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.accent.DEFAULT') 0%,
+      theme('colors.accent.secondary') 50%,
+      theme('colors.accent.muted') 100%
+    );
+  }
+
+  .gradient-text-primary {
+    @apply bg-clip-text text-transparent font-semibold;
+    background-image: linear-gradient(
+      90deg,
+      theme('colors.primary') 0%,
+      theme('colors.secondary') 50%,
+      theme('colors.primary') 100%
     );
   }
 
@@ -53,7 +85,16 @@
     @apply bg-chat-background text-chat-text p-4 rounded-lg overflow-x-auto;
   }
 
-  /* Bottom Sheet Styles */
+  /* Typography enhancements */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Bottom sheet styles */
   .bottom-sheet {
     position: fixed;
     left: 0;
@@ -62,7 +103,7 @@
     height: var(--drawer-height, 80vh);
     background: white;
     transition: transform 0.3s ease-in-out;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: theme('boxShadow.lg-up');
     z-index: 50;
   }
 
@@ -75,23 +116,20 @@
   }
 
   .bottom-sheet__header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 48px;
-    background: #f3f4f6;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 1rem;
+    @apply absolute top-0 left-0 right-0 h-12 bg-gray-100 border-b border-gray-200
+           flex items-center justify-between px-4;
   }
 
   .bottom-sheet__content {
-    height: 100%;
-    padding-top: 48px;
-    overflow: hidden;
-    background: white;
+    @apply h-full pt-12 overflow-hidden bg-white;
+  }
+
+  .bottom-sheet-enhanced {
+    @apply bottom-sheet;
+  }
+
+  .bottom-sheet-enhanced__overlay {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm;
+    transition: opacity 0.3s ease-in-out;
   }
 }
