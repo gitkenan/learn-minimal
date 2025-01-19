@@ -193,18 +193,13 @@ export default function Dashboard() {
 
           <div className="space-y-8">
             <div>
-              <div className="flex items-center justify-between mb-6">
+                <div className="mb-6">
                 <h2 className="text-2xl font-semibold flex items-center gap-2">
                   <FaGraduationCap className="text-gray-600" />
                   <span>Exam Results</span>
                 </h2>
-                <Link
-                  href="/exam"
-                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Take New Exam
-                </Link>
-              </div>
+                </div>
+
                 <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
             </div>
 
