@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import TaskNotes from './TaskNotes';
 import { usePlan } from '@/hooks/usePlan';
+import { useWorkflow } from '@/context/WorkflowContext';
+import { useExamFromPlan } from '@/hooks/useExamFromPlan';
+import { usePlanChat } from '@/hooks/usePlanChat';
 
 import { 
   detectSectionType,
@@ -49,6 +52,9 @@ const LearningPlanViewer = ({
   onProgressUpdate,
   contentType = 'json'
 }) => {
+  const { setActivePlanId } = useWorkflow();
+  const { startExamFromPlan } = useExamFromPlan();
+  const { startChatFromPlan } = usePlanChat();
   const { 
     plan,
     notes,
@@ -90,6 +96,13 @@ const LearningPlanViewer = ({
       setParsedContent(fallbackContent);
     }
   }, [initialContent, contentType]);
+
+  // Set active plan in workflow context
+  useEffect(() => {
+    if (planId) {
+      setActivePlanId(planId);
+    }
+  }, [planId, setActivePlanId]);
 
   // Update progress callback
   useEffect(() => {
@@ -155,6 +168,20 @@ const LearningPlanViewer = ({
 
   return (
     <div className="space-y-8">
+        <div className="flex justify-end gap-4 mb-4">
+        <button
+          onClick={() => startChatFromPlan(parsedContent)}
+          className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors duration-200"
+        >
+          Start Chat About Plan
+        </button>
+        <button
+          onClick={() => startExamFromPlan(parsedContent)}
+          className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors duration-200"
+        >
+          Start Exam Based on Plan
+        </button>
+        </div>
       {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
           {section.headingLevel === 2 ? (

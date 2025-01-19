@@ -20,7 +20,18 @@ export default function AIExaminerPage() {
 
   useEffect(() => {
     if (!user) return;
-    // Optionally, load any existing exam session here.
+    
+    // Load exam configuration if coming from a plan
+    const examConfig = localStorage.getItem('examConfig');
+    if (examConfig) {
+      const config = JSON.parse(examConfig);
+      setSubject(config.subject);
+      setDifficulty(config.difficulty);
+      setQuestionType(config.questionType);
+      setSystemInstructions(config.systemInstructions);
+      // Clear the config after loading
+      localStorage.removeItem('examConfig');
+    }
   }, [user]);
 
   const scrollToBottom = () => {
@@ -40,12 +51,17 @@ export default function AIExaminerPage() {
     setMessages(initialMessages);
     setShowQuiz(true);
     
-    await handleAIRequest(
-      `You are an AI examiner. ${systemInstructions ? `Special instructions: ${systemInstructions}. ` : ''}The student wants to test themselves on: ${subject}.
-      They have ${experience || 'no declared'} experience. 
-      The difficulty level is ${difficulty}, and question type is ${questionType}.
-      ${systemInstructions ? 'Follow the special instructions while maintaining the specified difficulty level. Begin by asking a single question or task, NO answer yet.' : 'Begin by asking a single question, no answer yet.'} Stay instructive and direct.`
-    );
+    // Send a more structured initial prompt
+    const initialPrompt = `You are an AI examiner conducting a ${difficulty} level exam on ${subject}.
+      Student experience level: ${experience || 'beginner'}
+      Question type: ${questionType}
+      ${systemInstructions ? `Special instructions: ${systemInstructions}` : ''}
+
+      Begin by asking a single ${questionType} question. Do not provide the answer yet.
+      Keep the difficulty at ${difficulty} level throughout the exam.
+      Focus on core concepts and practical applications.`;
+
+    await handleAIRequest(initialPrompt, initialMessages);
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -55,19 +71,18 @@ export default function AIExaminerPage() {
     setIsLoading(true);
     setError(null);
     try {
-        const response = await fetch('/api/exam', {
+      const response = await fetch('/api/exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, messages: localMessages }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to process request');
+        throw new Error(data.error || data.message || 'Failed to process request');
       }
 
-      const data = await response.json();
-      
       if (!data?.response) {
         throw new Error('Invalid response from server');
       }
@@ -75,8 +90,11 @@ export default function AIExaminerPage() {
       setMessages([...localMessages, { isAI: true, text: data.response }]);
       scrollToBottom();
     } catch (err) {
+      console.error('Error in exam:', err);
       setError(err.message || 'An error occurred while processing your request');
-      console.error('Error:', err);
+      if (userAnswer) {
+        setUserAnswer(userAnswer); // Preserve user's message on error
+      }
     } finally {
       setIsLoading(false);
     }

@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [examToDelete, setExamToDelete] = useState(null);
   const [isDeletingExam, setIsDeletingExam] = useState(false);
   const [deletedExamName, setDeletedExamName] = useState('');
+  const [showExamResults, setShowExamResults] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,53 +176,72 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
+          <div className="flex flex-col gap-4 mb-6">
           <input
             type="text"
             placeholder="Search plans..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border mb-6"
+            className="w-full px-4 py-2 rounded-lg border"
           />
+          
+          <button
+            type="button"
+            onClick={() => setShowExamResults(!showExamResults)}
+            className="flex items-center justify-center gap-2 text-accent hover:text-accent-hover transition-colors duration-200 py-2 border border-accent rounded-lg hover:bg-accent/5"
+          >
+            <FaGraduationCap className="text-current" />
+            <span>{showExamResults ? 'Hide' : 'Show'} Exam Results</span>
+            <svg 
+            className={`w-4 h-4 transform transition-transform ${showExamResults ? 'rotate-180' : ''}`}
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
-              {error}
-            </div>
+          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+            {error}
+          </div>
           )}
 
           <div className="space-y-8">
+          {showExamResults ? (
             <div>
-                <div className="mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                  <FaGraduationCap className="text-gray-600" />
-                  <span>Exam Results</span>
-                </h2>
-                </div>
-
-                <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
+            <h2 className="text-2xl font-semibold flex items-center gap-2 mb-6">
+              <FaGraduationCap className="text-gray-600" />
+              <span>Exam Results</span>
+            </h2>
+            <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
             </div>
-
+          ) : (
             <div>
-              <h2 className="text-2xl font-semibold mb-6">Learning Plans</h2>
-              {filteredPlans.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredPlans.map((plan) => (
-                    <PlanCard 
-                      key={plan.id} 
-                      plan={plan} 
-                      onDelete={handleDeleteConfirmation}
-                    />
-                  ))}
-                </div>
-              )}
+            <h2 className="text-2xl font-semibold mb-6">Learning Plans</h2>
+            {filteredPlans.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+              {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
+              </div>
+            ) : (
+              <div className="space-y-4">
+              {filteredPlans.map((plan) => (
+                <PlanCard 
+                key={plan.id} 
+                plan={plan} 
+                onDelete={handleDeleteConfirmation}
+                />
+              ))}
+              </div>
+            )}
             </div>
+          )}
           </div>
+
         </div>
       </div>
 
