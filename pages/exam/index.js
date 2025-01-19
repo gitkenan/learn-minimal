@@ -21,7 +21,6 @@ export default function AIExaminerPage() {
   useEffect(() => {
     if (!user) return;
     
-    // Load exam configuration if coming from a plan
     const examConfig = localStorage.getItem('examConfig');
     if (examConfig) {
       const config = JSON.parse(examConfig);
@@ -29,7 +28,14 @@ export default function AIExaminerPage() {
       setDifficulty(config.difficulty);
       setQuestionType(config.questionType);
       setSystemInstructions(config.systemInstructions);
-      // Clear the config after loading
+      
+      // Update title based on section/item context
+      document.title = config.itemId 
+        ? `Exam: ${config.subject}`
+        : config.sectionId 
+          ? `Section Exam: ${config.subject}`
+          : 'Full Plan Exam';
+          
       localStorage.removeItem('examConfig');
     }
   }, [user]);
@@ -210,14 +216,29 @@ export default function AIExaminerPage() {
         <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
           {!showQuiz ? (
             <>
-              <div className="mb-8 text-center">
+                <div className="mb-8 text-center">
                 <h1 className="text-primary text-3xl font-semibold mb-2">
-                  AI Examiner Setup
+                  {subject ? (
+                  <>
+                    {systemInstructions?.includes('specifically about:') 
+                    ? 'Task-Specific Exam'
+                    : systemInstructions?.includes('from the section:')
+                      ? 'Section Exam'
+                      : 'Full Plan Exam'}
+                  </>
+                  ) : (
+                  'AI Examiner Setup'
+                  )}
                 </h1>
+                {subject && (
+                  <p className="text-secondary text-lg mb-2">
+                  {subject}
+                  </p>
+                )}
                 <p className="text-secondary text-lg">
                   Configure your examination session
                 </p>
-              </div>
+                </div>
 
               <div className="flex flex-col gap-4">
                 <input

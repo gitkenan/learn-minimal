@@ -182,50 +182,68 @@ const LearningPlanViewer = ({
           Start Exam Based on Plan
         </button>
         </div>
-      {parsedContent?.sections.map(section => (
+        {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
-          {section.headingLevel === 2 ? (
+          <div className="flex items-center justify-between">
+          <div>
+            {section.headingLevel === 2 ? (
             <h2 
               className="text-2xl font-semibold text-gray-900"
               dangerouslySetInnerHTML={{ __html: section.title }}
             />
-          ) : (
+            ) : (
             <h3 
               className="text-xl font-semibold text-gray-900"
               dangerouslySetInnerHTML={{ __html: section.title }}
             />
-          )}
+            )}
+          </div>
+          <button
+            onClick={() => startExamFromPlan(parsedContent, section.id)}
+            className="text-sm px-3 py-1 bg-accent/10 hover:bg-accent/20 text-accent rounded transition-colors duration-200"
+          >
+            Test This Section
+          </button>
+          </div>
 
           <div className="space-y-1">
-            {section.items.map(item => (
-              <div key={item.id} className="group">
-                {item.type === 'task' ? (
-                  <div className="relative">
-                    <button
-                      className={`w-full text-left flex items-start gap-3 py-2 px-3 -ml-3
-                        rounded-lg transition-colors duration-200
-                        ${updating ? 'opacity-50' : 'hover:bg-gray-50/50'}`}
-                      onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
-                      disabled={updating}
-                      role="checkbox"
-                      aria-checked={item.isComplete}
-                    >
-                      <div className={`
-                        mt-1 flex-shrink-0 w-4 h-4 border rounded
-                        ${item.isComplete ? 'bg-accent border-accent' : 'border-accent-muted'}
-                        transition-colors duration-200
-                      `}>
-                        {item.isComplete && (
-                          <svg className="w-3 h-3 text-white m-0.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                          </svg>
-                        )}
-                      </div>
-                      <span 
-                        className={`flex-grow text-gray-900 ${item.isComplete ? 'line-through text-accent-muted' : ''}`}
-                        dangerouslySetInnerHTML={{ __html: item.content }}
-                      />
-                    </button>
+          {section.items.map(item => (
+            <div key={item.id} className="group">
+            {item.type === 'task' ? (
+              <div className="relative">
+              <div className="flex items-start justify-between gap-3 py-2 px-3 -ml-3 rounded-lg">
+                <button
+                className={`flex-grow text-left flex items-start gap-3
+                  transition-colors duration-200
+                  ${updating ? 'opacity-50' : 'hover:bg-gray-50/50'}`}
+                onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
+                disabled={updating}
+                role="checkbox"
+                aria-checked={item.isComplete}
+                >
+                <div className={`
+                  mt-1 flex-shrink-0 w-4 h-4 border rounded
+                  ${item.isComplete ? 'bg-accent border-accent' : 'border-accent-muted'}
+                  transition-colors duration-200
+                `}>
+                  {item.isComplete && (
+                  <svg className="w-3 h-3 text-white m-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                  )}
+                </div>
+                <span 
+                  className={`flex-grow text-gray-900 ${item.isComplete ? 'line-through text-accent-muted' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: item.content }}
+                />
+                </button>
+                <button
+                onClick={() => startExamFromPlan(parsedContent, section.id, item.id)}
+                className="text-sm px-3 py-1 bg-accent/10 hover:bg-accent/20 text-accent rounded transition-colors duration-200"
+                >
+                Test This Task
+                </button>
+              </div>
                     
                     <div key={item.id} className="mt-2">
                       <TaskNotes
