@@ -110,27 +110,22 @@ export default function AIExaminerPage() {
           You are an AI examiner conducting a final analysis. ${systemInstructions ? `This was a specialized exam with instructions: "${systemInstructions}". ` : ''}
           Based ONLY on the actual exchanges above, provide a comprehensive analysis of the student's performance.
           
-          Structure your analysis as follows:
-          1. EXAM OVERVIEW
-          - Subject matter and format
-          - Difficulty level
-          ${systemInstructions ? '- Special examination focus\n' : ''}
+          Please provide a comprehensive analysis with the following elements, using natural language and clear formatting:
+
+          • Start with a brief introduction or summary as to how the exam went in general. Try to focus more on positives to not discourage them, but stay realistic.
+          ${systemInstructions ? '• Take into account how the special examination focus was addressed.\n' : ''}
           
-          2. DETAILED ANALYSIS
-          - List each question asked and the student's response
-          - Evaluate the accuracy and completeness of each answer
+          • Assess their overall performance by discussing:
+            - Notable strengths shown during the exam
+            - Areas where improvement would be beneficial
+            - Their grasp of fundamental concepts
+            ${systemInstructions ? '- How well they handled the specialized aspects\n' : ''}
           
-          3. PERFORMANCE ASSESSMENT
-          - Key strengths demonstrated
-          - Specific areas needing improvement
-          - Understanding of core concepts
-          ${systemInstructions ? '- Performance in relation to the specialized focus\n' : ''}
-          
-          4. RECOMMENDATIONS
-          - Specific topics to review
-          - Suggested study resources or practice areas
-          
-          Format your response with clear headings and bullet points for readability.
+          • Conclude with constructive guidance:
+            - Key topics they should focus on reviewing
+            - Helpful resources and practice suggestions, only providing links if youre 100% certain of their accuracy
+
+          Use clear headings and natural paragraph breaks for readability. Focus on being constructive and specific.
           Be specific and reference actual answers given. Do not make assumptions about knowledge not demonstrated in the exchanges.`,
           messages: messagesToAnalyze
         }),

@@ -90,8 +90,12 @@ export default function SavedExamResultPage() {
             <section className="bg-white rounded-lg border p-6">
               <h2 className="text-2xl font-semibold mb-6">Detailed Report</h2>
               {examResult.final_analysis ? (
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <div className="prose prose-gray prose-headings:font-semibold prose-headings:text-gray-900 prose-p:text-gray-600">
+                <div className="bg-gray-50 p-8 rounded-lg border">
+                  <div className="prose prose-lg max-w-none prose-gray 
+                    prose-headings:font-semibold prose-headings:text-gray-900 prose-headings:mt-8 prose-headings:mb-4 first:prose-headings:mt-0
+                    prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-4
+                    prose-ul:my-4 prose-li:text-gray-600 prose-li:my-2 prose-li:leading-relaxed
+                    prose-strong:text-gray-800">
                     <ReactMarkdown>{examResult.final_analysis}</ReactMarkdown>
                   </div>
                 </div>
