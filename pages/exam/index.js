@@ -94,7 +94,12 @@ export default function AIExaminerPage() {
   };
 
   const finalizeExam = async () => {
-    const fullHistory = messages.map((m) => (m.isAI ? `AI: ${m.text}` : `Student: ${m.text}`)).join('\n');
+    // Filter out last message if it's an unanswered question from AI
+    const messagesToAnalyze = messages.length > 0 && messages[messages.length - 1].isAI 
+      ? messages.slice(0, -1) 
+      : messages;
+    
+    const fullHistory = messagesToAnalyze.map((m) => (m.isAI ? `AI: ${m.text}` : `Student: ${m.text}`)).join('\n');
     
     try {
       const response = await fetch('/api/exam-endpoint', {
@@ -127,7 +132,7 @@ export default function AIExaminerPage() {
           
           Format your response with clear headings and bullet points for readability.
           Be specific and reference actual answers given. Do not make assumptions about knowledge not demonstrated in the exchanges.`,
-          messages
+          messages: messagesToAnalyze
         }),
       });
 
@@ -141,12 +146,12 @@ export default function AIExaminerPage() {
         throw new Error('Invalid response from server');
       }
 
-      // Store messages and final analysis separately
+      // Store messages and final analysis separately, excluding last unanswered question if present
       const examResults = {
         subject,
         difficulty,
         questionType,
-        messages, // Keep original Q&A messages only
+        messages: messagesToAnalyze, // Store only answered Q&A pairs
         finalAnalysis: data.response, // Store final analysis separately
         finishedAt: new Date().toISOString(),
       };
