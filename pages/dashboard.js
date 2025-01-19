@@ -21,6 +21,9 @@ export default function Dashboard() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [experience, setExperience] = useState('');
   const [timeline, setTimeline] = useState('');
+  const [examToDelete, setExamToDelete] = useState(null);
+  const [isDeletingExam, setIsDeletingExam] = useState(false);
+  const [deletedExamName, setDeletedExamName] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +81,43 @@ export default function Dashboard() {
     setIsDeleting(false);
   };
 
+  const handleExamDeleteConfirmation = (exam) => {
+    setExamToDelete(exam);
+    setIsDeletingExam(true);
+  };
+
+  const cancelExamDelete = () => {
+    setExamToDelete(null);
+    setIsDeletingExam(false);
+  };
+
+  const handleExamDelete = async () => {
+    if (!examToDelete) return;
+
+    try {
+      const supabase = initializeSupabase();
+      const { error } = await supabase
+        .from('exam_results')
+        .delete()
+        .eq('id', examToDelete.id);
+
+      if (error) throw error;
+
+      setExamResults(examResults.filter((exam) => exam.id !== examToDelete.id));
+      setDeletedExamName(examToDelete.subject);
+      setExamToDelete(null);
+      setIsDeletingExam(false);
+      setShowToast(true);
+      
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      setError('Failed to delete exam result. Please try again.');
+    }
+  };
+
   const handleDelete = async () => {
     if (!planToDelete) return;
 
@@ -130,7 +170,7 @@ export default function Dashboard() {
             <FaCheck className="text-green-600 w-4 h-4" />
           </div>
           <p className="font-medium">
-            "{deletedPlanName}" has been deleted
+            "{deletedPlanName || deletedExamName}" has been deleted
           </p>
         </div>
       )}
@@ -165,7 +205,7 @@ export default function Dashboard() {
                   Take New Exam
                 </Link>
               </div>
-              <ExamResults examResults={examResults} />
+                <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
             </div>
 
             <div>
@@ -190,7 +230,52 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {isDeleting && (
+        {isDeletingExam && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in"
+          onClick={cancelExamDelete}
+        >
+          <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 transform scale-95 opacity-0 animate-dialog"
+          >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Delete Exam Result</h3>
+            <button 
+              onClick={cancelExamDelete}
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            >
+              <FaTimes className="text-gray-400 hover:text-gray-600" size={18} />
+            </button>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+            Are you sure you want to delete <span className="font-medium text-gray-900">"{examToDelete?.subject}"</span>? 
+            This action cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
+            <button
+              onClick={cancelExamDelete}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleExamDelete}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200"
+            >
+              <FaTrashAlt size={14} />
+              <span>Delete</span>
+            </button>
+            </div>
+          </div>
+          </div>
+        </div>
+        )}
+
+        {isDeleting && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 fade-in"
           onClick={cancelDelete}

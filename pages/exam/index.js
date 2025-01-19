@@ -55,7 +55,7 @@ export default function AIExaminerPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/exam-endpoint', {
+        const response = await fetch('/api/exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, messages: localMessages }),
@@ -102,7 +102,7 @@ export default function AIExaminerPage() {
     const fullHistory = messagesToAnalyze.map((m) => (m.isAI ? `AI: ${m.text}` : `Student: ${m.text}`)).join('\n');
     
     try {
-      const response = await fetch('/api/exam-endpoint', {
+        const response = await fetch('/api/exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
