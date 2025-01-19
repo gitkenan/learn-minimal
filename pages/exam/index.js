@@ -308,6 +308,12 @@ export default function AIExaminerPage() {
                            transition-colors duration-200"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitAnswer();
+                    }
+                  }}
                   placeholder="Type your answer..."
                   disabled={isLoading}
                 />
