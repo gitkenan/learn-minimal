@@ -141,17 +141,13 @@ export default function AIExaminerPage() {
         throw new Error('Invalid response from server');
       }
 
-      // Create final messages array with the analysis
-      const finalMessages = [
-        ...messages,
-        { isAI: true, text: data.response }
-      ];
-
+      // Store messages and final analysis separately
       const examResults = {
         subject,
         difficulty,
         questionType,
-        messages: finalMessages,
+        messages, // Keep original Q&A messages only
+        finalAnalysis: data.response, // Store final analysis separately
         finishedAt: new Date().toISOString(),
       };
 

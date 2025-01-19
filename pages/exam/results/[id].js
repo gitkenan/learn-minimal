@@ -63,14 +63,7 @@ export default function SavedExamResultPage() {
     );
   }
 
-  const messages = examResult.messages || [];
-  const finalAiMessage = messages.slice().reverse().find((m) => m.isAI);
-  const chatMessages = messages
-    .filter(m => 
-      m.text.includes('PERFORMANCE ASSESSMENT') || 
-      m.text.includes('Clinical Case') ||
-      m.text.includes('Question:')
-    );
+  const chatMessages = examResult.messages || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,16 +89,15 @@ export default function SavedExamResultPage() {
           <div className="space-y-10">
             <section className="bg-white rounded-lg border p-6">
               <h2 className="text-2xl font-semibold mb-6">Detailed Report</h2>
-              {finalAiMessage ? (
+              {examResult.final_analysis ? (
                 <div className="bg-gray-50 p-6 rounded-lg border">
                   <div className="prose prose-gray prose-headings:font-semibold prose-headings:text-gray-900 prose-p:text-gray-600">
-                    <ReactMarkdown>{finalAiMessage.text}</ReactMarkdown>
+                    <ReactMarkdown>{examResult.final_analysis}</ReactMarkdown>
                   </div>
                 </div>
               ) : (
                 <p className="text-gray-500">
-                  Couldn't locate a final summary. Possibly the exam didn't
-                  finish properly.
+                  No final analysis found.
                 </p>
               )}
             </section>
@@ -131,35 +123,15 @@ export default function SavedExamResultPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-3">
-                        {m.text.includes('PERFORMANCE ASSESSMENT') ? (
-                          <div className="bg-blue-50 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                            Assessment
-                          </div>
-                        ) : m.text.includes('Clinical Case') ? (
-                          <div className="bg-purple-50 text-purple-800 text-sm font-medium px-3 py-1 rounded-full">
-                            Case Details
-                          </div>
-                        ) : (
-                          <div
-                            className={`text-sm font-medium px-3 py-1 rounded-full ${
-                              m.isAI 
-                                ? 'bg-gray-100 text-gray-800' 
-                                : 'bg-green-50 text-green-800'
-                            }`}
-                          >
-                            {m.isAI ? 'AI Response' : 'Student Answer'}
-                          </div>
-                        )}
-                        {m.text.includes('Correct') && (
-                          <span className="text-green-600 text-sm font-medium flex items-center gap-1">
-                            <span className="text-lg">✓</span> Correct
-                          </span>
-                        )}
-                        {m.text.includes('Partly correct') && (
-                          <span className="text-yellow-600 text-sm font-medium flex items-center gap-1">
-                            <span className="text-lg">◐</span> Partially Correct
-                          </span>
-                        )}
+                        <div
+                          className={`text-sm font-medium px-3 py-1 rounded-full ${
+                            m.isAI 
+                              ? 'bg-gray-100 text-gray-800' 
+                              : 'bg-green-50 text-green-800'
+                          }`}
+                        >
+                          {m.isAI ? 'AI Response' : 'Student Answer'}
+                        </div>
                       </div>
                       <div className="prose prose-sm max-w-none prose-p:text-gray-600 prose-strong:text-gray-900 prose-ul:my-2 prose-headings:text-lg">
                         <ReactMarkdown>{m.text}</ReactMarkdown>
