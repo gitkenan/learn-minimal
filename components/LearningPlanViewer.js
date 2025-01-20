@@ -4,6 +4,7 @@ import { usePlan } from '@/hooks/usePlan';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { useExamFromPlan } from '@/hooks/useExamFromPlan';
 import { usePlanChat } from '@/hooks/usePlanChat';
+import ActionMenu from './ActionMenu';
 
 import { 
   detectSectionType,
@@ -168,42 +169,34 @@ const LearningPlanViewer = ({
 
   return (
     <div className="space-y-8">
-        <div className="flex justify-end gap-4 mb-4">
-        <button
-          onClick={() => startChatFromPlan(parsedContent)}
-          className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors duration-200"
-        >
-          Start Chat About Plan
-        </button>
-        <button
-          onClick={() => startExamFromPlan(parsedContent)}
-          className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors duration-200"
-        >
-          Start Exam Based on Plan
-        </button>
+        <div className="flex justify-end mb-4">
+          <ActionMenu 
+          onExam={() => startExamFromPlan(parsedContent)}
+          onChat={() => startChatFromPlan(parsedContent)}
+          label="entire plan"
+          />
         </div>
+
         {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
           <div className="flex items-center justify-between">
-          <div>
-            {section.headingLevel === 2 ? (
+          {section.headingLevel === 2 ? (
             <h2 
-              className="text-2xl font-semibold text-gray-900"
-              dangerouslySetInnerHTML={{ __html: section.title }}
+            className="text-2xl font-semibold text-gray-900"
+            dangerouslySetInnerHTML={{ __html: section.title }}
             />
-            ) : (
+          ) : (
             <h3 
-              className="text-xl font-semibold text-gray-900"
-              dangerouslySetInnerHTML={{ __html: section.title }}
+            className="text-xl font-semibold text-gray-900"
+            dangerouslySetInnerHTML={{ __html: section.title }}
             />
-            )}
-          </div>
-          <button
-            onClick={() => startExamFromPlan(parsedContent, section.id)}
-            className="text-sm px-3 py-1 bg-accent/10 hover:bg-accent/20 text-accent rounded transition-colors duration-200"
-          >
-            Test This Section
-          </button>
+          )}
+          <ActionMenu 
+            onExam={() => startExamFromPlan(parsedContent, section.id)}
+            onChat={() => startChatFromPlan(parsedContent, section.id)}
+            label="this section"
+          />
+
           </div>
 
           <div className="space-y-1">
@@ -237,12 +230,12 @@ const LearningPlanViewer = ({
                   dangerouslySetInnerHTML={{ __html: item.content }}
                 />
                 </button>
-                <button
-                onClick={() => startExamFromPlan(parsedContent, section.id, item.id)}
-                className="text-sm px-3 py-1 bg-accent/10 hover:bg-accent/20 text-accent rounded transition-colors duration-200"
-                >
-                Test This Task
-                </button>
+                  <ActionMenu 
+                  onExam={() => startExamFromPlan(parsedContent, section.id, item.id)}
+                  onChat={() => startChatFromPlan(parsedContent, section.id, item.id)}
+                  label="this task"
+                  />
+
               </div>
                     
                     <div key={item.id} className="mt-2">
