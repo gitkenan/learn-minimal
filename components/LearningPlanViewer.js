@@ -3,7 +3,7 @@ import TaskNotes from './TaskNotes';
 import { usePlan } from '@/hooks/usePlan';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { useExamFromPlan } from '@/hooks/useExamFromPlan';
-import { usePlanChat } from '@/hooks/usePlanChat';
+import LearningChat from './LearningChat';
 import ActionMenu from './ActionMenu';
 
 import { 
@@ -55,7 +55,9 @@ const LearningPlanViewer = ({
 }) => {
   const { setActivePlanId } = useWorkflow();
   const { startExamFromPlan } = useExamFromPlan();
-  const { startChatFromPlan } = usePlanChat();
+  const [activeChatSection, setActiveChatSection] = useState(null);
+  const [activeChatItem, setActiveChatItem] = useState(null);
+  
   const { 
     plan,
     notes,
@@ -158,6 +160,11 @@ const LearningPlanViewer = ({
     }
   };
 
+  const handleStartChat = (content, sectionId = null, itemId = null) => {
+    setActiveChatSection(sectionId);
+    setActiveChatItem(itemId);
+  };
+
   const handleSaveNote = async (taskId, content) => {
     try {
       await saveNote(taskId, content);
@@ -170,10 +177,19 @@ const LearningPlanViewer = ({
   return (
     <div className="space-y-8">
         <div className="flex justify-end mb-4">
+          {activeChatSection === null && activeChatItem === null && (
+            <div className="mb-8 border rounded-lg shadow-sm">
+              <LearningChat 
+                planId={planId}
+                topic={parsedContent?.title || 'Learning Plan'}
+                initialContext={`This chat is about the entire learning plan`}
+              />
+            </div>
+          )}
           <ActionMenu 
-          onExam={() => startExamFromPlan(parsedContent)}
-          onChat={() => startChatFromPlan(parsedContent)}
-          label="entire plan"
+            onExam={() => startExamFromPlan(parsedContent)}
+            onChat={() => handleStartChat(parsedContent)}
+            label="entire plan"
           />
         </div>
 
@@ -191,15 +207,25 @@ const LearningPlanViewer = ({
             dangerouslySetInnerHTML={{ __html: section.title }}
             />
           )}
-          <ActionMenu 
+            <ActionMenu 
             onExam={() => startExamFromPlan(parsedContent, section.id)}
-            onChat={() => startChatFromPlan(parsedContent, section.id)}
+            onChat={() => handleStartChat(parsedContent, section.id)}
             label="this section"
-          />
+            />
 
-          </div>
+            </div>
 
-          <div className="space-y-1">
+            {activeChatSection === section.id && activeChatItem === null && (
+            <div className="mb-8 border rounded-lg shadow-sm">
+              <LearningChat 
+              planId={planId}
+              topic={section.title}
+              initialContext={`This chat is about the section: ${section.title}`}
+              />
+            </div>
+            )}
+
+            <div className="space-y-1">
           {section.items.map(item => (
             <div key={item.id} className="group">
             {item.type === 'task' ? (
@@ -230,15 +256,24 @@ const LearningPlanViewer = ({
                   dangerouslySetInnerHTML={{ __html: item.content }}
                 />
                 </button>
-                  <ActionMenu 
-                  onExam={() => startExamFromPlan(parsedContent, section.id, item.id)}
-                  onChat={() => startChatFromPlan(parsedContent, section.id, item.id)}
-                  label="this task"
-                  />
+                    <ActionMenu 
+                    onExam={() => startExamFromPlan(parsedContent, section.id, item.id)}
+                    onChat={() => handleStartChat(parsedContent, section.id, item.id)}
+                    label="this task"
+                    />
+                  </div>
 
-              </div>
+                  {activeChatSection === section.id && activeChatItem === item.id && (
+                  <div className="mb-8 border rounded-lg shadow-sm">
+                    <LearningChat 
+                    planId={planId}
+                    topic={item.content}
+                    initialContext={`This chat is about the task: ${item.content}`}
+                    />
+                  </div>
+                  )}
                     
-                    <div key={item.id} className="mt-2">
+                  <div key={item.id} className="mt-2">
                       <TaskNotes
                         taskId={item.id}
                         notes={notes[item.id] || []}
