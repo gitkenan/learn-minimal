@@ -1,10 +1,11 @@
 import { useRouter } from 'next/router';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { useChat } from '@/hooks/useChat';
 
 export function usePlanChat() {
 	const router = useRouter();
 	const { activePlanId } = useWorkflow();
-
+	
 	const startChatFromPlan = async (plan) => {
 		if (!plan?.sections) return;
 
@@ -13,18 +14,15 @@ export function usePlanChat() {
 			.map(section => section.title)
 			.join(', ');
 
-		// Store chat configuration
-		const chatConfig = {
-			initialContext: `This chat is about a learning plan covering: ${topics}`,
-			planId: activePlanId,
-			topics
-		};
-
-		// Store in localStorage for chat page
-		localStorage.setItem('chatConfig', JSON.stringify(chatConfig));
-		
-		// Navigate to chat page
-		router.push('/chat');
+		// Navigate to chat page with query params
+		router.push({
+			pathname: '/chat',
+			query: {
+				planId: activePlanId,
+				topics,
+				context: `This chat is about a learning plan covering: ${topics}`
+			}
+		});
 	};
 
 	return { startChatFromPlan };
