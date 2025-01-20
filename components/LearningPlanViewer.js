@@ -55,8 +55,8 @@ const LearningPlanViewer = ({
 }) => {
   const { setActivePlanId } = useWorkflow();
   const { startExamFromPlan } = useExamFromPlan();
-  const [activeChatSection, setActiveChatSection] = useState(null);
-  const [activeChatItem, setActiveChatItem] = useState(null);
+  const [openChats, setOpenChats] = useState(new Set());
+
   
   const { 
     plan,
@@ -161,9 +161,18 @@ const LearningPlanViewer = ({
   };
 
   const handleStartChat = (content, sectionId = null, itemId = null) => {
-    setActiveChatSection(sectionId);
-    setActiveChatItem(itemId);
+    const chatKey = `${sectionId || 'plan'}-${itemId || 'main'}`;
+    setOpenChats(prev => {
+      const next = new Set(prev);
+      if (next.has(chatKey)) {
+        next.delete(chatKey);
+      } else {
+        next.add(chatKey);
+      }
+      return next;
+    });
   };
+
 
   const handleSaveNote = async (taskId, content) => {
     try {
@@ -177,21 +186,35 @@ const LearningPlanViewer = ({
   return (
     <div className="space-y-8">
         <div className="flex justify-end mb-4">
-          {activeChatSection === null && activeChatItem === null && (
-            <div className="mb-8 border rounded-lg shadow-sm">
-              <LearningChat 
-                planId={planId}
-                topic={parsedContent?.title || 'Learning Plan'}
-                initialContext={`This chat is about the entire learning plan`}
-              />
-            </div>
-          )}
-          <ActionMenu 
+
+            <ActionMenu 
             onExam={() => startExamFromPlan(parsedContent)}
             onChat={() => handleStartChat(parsedContent)}
             label="entire plan"
-          />
-        </div>
+            />
+          </div>
+
+            {openChats.has('plan-main') && (
+              <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key="plan-main">
+              <div className="relative h-[500px]">
+                <button 
+                onClick={() => handleStartChat(parsedContent)}
+                className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+                aria-label="Close chat"
+                >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                </button>
+                <LearningChat 
+                planId={planId}
+                topic={parsedContent?.title || 'Learning Plan'}
+                initialContext={`This chat is about the entire learning plan`}
+                key="plan-main"
+                />
+              </div>
+              </div>
+            )}
 
         {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
@@ -215,14 +238,26 @@ const LearningPlanViewer = ({
 
             </div>
 
-            {activeChatSection === section.id && activeChatItem === null && (
-            <div className="mb-8 border rounded-lg shadow-sm">
-              <LearningChat 
-              planId={planId}
-              topic={section.title}
-              initialContext={`This chat is about the section: ${section.title}`}
-              />
-            </div>
+            {openChats.has(`${section.id}-main`) && (
+              <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key={`${section.id}-main`}>
+              <div className="relative h-[500px]">
+                <button 
+                onClick={() => handleStartChat(parsedContent, section.id)}
+                className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+                aria-label="Close chat"
+                >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                </button>
+                <LearningChat 
+                planId={planId}
+                topic={section.title}
+                initialContext={`This chat is about the section: ${section.title}`}
+                key={`${section.id}-main`}
+                />
+              </div>
+              </div>
             )}
 
             <div className="space-y-1">
@@ -263,15 +298,27 @@ const LearningPlanViewer = ({
                     />
                   </div>
 
-                  {activeChatSection === section.id && activeChatItem === item.id && (
-                  <div className="mb-8 border rounded-lg shadow-sm">
-                    <LearningChat 
-                    planId={planId}
-                    topic={item.content}
-                    initialContext={`This chat is about the task: ${item.content}`}
-                    />
-                  </div>
-                  )}
+                    {openChats.has(`${section.id}-${item.id}`) && (
+                      <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key={`${section.id}-${item.id}`}>
+                      <div className="relative h-[500px]">
+                        <button 
+                        onClick={() => handleStartChat(parsedContent, section.id, item.id)}
+                        className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+                        aria-label="Close chat"
+                        >
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        </button>
+                        <LearningChat 
+                        planId={planId}
+                        topic={item.content}
+                        initialContext={`This chat is about the task: ${item.content}`}
+                        key={`${section.id}-${item.id}`}
+                        />
+                      </div>
+                      </div>
+                    )}
                     
                   <div key={item.id} className="mt-2">
                       <TaskNotes

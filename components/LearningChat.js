@@ -1,10 +1,11 @@
 // components/LearningChat.js
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '@/hooks/useChat';
 
 export default function LearningChat({ planId, topic, initialContext }) {
   const [newMessage, setNewMessage] = useState('');
+  const [isCreatingDiscussion, setIsCreatingDiscussion] = useState(false);
   const chatContainerRef = useRef(null);
   
   const {
@@ -22,6 +23,23 @@ export default function LearningChat({ planId, topic, initialContext }) {
     topics: topic,
     initialContext: initialContext || `This chat is about: ${topic}`
   });
+
+  // Start new discussion on mount
+  useEffect(() => {
+    const createInitialDiscussion = async () => {
+      if (!currentDiscussion && !isInitializing) {
+        setIsCreatingDiscussion(true);
+        try {
+          await startNewDiscussion();
+        } catch (err) {
+          console.error('Failed to create initial discussion:', err);
+        } finally {
+          setIsCreatingDiscussion(false);
+        }
+      }
+    };
+    createInitialDiscussion();
+  }, [currentDiscussion, isInitializing]);
 
   // Scroll to bottom after messages load
   React.useEffect(() => {
@@ -43,18 +61,20 @@ export default function LearningChat({ planId, topic, initialContext }) {
   };
 
 
-  if (isInitializing) {
+  if (isInitializing || isCreatingDiscussion) {
     return (
       <div className="flex flex-col h-full items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="text-gray-600 mt-2">Initializing chat...</p>
+        <p className="text-gray-600 mt-2">
+          {isCreatingDiscussion ? 'Starting new chat...' : 'Initializing chat...'}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-none p-4 border-b bg-white">
+    <div className="flex flex-col h-full bg-white">
+      <div className="flex-none p-4 border-b">
         <div className="flex justify-between items-center mb-4">
           <h2 className="gradient-text text-lg font-semibold">Learning Assistant</h2>
           <button
@@ -84,9 +104,9 @@ export default function LearningChat({ planId, topic, initialContext }) {
         )}
       </div>
 
-      <div 
+        <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#E5E7EB transparent' }}
       >
         {currentDiscussion ? (
@@ -119,7 +139,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
         </div>
       )}
 
-      <div className="flex-none p-4 bg-white border-t">
+        <div className="flex-none p-4 border-t">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"

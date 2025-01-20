@@ -28,10 +28,8 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 				if (error) throw error;
 				
 				setDiscussions(data || []);
-				if (data?.length > 0) {
-					setCurrentDiscussion(data[0]);
-				}
 				setIsInitializing(false);
+
 			} catch (err) {
 				console.error('Error loading discussions:', err);
 				setError('Failed to load chat history');
