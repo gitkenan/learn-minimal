@@ -51,7 +51,8 @@ const LearningPlanViewer = ({
   initialContent, 
   planId, 
   onProgressUpdate,
-  contentType = 'json'
+  contentType = 'json',
+  onChatStart
 }) => {
   const { setActivePlanId } = useWorkflow();
   const { startExamFromPlan } = useExamFromPlan();
@@ -161,6 +162,30 @@ const LearningPlanViewer = ({
   };
 
   const handleStartChat = (content, sectionId = null, itemId = null) => {
+    // If mobile handler is provided, use it
+    if (onChatStart) {
+      let title = '';
+      let context = '';
+
+      if (!sectionId && !itemId) {
+        title = 'Full Plan';
+        context = `This chat is about the entire learning plan`;
+      } else if (sectionId && !itemId) {
+        const section = parsedContent.sections.find(s => s.id === sectionId);
+        title = section?.title || 'Section';
+        context = `This chat is about the section: ${section?.title}`;
+      } else if (sectionId && itemId) {
+        const section = parsedContent.sections.find(s => s.id === sectionId);
+        const item = section?.items.find(i => i.id === itemId);
+        title = item?.content || 'Task';
+        context = `This chat is about the task: ${item?.content}`;
+      }
+
+      onChatStart({ title, context });
+      return;
+    }
+
+    // Desktop chat handling
     const chatKey = `${sectionId || 'plan'}-${itemId || 'main'}`;
     setOpenChats(prev => {
       const next = new Set(prev);

@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaEllipsisV, FaGraduationCap, FaComments } from 'react-icons/fa';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function ActionMenu({ onExam, onChat, label = '' }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef(null);
+	const isMobile = useMediaQuery('(max-width: 768px)');
 
 	useEffect(() => {
 		function handleClickOutside(event) {
@@ -15,6 +17,11 @@ export default function ActionMenu({ onExam, onChat, label = '' }) {
 		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, []);
+
+	const handleChatClick = () => {
+		onChat();
+		setIsOpen(false);
+	};
 
 	return (
 		<div className="relative inline-flex items-center h-6" ref={menuRef}>
@@ -39,10 +46,7 @@ export default function ActionMenu({ onExam, onChat, label = '' }) {
 						<span>Test {label}</span>
 					</button>
 					<button
-						onClick={() => {
-							onChat();
-							setIsOpen(false);
-						}}
+						onClick={handleChatClick}
 						className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
 					>
 						<FaComments className="w-4 h-4" />

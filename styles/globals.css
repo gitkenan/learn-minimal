@@ -132,4 +132,46 @@
     @apply fixed inset-0 bg-black/30 backdrop-blur-sm;
     transition: opacity 0.3s ease-in-out;
   }
+
+  /* Mobile chat overlay animations */
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out forwards;
+  }
+
+  /* Mobile chat overlay styles */
+  .mobile-chat-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50;
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .mobile-chat-container {
+    @apply fixed inset-x-0 bottom-0 top-0 bg-white flex flex-col z-50;
+    animation: slide-up 0.3s ease-out forwards;
+  }
+
+  .mobile-chat-header {
+    @apply flex items-center justify-between p-4 border-b bg-white sticky top-0;
+  }
+
+  .mobile-chat-content {
+    @apply flex-1 overflow-hidden bg-gray-50;
+  }
 }
