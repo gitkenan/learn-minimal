@@ -100,6 +100,13 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 			const supabase = initializeSupabase();
 			const title = `Chat ${discussions.length + 1}`;
 			
+			// Create initial system message content
+			const systemMessage = `I'm here to help you learn about: ${topics}
+
+${initialContext}
+
+Let's focus our discussion on this specific topic. What would you like to know?`;
+			
 			const { data, error } = await supabase
 				.from('plan_discussions')
 				.insert([{
@@ -107,7 +114,7 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 					user_id: user.id,
 					title,
 					is_active: true,
-					context: initialContext
+					context: systemMessage
 				}])
 				.select()
 				.single();
@@ -118,6 +125,19 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 			setCurrentDiscussion(data);
 			setMessages([]);
 			setError(null);
+
+			// Add system message
+			const { error: messageError } = await supabase
+				.from('discussion_messages')
+				.insert({
+					discussion_id: data.id,
+					content: systemMessage,
+					is_ai: true,
+					is_system: true
+				});
+
+			if (messageError) throw messageError;
+
 		} catch (err) {
 			console.error('Error creating discussion:', err);
 			setError('Failed to start new chat');
