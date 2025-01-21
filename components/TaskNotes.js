@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { MessageSquarePlus, ChevronDown, ChevronUp, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, X } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
+const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote, isAddingNote, onCancelAdd }) => {
   const [newNote, setNewNote] = useState('');
-  const [isAddingNote, setIsAddingNote] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
@@ -19,7 +18,7 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
       setIsSaving(true);
       await onSaveNote(newNote);
       setNewNote('');
-      setIsAddingNote(false);
+      onCancelAdd();
       setIsExpanded(true);
     } catch (error) {
       console.error('Failed to save note:', error);
@@ -40,9 +39,6 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
     }
   };
 
-  // Only render add note button if there are no notes and we're not currently adding one
-  const showAddNoteButton = !isAddingNote && !notes.length;
-
   return (
     <div className="mt-2">
       {/* Note count and toggle - only show if there are notes */}
@@ -60,21 +56,6 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
             <ChevronDown className="w-4 h-4" />
           )}
           <span>{notes.length} note{notes.length !== 1 ? 's' : ''}</span>
-        </button>
-      )}
-
-      {/* Add note button - in margin */}
-      {showAddNoteButton && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsAddingNote(true);
-          }}
-          className="ml-2 flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200"
-          title="Add note"
-        >
-          <MessageSquarePlus className="w-4 h-4" />
-          <span>Add note</span>
         </button>
       )}
 
@@ -102,20 +83,6 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
               </div>
             </div>
           ))}
-          
-          {/* Add another note button */}
-          {!isAddingNote && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsAddingNote(true);
-              }}
-              className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors duration-200"
-            >
-              <MessageSquarePlus className="w-3 h-3" />
-              <span>Add another note</span>
-            </button>
-          )}
         </div>
       )}
 
@@ -141,7 +108,7 @@ const TaskNotes = ({ taskId, notes = [], onSaveNote, onDeleteNote }) => {
             </Button>
             <Button
               onClick={() => {
-                setIsAddingNote(false);
+                onCancelAdd();
                 setNewNote('');
               }}
               variant="outline"

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaEllipsisV, FaGraduationCap, FaComments } from 'react-icons/fa';
+import { MessageSquarePlus } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-export default function ActionMenu({ onExam, onChat, label = '' }) {
+export default function ActionMenu({ onExam, onChat, onAddNote, label = '' }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef(null);
 	const isMobile = useMediaQuery('(max-width: 768px)');
@@ -52,6 +53,18 @@ export default function ActionMenu({ onExam, onChat, label = '' }) {
 						<FaComments className="w-4 h-4" />
 						<span>Chat about {label}</span>
 					</button>
+					{onAddNote && (
+						<button
+							onClick={() => {
+								onAddNote();
+								setIsOpen(false);
+							}}
+							className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+						>
+							<MessageSquarePlus className="w-4 h-4" />
+							<span>Add note</span>
+						</button>
+					)}
 				</div>
 			)}
 		</div>

@@ -63,6 +63,7 @@ const LearningPlanViewer = ({
   const { setActivePlanId } = useWorkflow();
   const { startExamFromPlan } = useExamFromPlan();
   const [openChats, setOpenChats] = useState(new Set());
+  const [activeNoteItem, setActiveNoteItem] = useState(null);
 
   
   const { 
@@ -331,6 +332,7 @@ const LearningPlanViewer = ({
                     <ActionMenu 
                     onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
                     onChat={() => handleStartChat(parsedContent, section.id, item.id)}
+                    onAddNote={() => setActiveNoteItem(item.id)}
                     label="this task"
                     />
                   </div>
@@ -363,6 +365,8 @@ const LearningPlanViewer = ({
                         notes={notes[item.id] || []}
                         onSaveNote={(content) => handleSaveNote(item.id, content)}
                         onDeleteNote={deleteNote}
+                        isAddingNote={activeNoteItem === item.id}
+                        onCancelAdd={() => setActiveNoteItem(null)}
                       />
                     </div>
                   </div>
