@@ -2,17 +2,20 @@ import { AuthProvider } from '@/context/AuthContext'
 import { WorkflowProvider } from '@/context/WorkflowContext'
 import { SessionGuard } from '@/components/SessionGuard'
 import "@/styles/globals.css"
+import Layout from '@/components/Layout'
 
 export default function App({ Component, pageProps }) {
   return (
     <AuthProvider>
       <WorkflowProvider>
         <SessionGuard>
-          <div className="min-h-screen flex flex-col">
-            <main className="flex-1">
+          {Component.noLayout ? (
+            <Component {...pageProps} />
+          ) : (
+            <Layout>
               <Component {...pageProps} />
-            </main>
-          </div>
+            </Layout>
+          )}
         </SessionGuard>
       </WorkflowProvider>
     </AuthProvider>

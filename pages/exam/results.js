@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
-import Header from '@/components/Header';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
@@ -74,7 +73,6 @@ export default function ExamResultsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-3xl mx-auto">
             <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
@@ -98,7 +96,6 @@ function ExamResultDisplay({ examResults }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="space-y-6">
           <div className="mb-8">

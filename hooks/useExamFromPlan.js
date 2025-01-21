@@ -7,7 +7,10 @@ export function useExamFromPlan() {
 
 	const startExamFromPlan = async (plan, sectionId = null, itemId = null) => {
 		if (!plan?.sections) return;
-
+		
+		// Get topic from plan object directly
+		const planTopic = plan.topic || plan.json_content?.topic || plan.sections[0]?.title || 'Learning Plan';
+		
 		let subject, systemInstructions;
 		
 		if (sectionId) {
@@ -17,16 +20,16 @@ export function useExamFromPlan() {
 			if (itemId) {
 				const item = section.items.find(i => i.id === itemId);
 				if (!item) return;
-				subject = `${section.title} - ${item.content}`;
+				subject = `${planTopic} - ${section.title} - ${item.content}`;
 				systemInstructions = `This exam should test knowledge specifically about: ${item.content} from section "${section.title}"`;
 			} else {
-				subject = section.title;
+				subject = `${planTopic} - ${section.title}`;
 				systemInstructions = `This exam should test knowledge from the section: ${section.title}`;
 			}
 		} else {
 			// Original behavior for full plan
-			subject = plan.sections.map(section => section.title).join(', ');
-			systemInstructions = `This exam should test knowledge from the following learning plan sections: ${subject}`;
+			subject = planTopic;
+			systemInstructions = `This exam should test knowledge from the following learning plan sections: ${plan.sections.map(section => section.title).join(', ')}`;
 		}
 
 		const examConfig = {

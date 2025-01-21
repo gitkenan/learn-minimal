@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
-import Header from '@/components/Header';
 import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
 import ExamResults from '@/components/ExamResults';
@@ -163,8 +162,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       {showToast && (
         <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-lg shadow-lg border border-green-100 animate-slide-up z-[60]">
           <div className="bg-green-100 rounded-full p-1">

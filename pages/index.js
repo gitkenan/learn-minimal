@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import { initializeSupabase } from '@/lib/supabaseClient';
-import Header from '@/components/Header';
 
 export default function Home() {
   const { user, session, loading } = useAuth();
@@ -75,8 +74,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] pt-20">
         <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
           <div className="mb-8 text-center">

@@ -12,3 +12,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+AuthPage.noLayout = true

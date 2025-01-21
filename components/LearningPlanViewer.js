@@ -33,6 +33,11 @@ const processContent = (text) => {
 export function parseMarkdownPlan(markdown) {
   const lines = markdown.split('\n');
   
+  // Get title from first h1 heading
+  const title = lines[0]?.startsWith('# ') 
+    ? lines[0].substring(2).trim()
+    : 'Learning Plan';
+  
   // Skip the first h1 heading as it will be used as the title
   const filteredLines = lines[0]?.startsWith('# ') 
     ? lines.slice(1) 
@@ -42,6 +47,7 @@ export function parseMarkdownPlan(markdown) {
   const progress = calculateProgress(sections);
 
   return {
+    topic: title,
     sections,
     progress
   };
@@ -91,12 +97,18 @@ const LearningPlanViewer = ({
         processedContent = parseMarkdownPlan(initialContent);
       }
 
+      // Ensure topic is set
+      if (!processedContent.topic) {
+        processedContent.topic = processedContent.sections[0]?.title || 'Learning Plan';
+      }
+
       setParsedContent(processedContent);
     } catch (e) {
       console.warn('Content processing failed:', e);
       const fallbackContent = parseMarkdownPlan(
         typeof initialContent === 'string' ? initialContent : ''
       );
+      fallbackContent.topic = fallbackContent.sections[0]?.title || 'Learning Plan';
       setParsedContent(fallbackContent);
     }
   }, [initialContent, contentType]);
@@ -213,7 +225,7 @@ const LearningPlanViewer = ({
         <div className="flex justify-end mb-4">
 
             <ActionMenu 
-            onExam={() => startExamFromPlan(parsedContent)}
+            onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic })}
             onChat={() => handleStartChat(parsedContent)}
             label="entire plan"
             />
@@ -233,7 +245,7 @@ const LearningPlanViewer = ({
                 </button>
                 <LearningChat 
                 planId={planId}
-                topic={parsedContent?.title || 'Learning Plan'}
+                topic={parsedContent?.topic || 'Learning Plan'}
                 initialContext={`This chat is about the entire learning plan`}
                 key="plan-main"
                 />
@@ -256,7 +268,7 @@ const LearningPlanViewer = ({
             />
           )}
             <ActionMenu 
-            onExam={() => startExamFromPlan(parsedContent, section.id)}
+            onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id)}
             onChat={() => handleStartChat(parsedContent, section.id)}
             label="this section"
             />
@@ -317,7 +329,7 @@ const LearningPlanViewer = ({
                 />
                 </button>
                     <ActionMenu 
-                    onExam={() => startExamFromPlan(parsedContent, section.id, item.id)}
+                    onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
                     onChat={() => handleStartChat(parsedContent, section.id, item.id)}
                     label="this task"
                     />
