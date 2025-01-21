@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
 import { parseMarkdownPlan } from '../../components/LearningPlanViewer';
+import { handleApiError } from '../../utils/apiUtils';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -19,10 +20,11 @@ const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      error: 'Method not allowed',
+    return handleApiError(res, { 
+      statusCode: 405,
+      type: 'METHOD_NOT_ALLOWED',
       message: 'This endpoint only accepts POST requests'
-    });
+    }, 'Method not allowed');
   }
 
   try {
@@ -199,17 +201,6 @@ export default async function handler(req, res) {
       });
     }
   } catch (error) {
-    if (error instanceof PlanGenerationError) {
-      return res.status(500).json({
-        error: error.type,
-        message: error.message,
-        details: error.details
-      });
-    }
-    return res.status(500).json({
-      error: 'UNKNOWN_ERROR',
-      message: 'An unexpected error occurred while generating your plan',
-      details: error.message
-    });
+    return handleApiError(res, error, 'An unexpected error occurred while generating your plan');
   }
 }

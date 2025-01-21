@@ -1,12 +1,17 @@
 // pages/api/chat.js
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { handleApiError } from '../../utils/apiUtils';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return handleApiError(res, {
+      statusCode: 405,
+      type: 'METHOD_NOT_ALLOWED',
+      message: 'Method not allowed'
+    }, 'Method not allowed');
   }
 
   // Declare variables outside try block for error handling
@@ -161,17 +166,14 @@ export default async function handler(req, res) {
     });
     
     if (error.message.includes('SAFETY')) {
-      return res.status(403).json({ 
-        error: 'Message blocked by content safety filters',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      return handleApiError(res, {
+        statusCode: 403,
+        type: 'CONTENT_SAFETY_ERROR',
+        message: 'Message blocked by content safety filters',
         code: 'CONTENT_SAFETY_ERROR'
-      });
+      }, 'Content safety error');
     }
 
-    return res.status(500).json({ 
-      error: 'Failed to process chat message',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      code: 'INTERNAL_SERVER_ERROR'
-    });
+    return handleApiError(res, error, 'Failed to process chat message');
   }
 }

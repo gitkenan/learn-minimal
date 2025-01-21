@@ -1,11 +1,16 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { handleApiError } from '../../utils/apiUtils';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 export default async function handler(req, res) {
 	if (req.method !== 'POST') {
-		return res.status(405).json({ message: 'Method not allowed' });
+		return handleApiError(res, {
+			statusCode: 405,
+			type: 'METHOD_NOT_ALLOWED',
+			message: 'Method not allowed'
+		}, 'Method not allowed');
 	}
 
 	try {
@@ -13,7 +18,11 @@ export default async function handler(req, res) {
 		const { data: { user } } = await supabase.auth.getUser();
 
 		if (!user) {
-			return res.status(401).json({ message: 'Unauthorized' });
+			return handleApiError(res, {
+				statusCode: 401,
+				type: 'UNAUTHORIZED',
+				message: 'Unauthorized'
+			}, 'Unauthorized');
 		}
 
 		const { prompt, messages } = req.body;
@@ -82,18 +91,20 @@ ${prompt}`
 		const result = await chat.sendMessage([{ text: prompt }]);
 		
 		if (!result || !result.response) {
-			return res.status(502).json({ 
-				error: 'Invalid AI response format',
-				details: 'The AI returned an invalid response format'
-			});
+			return handleApiError(res, {
+				statusCode: 502,
+				type: 'AI_RESPONSE_FORMAT_ERROR',
+				message: 'The AI returned an invalid response format'
+			}, 'Invalid AI response format');
 		}
 
 		const responseText = result.response.text();
 		if (!responseText || typeof responseText !== 'string') {
-			return res.status(502).json({ 
-				error: 'Empty or invalid AI response',
-				details: 'The AI returned an empty or invalid response'
-			});
+			return handleApiError(res, {
+				statusCode: 502,
+				type: 'AI_RESPONSE_CONTENT_ERROR',
+				message: 'The AI returned an empty or invalid response'
+			}, 'Empty or invalid AI response');
 		}
 
 		return res.status(200).json({ response: responseText });
@@ -101,15 +112,13 @@ ${prompt}`
 		console.error('Exam API Error:', error);
 		
 		if (error.message.includes('SAFETY')) {
-			return res.status(403).json({ 
-				error: 'Message blocked by content safety filters',
-				details: process.env.NODE_ENV === 'development' ? error.message : undefined
-			});
+			return handleApiError(res, {
+				statusCode: 403,
+				type: 'CONTENT_SAFETY_ERROR',
+				message: 'Message blocked by content safety filters'
+			}, 'Content safety error');
 		}
 
-		return res.status(500).json({ 
-			message: 'Internal server error',
-			error: error.message 
-		});
+		return handleApiError(res, error, 'Internal server error');
 	}
 }
