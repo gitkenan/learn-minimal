@@ -55,6 +55,12 @@ function MobileMenu() {
                   Exam
                 </button>
                 <button
+                  onClick={() => handleNavigation('/calendar')}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                >
+                  Calendar
+                </button>
+                <button
                   onClick={() => handleNavigation('/')}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
                 >
@@ -109,6 +115,12 @@ export default function Header() {
                   className="text-gray-500 hover:text-primary interactive"
                 >
                   Exam
+                </Link>
+                <Link 
+                  href="/calendar" 
+                  className="text-gray-500 hover:text-primary interactive"
+                >
+                  Calendar
                 </Link>
               </nav>
               {!user ? (

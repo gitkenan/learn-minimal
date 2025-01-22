@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import TaskNotes from './TaskNotes';
+import { useAuth } from '@/context/AuthContext';
 import { usePlan } from '@/hooks/usePlan';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { useExamFromPlan } from '@/hooks/useExamFromPlan';
 import LearningChat from './LearningChat';
 import ActionMenu from './ActionMenu';
+import { initializeSupabase } from '@/lib/supabaseClient';
 
 import { 
   detectSectionType,
@@ -60,11 +63,11 @@ const LearningPlanViewer = ({
   contentType = 'json',
   onChatStart
 }) => {
+  const { user } = useAuth();
   const { setActivePlanId } = useWorkflow();
   const { startExamFromPlan } = useExamFromPlan();
   const [openChats, setOpenChats] = useState(new Set());
   const [activeNoteItem, setActiveNoteItem] = useState(null);
-
   
   const { 
     plan,
@@ -128,15 +131,65 @@ const LearningPlanViewer = ({
     }
   }, [plan?.progress, onProgressUpdate]);
 
-  // Loading state
-  if (loading) {
-    return <div className="animate-pulse">Loading plan...</div>;
-  }
+  const handleAddToCalendar = async (date, sectionId = null, itemId = null) => {
+    try {
+      // Validate required data
+      if (!planId || !date) {
+        toast.error('Missing required information');
+        return;
+      }
 
-  // Error state
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
+      // Get content based on context
+      let content;
+      if (sectionId && itemId) {
+        const section = parsedContent.sections.find(s => s.id === sectionId);
+        const item = section?.items.find(i => i.id === itemId);
+        content = item?.content;
+      } else if (sectionId) {
+        const section = parsedContent.sections.find(s => s.id === sectionId);
+        content = section?.title;
+      } else {
+        content = parsedContent?.topic;
+      }
+
+      if (!content) {
+        toast.error('Could not determine task content');
+        return;
+      }
+
+      const response = await fetch('/api/calendar/add-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plan_id: planId,
+          section_id: sectionId,
+          item_id: itemId,
+          content,
+          date
+        }),
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        console.error('Add task failed:', responseText);
+        const errorData = JSON.parse(responseText);
+        const message = errorData.code === '23505'
+          ? 'This item already has a task scheduled for this date. Edit the existing task instead.'
+          : `Failed to add task: ${response.statusText} - ${errorData.error}`;
+        throw new Error(message);
+      }
+
+      const data = JSON.parse(responseText);
+
+      toast.success('Successfully added to calendar');
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+      toast.error(error.message || 'Failed to add to calendar');
+    }
+  };
 
   const handleTaskInteraction = async (e, sectionId, itemId) => {
     e.preventDefault();
@@ -164,6 +217,20 @@ const LearningPlanViewer = ({
     // Then sync with backend
     try {
       await toggleTask(sectionId, itemId);
+      
+      // Sync calendar tasks
+      const supabase = initializeSupabase();
+      const { error: calendarError } = await supabase
+        .from('calendar_tasks')
+        .update({ status: !item.isComplete ? 'completed' : 'pending' })
+        .eq('plan_id', planId)
+        .eq('section_id', sectionId)
+        .eq('item_id', itemId);
+
+      if (calendarError) {
+        console.error('Calendar sync error:', calendarError);
+        toast.error('Task updated but calendar sync failed');
+      }
     } catch (error) {
       // Revert on error
       setParsedContent({
@@ -211,7 +278,6 @@ const LearningPlanViewer = ({
     });
   };
 
-
   const handleSaveNote = async (taskId, content) => {
     try {
       await saveNote(taskId, content);
@@ -221,145 +287,156 @@ const LearningPlanViewer = ({
     }
   };
 
+  // Loading state
+  if (loading) {
+    return <div className="animate-pulse">Loading plan...</div>;
+  }
+
+  // Error state
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
   return (
     <div className="space-y-8">
         <div className="flex justify-end mb-4">
-
             <ActionMenu 
             onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic })}
             onChat={() => handleStartChat(parsedContent)}
+            onAddToCalendar={(date) => handleAddToCalendar(date)}
             label="entire plan"
             />
-          </div>
+        </div>
 
-            {openChats.has('plan-main') && (
-              <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key="plan-main">
-              <div className="relative h-[500px]">
-                <button 
+        {openChats.has('plan-main') && (
+          <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key="plan-main">
+            <div className="relative h-[500px]">
+              <button 
                 onClick={() => handleStartChat(parsedContent)}
                 className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
                 aria-label="Close chat"
-                >
+              >
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                </button>
-                <LearningChat 
+              </button>
+              <LearningChat 
                 planId={planId}
                 topic={parsedContent?.topic || 'Learning Plan'}
                 initialContext={`This chat is about the entire learning plan`}
                 key="plan-main"
-                />
-              </div>
-              </div>
-            )}
+              />
+            </div>
+          </div>
+        )}
 
         {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
           <div className="flex items-center justify-between">
-          {section.headingLevel === 2 ? (
-            <h2 
-            className="text-2xl font-semibold text-gray-900"
-            dangerouslySetInnerHTML={{ __html: section.title }}
-            />
-          ) : (
-            <h3 
-            className="text-xl font-semibold text-gray-900"
-            dangerouslySetInnerHTML={{ __html: section.title }}
-            />
-          )}
+            {section.headingLevel === 2 ? (
+              <h2 
+                className="text-2xl font-semibold text-gray-900"
+                dangerouslySetInnerHTML={{ __html: section.title }}
+              />
+            ) : (
+              <h3 
+                className="text-xl font-semibold text-gray-900"
+                dangerouslySetInnerHTML={{ __html: section.title }}
+              />
+            )}
             <ActionMenu 
-            onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id)}
-            onChat={() => handleStartChat(parsedContent, section.id)}
-            label="this section"
+              onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id)}
+              onChat={() => handleStartChat(parsedContent, section.id)}
+              onAddToCalendar={(date) => handleAddToCalendar(date, section.id)}
+              label="this section"
             />
+          </div>
 
-            </div>
-
-            {openChats.has(`${section.id}-main`) && (
-              <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key={`${section.id}-main`}>
+          {openChats.has(`${section.id}-main`) && (
+            <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key={`${section.id}-main`}>
               <div className="relative h-[500px]">
                 <button 
-                onClick={() => handleStartChat(parsedContent, section.id)}
-                className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
-                aria-label="Close chat"
+                  onClick={() => handleStartChat(parsedContent, section.id)}
+                  className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+                  aria-label="Close chat"
                 >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
                 <LearningChat 
-                planId={planId}
-                topic={section.title}
-                initialContext={`This chat is about the section: ${section.title}`}
-                key={`${section.id}-main`}
+                  planId={planId}
+                  topic={section.title}
+                  initialContext={`This chat is about the section: ${section.title}`}
+                  key={`${section.id}-main`}
                 />
               </div>
-              </div>
-            )}
+            </div>
+          )}
 
-            <div className="space-y-1">
-          {section.items.map(item => (
-            <div key={item.id} className="group">
-            {item.type === 'task' ? (
-              <div className="relative">
-              <div className="flex items-start justify-between gap-3 py-2 px-3 -ml-3 rounded-lg">
-                <button
-                className={`flex-grow text-left flex items-start gap-3
-                  transition-colors duration-200
-                  ${updating ? 'opacity-50' : 'hover:bg-gray-50/50'}`}
-                onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
-                disabled={updating}
-                role="checkbox"
-                aria-checked={item.isComplete}
-                >
-                <div className={`
-                  mt-1 flex-shrink-0 w-4 h-4 border rounded
-                  ${item.isComplete ? 'bg-accent border-accent' : 'border-accent-muted'}
-                  transition-colors duration-200
-                `}>
-                  {item.isComplete && (
-                  <svg className="w-3 h-3 text-white m-0.5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                  </svg>
-                  )}
-                </div>
-                <span 
-                  className={`flex-grow text-gray-900 ${item.isComplete ? 'line-through text-accent-muted' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: item.content }}
-                />
-                </button>
-                    <ActionMenu 
-                    onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
-                    onChat={() => handleStartChat(parsedContent, section.id, item.id)}
-                    onAddNote={() => setActiveNoteItem(item.id)}
-                    label="this task"
-                    />
-                  </div>
+          <div className="space-y-1">
+            {section.items.map(item => (
+              <div key={item.id} className="group">
+                {item.type === 'task' ? (
+                  <div className="relative">
+                    <div className="flex items-start justify-between gap-3 py-2 px-3 -ml-3 rounded-lg">
+                      <button
+                        className={`flex-grow text-left flex items-start gap-3
+                          transition-colors duration-200
+                          ${updating ? 'opacity-50' : 'hover:bg-gray-50/50'}`}
+                        onClick={(e) => handleTaskInteraction(e, section.id, item.id)}
+                        disabled={updating}
+                        role="checkbox"
+                        aria-checked={item.isComplete}
+                      >
+                        <div className={`
+                          mt-1 flex-shrink-0 w-4 h-4 border rounded
+                          ${item.isComplete ? 'bg-accent border-accent' : 'border-accent-muted'}
+                          transition-colors duration-200
+                        `}>
+                          {item.isComplete && (
+                            <svg className="w-3 h-3 text-white m-0.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span 
+                          className={`flex-grow text-gray-900 ${item.isComplete ? 'line-through text-accent-muted' : ''}`}
+                          dangerouslySetInnerHTML={{ __html: item.content }}
+                        />
+                      </button>
+                      <ActionMenu 
+                        onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
+                        onChat={() => handleStartChat(parsedContent, section.id, item.id)}
+                        onAddNote={() => setActiveNoteItem(item.id)}
+                        onAddToCalendar={(date) => handleAddToCalendar(date, section.id, item.id)}
+                        label="this task"
+                      />
+                    </div>
 
                     {openChats.has(`${section.id}-${item.id}`) && (
                       <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key={`${section.id}-${item.id}`}>
-                      <div className="relative h-[500px]">
-                        <button 
-                        onClick={() => handleStartChat(parsedContent, section.id, item.id)}
-                        className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
-                        aria-label="Close chat"
-                        >
-                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        </button>
-                        <LearningChat 
-                        planId={planId}
-                        topic={item.content}
-                        initialContext={`This chat is about the task: ${item.content}`}
-                        key={`${section.id}-${item.id}`}
-                        />
-                      </div>
+                        <div className="relative h-[500px]">
+                          <button 
+                            onClick={() => handleStartChat(parsedContent, section.id, item.id)}
+                            className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+                            aria-label="Close chat"
+                          >
+                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          <LearningChat 
+                            planId={planId}
+                            topic={item.content}
+                            initialContext={`This chat is about the task: ${item.content}`}
+                            key={`${section.id}-${item.id}`}
+                          />
+                        </div>
                       </div>
                     )}
                     
-                  <div key={item.id} className="mt-2">
+                    <div key={item.id} className="mt-2">
                       <TaskNotes
                         taskId={item.id}
                         notes={notes[item.id] || []}
