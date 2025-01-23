@@ -29,8 +29,8 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Only get plan functions when we have a selected task with a planId
-  const { toggleTask: planToggleTask } = usePlan(selectedTask?.planId || null);
+  // Get plan functions and state when we have a selected task with a planId
+  const { toggleTask: planToggleTask, refresh: refreshPlan, plan } = usePlan(selectedTask?.planId || null);
   
   // Memoize the task toggle function
   const toggleTask = useCallback(() => {
@@ -82,12 +82,12 @@ export default function CalendarPage() {
     }
   }, [user?.id, fetchTasks]);
 
-  // Refresh tasks when selected task status changes
+  // Refresh tasks when selected task status changes or when plan is refreshed
   useEffect(() => {
-    if (selectedTask?.status) {
+    if (selectedTask?.status || plan?.json_content?.version) {
       fetchTasks();
     }
-  }, [selectedTask?.status, fetchTasks]);
+  }, [selectedTask?.status, plan?.json_content?.version, fetchTasks]);
 
   const handleTaskClick = useCallback((event) => {
     setSelectedTask(event);
@@ -97,8 +97,18 @@ export default function CalendarPage() {
     if (!selectedTask) return;
 
     try {
-      // Use toggleTask which will handle both plan and calendar updates atomically
+      setError('');
+      
+      // First update the plan through the sync service
       await toggleTask();
+      
+      // Then refresh both plan and tasks
+      await Promise.all([
+        refreshPlan(),
+        fetchTasks()
+      ]);
+      
+      // Close the modal after successful update
       setSelectedTask(null);
     } catch (err) {
       console.error('Error marking task complete:', err);
