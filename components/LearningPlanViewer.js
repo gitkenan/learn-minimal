@@ -129,7 +129,7 @@ const LearningPlanViewer = ({
     if (plan && onProgressUpdate) {
       onProgressUpdate(plan.progress);
     }
-  }, [plan?.progress, onProgressUpdate]);
+  }, [plan, plan?.progress, onProgressUpdate]);
 
   const handleAddToCalendar = async (date, sectionId = null, itemId = null) => {
     try {
