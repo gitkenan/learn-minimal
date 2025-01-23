@@ -24,10 +24,21 @@ const localizer = dateFnsLocalizer({
 
 export default function CalendarPage() {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Only get plan functions when we have a selected task with a planId
+  const { toggleTask: planToggleTask } = usePlan(selectedTask?.planId || null);
+  
+  // Memoize the task toggle function
+  const toggleTask = useCallback(() => {
+    if (!selectedTask?.planId) {
+      throw new Error('Cannot toggle task without a valid planId');
+    }
+    return planToggleTask(selectedTask.sectionId, selectedTask.itemId);
+  }, [selectedTask, planToggleTask]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -71,6 +82,13 @@ export default function CalendarPage() {
     }
   }, [user?.id, fetchTasks]);
 
+  // Refresh tasks when selected task status changes
+  useEffect(() => {
+    if (selectedTask?.status) {
+      fetchTasks();
+    }
+  }, [selectedTask?.status, fetchTasks]);
+
   const handleTaskClick = useCallback((event) => {
     setSelectedTask(event);
   }, []);
@@ -79,26 +97,9 @@ export default function CalendarPage() {
     if (!selectedTask) return;
 
     try {
-      const supabase = initializeSupabase();
-
-      // Update calendar task
-      const { error: calendarError } = await supabase
-        .from('calendar_tasks')
-        .update({ status: 'completed' })
-        .eq('id', selectedTask.id);
-
-      if (calendarError) throw calendarError;
-
-      // Update plan item using concurrency-safe toggle
-      const { toggleTask } = usePlan(selectedTask.planId);
-      if (toggleTask) {
-        await toggleTask(selectedTask.sectionId, selectedTask.itemId);
-      } else {
-        throw new Error('Plan synchronization failed');
-      }
-
+      // Use toggleTask which will handle both plan and calendar updates atomically
+      await toggleTask();
       setSelectedTask(null);
-      fetchTasks();
     } catch (err) {
       console.error('Error marking task complete:', err);
       setError('Failed to update task status');

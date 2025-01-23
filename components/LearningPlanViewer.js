@@ -214,23 +214,9 @@ const LearningPlanViewer = ({
       progress: calculateProgress(updatedSections)
     });
 
-    // Then sync with backend
+    // Sync with backend using toggleTask which handles both plan and calendar updates
     try {
       await toggleTask(sectionId, itemId);
-      
-      // Sync calendar tasks
-      const supabase = initializeSupabase();
-      const { error: calendarError } = await supabase
-        .from('calendar_tasks')
-        .update({ status: !item.isComplete ? 'completed' : 'pending' })
-        .eq('plan_id', planId)
-        .eq('section_id', sectionId)
-        .eq('item_id', itemId);
-
-      if (calendarError) {
-        console.error('Calendar sync error:', calendarError);
-        toast.error('Task updated but calendar sync failed');
-      }
     } catch (error) {
       // Revert on error
       setParsedContent({
