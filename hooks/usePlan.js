@@ -74,9 +74,17 @@ export function usePlan(planId) {
 
   // Single effect that calls fetch
   useEffect(() => {
-    // If planId or user changes from undefined to valid, do fetch
-    fetchPlanAndNotes();
-  }, [fetchPlanAndNotes]);
+    // Only fetch when we have valid planId and user
+    if (planId && user?.id) {
+      fetchPlanAndNotes();
+    } else {
+      // Maintain consistent state when missing requirements
+      setPlan(null);
+      setNotes({});
+      setError(planId ? 'No authenticated user' : 'No plan selected');
+      setLoading(false);
+    }
+  }, [planId, user?.id]); // Use primitive values in dependencies
 
   // The updatePlan function
   const updatePlan = async (updateFunction) => {
