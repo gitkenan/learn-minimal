@@ -168,7 +168,7 @@ export default function Dashboard() {
             <FaCheck className="text-green-600 w-4 h-4" />
           </div>
           <p className="font-medium">
-            "{deletedPlanName || deletedExamName}" has been deleted
+            &quot;{deletedPlanName || deletedExamName}&quot; has been deleted
           </p>
         </div>
       )}
@@ -263,7 +263,7 @@ export default function Dashboard() {
             </div>
             
             <p className="text-gray-600 mb-6">
-            Are you sure you want to delete <span className="font-medium text-gray-900">"{examToDelete?.subject}"</span>? 
+            Are you sure you want to delete <span className="font-medium text-gray-900">&quot;{examToDelete?.subject}&quot;</span>? 
             This action cannot be undone.
             </p>
 
@@ -308,7 +308,7 @@ export default function Dashboard() {
               </div>
               
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete <span className="font-medium text-gray-900">"{planToDelete?.topic}"</span>? 
+                Are you sure you want to delete <span className="font-medium text-gray-900">&quot;{planToDelete?.topic}&quot;</span>? 
                 This action cannot be undone.
               </p>
 
