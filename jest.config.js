@@ -14,7 +14,7 @@ const customJestConfig = {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(react-markdown|remark-gfm|@google/generative-ai)/)',
+    '/node_modules/(?!(react-markdown|remark-gfm|@google/generative-ai|unist-util-position-from-estree|vfile|micromark-util-combine-extensions|micromark-util-chunked|micromark))',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   globals: {

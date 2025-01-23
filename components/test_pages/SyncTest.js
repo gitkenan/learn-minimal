@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePlan } from '@/hooks/usePlan';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import { toast } from 'react-toastify';
@@ -9,7 +9,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
   const [versionsMatch, setVersionsMatch] = useState(false);
   const { toggleTask, plan } = usePlan(planId);
 
-  const refreshStatus = async () => {
+  const refreshStatus = useCallback(async () => {
     const supabase = initializeSupabase();
     
     // Get plan item status
@@ -28,7 +28,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
       .single();
       
     setCalendarStatus(calendarTask?.status || 'unknown');
-  };
+  }, [plan, planId, sectionId, itemId]);
 
   const handleToggle = async (source) => {
     try {
@@ -86,7 +86,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
     if (planId && sectionId && itemId) {
       refreshStatus();
     }
-  }, [planId, sectionId, itemId]);
+  }, [planId, sectionId, itemId, refreshStatus, plan]);
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
