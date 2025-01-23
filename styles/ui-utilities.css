@@ -8,8 +8,8 @@
     @apply transition-all duration-200 ease-in-out;
   }
   
-  .interactive:hover {
-    @apply scale-[1.02] shadow-strong;
+.interactive:hover {
+  @apply text-green-500;
   }
 
   .interactive:active {

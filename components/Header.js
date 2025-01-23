@@ -33,7 +33,7 @@ function MobileMenu() {
         <div ref={menuRef}>
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 hover:bg-gray-50 rounded-full"
+            className="p-2 bg-gray-50 rounded-full"
           >
             <Menu size={20} />
           </button>
