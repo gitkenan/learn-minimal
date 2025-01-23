@@ -120,7 +120,7 @@ export default function CalendarPage() {
     const isCompleted = event.status === 'completed';
     const baseStyle = {
       backgroundColor: isCompleted ? '#94B49F' : '#7FB069',
-      borderRadius: '4px',
+      borderRadius: '3px',
       opacity: isCompleted ? 0.7 : 1,
       color: '#fff',
       border: 'none',
@@ -144,25 +144,49 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-2 sm:p-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-6">Learning Calendar</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Learning Calendar</h1>
         
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 text-red-600 rounded-lg text-sm sm:text-base">
             {error}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-soft p-6">
+        <div className="bg-white rounded-lg shadow-sm p-1 sm:p-3">
           <Calendar
             localizer={localizer}
             events={tasks}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: 'calc(100vh - 250px)' }}
+            style={{ height: 'calc(100vh - 160px)' }}
             onSelectEvent={handleTaskClick}
             eventPropGetter={eventStyleGetter}
+            views={['month']}
+            defaultView="month"
+            toolbar={{
+              left: 'prev,next',
+              center: 'title',
+              right: null
+            }}
+            messages={{
+              previous: '◀',
+              next: '▶'
+            }}
+            components={{
+              toolbar: props => {
+                return (
+                  <div className="rbc-toolbar">
+                    <span className="rbc-btn-group">
+                      <button type="button" onClick={() => props.onNavigate('PREV')}>◀</button>
+                      <button type="button" onClick={() => props.onNavigate('NEXT')}>▶</button>
+                    </span>
+                    <span className="rbc-toolbar-label">{props.label}</span>
+                  </div>
+                );
+              }
+            }}
           />
         </div>
 
@@ -173,9 +197,9 @@ export default function CalendarPage() {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 transform scale-95 opacity-0 animate-dialog"
+              className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-0 sm:p-2 transform scale-95 opacity-0 animate-dialog"
             >
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Task Details</h3>
                   <button 
@@ -186,7 +210,7 @@ export default function CalendarPage() {
                   </button>
                 </div>
                 
-                <div className="space-y-4 mb-6">
+                <div className="space-y-3 mb-4">
                   <p className="text-gray-600">
                     <span className="font-medium text-gray-900">Task:</span> {selectedTask.title}
                   </p>
@@ -222,35 +246,122 @@ export default function CalendarPage() {
         <style jsx global>{`
           .rbc-calendar {
             background: white;
-            padding: 1rem;
+            padding: 0.25rem;
             border-radius: 0.5rem;
+            font-size: 12px;
+          }
+          @media (min-width: 640px) {
+            .rbc-calendar {
+              padding: 0.75rem;
+              font-size: 14px;
+            }
+          }
+          .rbc-month-view {
+            border: none;
+          }
+          .rbc-month-row {
+            border-top: 1px solid #f0f0f0;
+          }
+          .rbc-day-bg {
+            border-left: 1px solid #f0f0f0;
+          }
+          .rbc-date-cell {
+            padding: 0.15rem;
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+          }
+          .rbc-date-cell.rbc-now {
+            font-weight: 500;
+            color: #7FB069;
+          }
+          .rbc-toolbar {
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            justify-content: center;
+            margin-bottom: 0.25rem;
+          }
+          .rbc-toolbar-label {
+            width: 100%;
+            text-align: center;
+            margin: 0.15rem 0;
+            font-weight: 500;
+            font-size: 1em;
+            color: #4A4A4A;
+          }
+          @media (min-width: 640px) {
+            .rbc-toolbar {
+              flex-wrap: nowrap;
+              gap: 0;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+            }
+            .rbc-toolbar-label {
+              width: auto;
+              margin: 0;
+              font-size: 1.1em;
+            }
           }
           .rbc-toolbar button {
             color: #4A4A4A;
+            padding: 0.35rem 0.5rem;
+            min-width: 32px;
+            font-size: 1em;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            margin: 0 2px;
           }
           .rbc-toolbar button:hover {
-            background-color: #F3F4F6;
+            background-color: #f9fafb;
+            border-color: #d1d5db;
           }
-          .rbc-toolbar button.rbc-active {
-            background-color: #7FB069 !important;
-            color: white;
-          }
-          .rbc-toolbar button.rbc-active:hover {
-            background-color: #6A9557 !important;
+          .rbc-btn-group {
+            display: flex;
+            gap: 4px;
           }
           .rbc-today {
-            background-color: #F3F4F6;
+            background-color: #fafdf7;
           }
           .rbc-off-range-bg {
-            background-color: #F8F8F8;
+            background-color: #fafafa;
           }
           .rbc-header {
-            padding: 0.5rem;
-            font-weight: 600;
-            color: #4A4A4A;
+            padding: 0.15rem;
+            font-weight: 500;
+            color: #666;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+          }
+          @media (min-width: 640px) {
+            .rbc-header {
+              padding: 0.25rem;
+              font-size: 0.85em;
+            }
           }
           .rbc-event {
-            padding: 0.25rem 0.5rem;
+            padding: 0.1rem 0.25rem;
+            margin: 1px 0;
+            min-height: 1.5rem;
+            font-size: 0.8em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          @media (min-width: 640px) {
+            .rbc-event {
+              padding: 0.15rem 0.35rem;
+              min-height: 1.75rem;
+              font-size: 0.85em;
+            }
+          }
+          .rbc-events-container {
+            margin-right: 1px;
+          }
+          .rbc-row-content {
+            z-index: 1;
           }
           @keyframes fadeIn {
             from { opacity: 0; }
