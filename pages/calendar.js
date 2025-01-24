@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { usePlan } from '@/hooks/usePlan';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import { FaCheck, FaTimes } from 'react-icons/fa';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const locales = {
@@ -22,17 +23,78 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Mobile-optimized toolbar with simple navigation
+const MobileToolbar = ({ onNavigate, label }) => (
+  <div className="rbc-toolbar">
+    <div className="flex items-center justify-between w-full px-2">
+      <button 
+        type="button" 
+        onClick={() => onNavigate('PREV')}
+        className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <span className="text-xl">←</span>
+      </button>
+      <span className="rbc-toolbar-label text-lg">{label}</span>
+      <button 
+        type="button" 
+        onClick={() => onNavigate('NEXT')}
+        className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
+      >
+        <span className="text-xl">→</span>
+      </button>
+    </div>
+  </div>
+);
+
+// Desktop toolbar with full navigation and view options
+const DesktopToolbar = ({ onNavigate, onView, label, view }) => (
+  <div className="rbc-toolbar">
+    <span className="rbc-btn-group">
+      <button type="button" onClick={() => onNavigate('PREV')}>
+        <span className="text-lg">←</span>
+      </button>
+      <button type="button" onClick={() => onNavigate('TODAY')}>Today</button>
+      <button type="button" onClick={() => onNavigate('NEXT')}>
+        <span className="text-lg">→</span>
+      </button>
+    </span>
+    <span className="rbc-toolbar-label">{label}</span>
+    <span className="rbc-btn-group">
+      <button 
+        type="button" 
+        onClick={() => onView('day')}
+        className={view === 'day' ? 'rbc-active' : ''}
+      >
+        Day
+      </button>
+      <button 
+        type="button" 
+        onClick={() => onView('week')}
+        className={view === 'week' ? 'rbc-active' : ''}
+      >
+        Week
+      </button>
+      <button 
+        type="button" 
+        onClick={() => onView('month')}
+        className={view === 'month' ? 'rbc-active' : ''}
+      >
+        Month
+      </button>
+    </span>
+  </div>
+);
+
 export default function CalendarPage() {
+  const isDesktop = useMediaQuery('(min-width: 640px)');
   const { user } = useAuth();
   const [selectedTask, setSelectedTask] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Get plan functions and state when we have a selected task with a planId
   const { toggleTask: planToggleTask, refresh: refreshPlan, plan } = usePlan(selectedTask?.planId || null);
   
-  // Memoize the task toggle function
   const toggleTask = useCallback(() => {
     if (!selectedTask?.planId) {
       throw new Error('Cannot toggle task without a valid planId');
@@ -82,7 +144,6 @@ export default function CalendarPage() {
     }
   }, [user?.id, fetchTasks]);
 
-  // Refresh tasks when selected task status changes or when plan is refreshed
   useEffect(() => {
     if (selectedTask?.status || plan?.json_content?.version) {
       fetchTasks();
@@ -98,17 +159,8 @@ export default function CalendarPage() {
 
     try {
       setError('');
-      
-      // First update the plan through the sync service
       await toggleTask();
-      
-      // Then refresh both plan and tasks
-      await Promise.all([
-        refreshPlan(),
-        fetchTasks()
-      ]);
-      
-      // Close the modal after successful update
+      await Promise.all([refreshPlan(), fetchTasks()]);
       setSelectedTask(null);
     } catch (err) {
       console.error('Error marking task complete:', err);
@@ -145,8 +197,21 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Learning Calendar</h1>
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0">Learning Calendar</h1>
+          <div className="hidden sm:flex items-center space-x-2 text-sm">
+            <span className="text-secondary">Legend:</span>
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 rounded-sm bg-accent"></div>
+              <span className="text-secondary">Pending</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 rounded-sm bg-accent-secondary opacity-70"></div>
+              <span className="text-secondary">Completed</span>
+            </div>
+          </div>
+        </div>
         
         {error && (
           <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 text-red-600 rounded-lg text-sm sm:text-base">
@@ -154,7 +219,7 @@ export default function CalendarPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-1 sm:p-3">
+        <div className="bg-white rounded-lg shadow-strong p-1 sm:p-3">
           <Calendar
             localizer={localizer}
             events={tasks}
@@ -163,28 +228,19 @@ export default function CalendarPage() {
             style={{ height: 'calc(100vh - 160px)' }}
             onSelectEvent={handleTaskClick}
             eventPropGetter={eventStyleGetter}
-            views={['month']}
+            views={isDesktop ? {
+              day: true,
+              week: true,
+              month: true,
+              agenda: false
+            } : {
+              month: true
+            }}
             defaultView="month"
-            toolbar={{
-              left: 'prev,next',
-              center: 'title',
-              right: null
-            }}
-            messages={{
-              previous: '◀',
-              next: '▶'
-            }}
             components={{
               toolbar: props => {
-                return (
-                  <div className="rbc-toolbar">
-                    <span className="rbc-btn-group">
-                      <button type="button" onClick={() => props.onNavigate('PREV')}>◀</button>
-                      <button type="button" onClick={() => props.onNavigate('NEXT')}>▶</button>
-                    </span>
-                    <span className="rbc-toolbar-label">{props.label}</span>
-                  </div>
-                );
+                const CustomToolbar = isDesktop ? DesktopToolbar : MobileToolbar;
+                return <CustomToolbar {...props} />;
               }
             }}
           />
@@ -248,7 +304,7 @@ export default function CalendarPage() {
             background: white;
             padding: 0.25rem;
             border-radius: 0.5rem;
-            font-size: 12px;
+            font-size: 14px;
           }
           @media (min-width: 640px) {
             .rbc-calendar {
@@ -266,56 +322,67 @@ export default function CalendarPage() {
             border-left: 1px solid #f0f0f0;
           }
           .rbc-date-cell {
-            padding: 0.15rem;
+            padding: 0.5rem 0.25rem;
             text-align: center;
             color: #666;
-            font-size: 0.85em;
+            font-size: 0.9em;
           }
           .rbc-date-cell.rbc-now {
-            font-weight: 500;
+            font-weight: 600;
             color: #7FB069;
           }
           .rbc-toolbar {
             flex-wrap: wrap;
-            gap: 0.25rem;
+            gap: 0.5rem;
             justify-content: center;
-            margin-bottom: 0.25rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background-color: #fafafa;
+            border-radius: 0.5rem;
           }
           .rbc-toolbar-label {
-            width: 100%;
-            text-align: center;
-            margin: 0.15rem 0;
-            font-weight: 500;
-            font-size: 1em;
-            color: #4A4A4A;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #1A1A1A;
           }
           @media (min-width: 640px) {
             .rbc-toolbar {
               flex-wrap: nowrap;
-              gap: 0;
+              gap: 1rem;
               justify-content: space-between;
-              margin-bottom: 0.5rem;
+              margin-bottom: 1rem;
             }
             .rbc-toolbar-label {
-              width: auto;
-              margin: 0;
-              font-size: 1.1em;
+              font-size: 1.2em;
             }
           }
           .rbc-toolbar button {
             color: #4A4A4A;
-            padding: 0.35rem 0.5rem;
-            min-width: 32px;
-            font-size: 1em;
+            padding: 0.5rem 1rem;
+            min-width: 40px;
+            font-size: 0.95em;
+            font-weight: 500;
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 6px;
+            border-radius: 8px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             margin: 0 2px;
+            transition: all 0.2s ease;
           }
           .rbc-toolbar button:hover {
             background-color: #f9fafb;
-            border-color: #d1d5db;
+            border-color: #7FB069;
+            color: #7FB069;
+          }
+          .rbc-toolbar button.rbc-active {
+            background-color: #7FB069;
+            border-color: #7FB069;
+            color: white;
+          }
+          .rbc-toolbar button.rbc-active:hover {
+            background-color: #6A9557;
+            border-color: #6A9557;
+            color: white;
           }
           .rbc-btn-group {
             display: flex;
@@ -328,24 +395,25 @@ export default function CalendarPage() {
             background-color: #fafafa;
           }
           .rbc-header {
-            padding: 0.15rem;
-            font-weight: 500;
-            color: #666;
-            font-size: 0.8em;
+            padding: 0.75rem 0.5rem;
+            font-weight: 600;
+            color: #4A4A4A;
+            font-size: 0.85em;
             text-transform: uppercase;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #f0f0f0;
           }
           @media (min-width: 640px) {
             .rbc-header {
-              padding: 0.25rem;
-              font-size: 0.85em;
+              padding: 1rem 0.5rem;
+              font-size: 0.9em;
             }
           }
           .rbc-event {
-            padding: 0.1rem 0.25rem;
+            padding: 0.35rem 0.5rem;
             margin: 1px 0;
-            min-height: 1.5rem;
-            font-size: 0.8em;
+            min-height: 2rem;
+            font-size: 0.9em;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
