@@ -163,9 +163,16 @@ export function usePlan(planId) {
   const toggleTask = async (sectionId, itemId) => {
     if (!plan) return;
     try {
-      await syncService.toggleTaskCompletion(planId, sectionId, itemId);
-      // Re-fetch plan
-      await fetchPlanAndNotes();
+      const result = await syncService.toggleTaskCompletion(planId, sectionId, itemId);
+      // Update local state with the new version
+      setPlan(prev => ({
+        ...prev,
+        json_content: {
+          ...prev.json_content,
+          version: result.version
+        }
+      }));
+      return result;
     } catch (err) {
       console.error('Failed to toggle task:', err);
       throw err;

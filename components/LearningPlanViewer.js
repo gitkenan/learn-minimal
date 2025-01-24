@@ -195,14 +195,14 @@ const LearningPlanViewer = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // Store previous state before making updates
-    const previousState = {
-      sections: [...parsedContent.sections],
-      progress: parsedContent.progress
-    };
-
     try {
-      // Find and update the item immediately in local state
+      // Capture pre-update state snapshot
+      const preUpdateState = {
+        sections: parsedContent.sections,
+        progress: parsedContent.progress
+      };
+
+      // Create optimistic update
       const updatedSections = parsedContent.sections.map(section => {
         if (section.id !== sectionId) return section;
         return {
@@ -214,22 +214,45 @@ const LearningPlanViewer = ({
         };
       });
 
-      // Update local state immediately
-      setParsedContent({
-        ...parsedContent,
+      // Apply optimistic update using functional update to ensure latest state
+      setParsedContent(currentState => ({
+        ...currentState,
         sections: updatedSections,
         progress: calculateProgress(updatedSections)
-      });
+      }));
 
       // Sync with backend using toggleTask which handles both plan and calendar updates
       await toggleTask(sectionId, itemId);
     } catch (error) {
-      // Revert on error using stored previous state
-      setParsedContent(prev => ({
-        ...prev,
-        sections: previousState.sections,
-        progress: previousState.progress
-      }));
+      // Revert on error using functional update to ensure latest state
+      setParsedContent(currentState => {
+        // Get the task that was being toggled
+        const section = currentState.sections.find(s => s.id === sectionId);
+        const item = section?.items.find(i => i.id === itemId);
+        
+        // Only rollback if the item exists and was actually changed
+        if (section && item) {
+          const rolledBackSections = currentState.sections.map(s => {
+            if (s.id !== sectionId) return s;
+            return {
+              ...s,
+              items: s.items.map(i => {
+                if (i.id !== itemId) return i;
+                return { ...i, isComplete: !i.isComplete }; // Revert the toggle
+              })
+            };
+          });
+          
+          return {
+            ...currentState,
+            sections: rolledBackSections,
+            progress: calculateProgress(rolledBackSections)
+          };
+        }
+        
+        return currentState; // No changes needed if item wasn't found
+      });
+      
       console.error('Failed to toggle task:', error);
       toast.error('Failed to update task status');
     }
