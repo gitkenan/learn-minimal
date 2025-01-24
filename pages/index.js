@@ -51,8 +51,8 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-screen">
-          <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
-            <h1 className="text-primary text-3xl font-semibold mb-4 text-center">
+          <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-soft">
+            <h1 className="text-h1 mb-4 text-center">
               Welcome to Learn Minimal
             </h1>
             <p className="text-secondary text-center mb-8">
@@ -75,9 +75,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] pt-20">
-        <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
+          <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-soft">
           <div className="mb-8 text-center">
-            <h1 className="text-primary text-3xl font-semibold mb-2">
+            <h1 className="text-h1 mb-2">
               Learn Minimal
             </h1>
             <p className="text-secondary text-lg">
@@ -92,9 +92,7 @@ export default function Home() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Enter a topic to learn about..."
-                className="w-full p-4 text-primary bg-background border border-claude-border 
-                         rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                         transition-colors duration-200"
+                className="search-input bg-background"
                 disabled={isLoading}
               />
               <button
@@ -119,9 +117,7 @@ export default function Home() {
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
                     placeholder="Tell us about your experience with this topic (optional)"
-                    className="w-full p-4 text-primary bg-background border border-claude-border 
-                             rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                             transition-colors duration-200 min-h-[100px]"
+                    className="search-input bg-background min-h-[100px]"
                     disabled={isLoading}
                   />
                   <input
@@ -129,9 +125,7 @@ export default function Home() {
                     value={timeline}
                     onChange={(e) => setTimeline(e.target.value)}
                     placeholder="How much time do you have? (optional)"
-                    className="w-full p-4 text-primary bg-background border border-claude-border 
-                             rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                             transition-colors duration-200"
+                    className="search-input bg-background"
                     disabled={isLoading}
                   />
                 </>
@@ -147,9 +141,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading || !topic.trim() || loading}
-              className="w-full p-4 bg-accent hover:bg-accent-hover text-white rounded-lg
-                       transition-colors duration-200 disabled:opacity-50
-                       font-medium text-base flex items-center justify-center"
+              className="search-button w-full disabled:opacity-50 flex items-center justify-center"
             >
               {isLoading ? (
                 <>

@@ -6,6 +6,24 @@ module.exports = {
     ],
     theme: {
       extend: {
+        spacing: {
+          'gutter-sm': '1rem',    // 16px
+          'gutter-md': '1.5rem',  // 24px
+          'gutter-lg': '2rem',    // 32px
+          'gutter-xl': '3rem'     // 48px
+        },
+        lineHeight: {
+          'paragraph': '1.7',  // Optimal reading line-height
+        },
+        fontSize: {
+          // Heading scale with associated line-heights
+          'h1': ['2.25rem', { lineHeight: '1.2', fontWeight: '700' }],
+          'h2': ['1.875rem', { lineHeight: '1.3', fontWeight: '600' }],
+          'h3': ['1.5rem', { lineHeight: '1.4', fontWeight: '600' }],
+          'h4': ['1.25rem', { lineHeight: '1.5', fontWeight: '500' }],
+          'h5': ['1.125rem', { lineHeight: '1.5', fontWeight: '500' }],
+          'h6': ['1rem', { lineHeight: '1.5', fontWeight: '500' }],
+        },
         colors: {
           background: '#F8F8F8',
           surface: '#FFFFFF',
@@ -37,6 +55,18 @@ module.exports = {
           'lg-up': '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
         },
         keyframes: {
+          shimmer: {
+            '0%': {
+              backgroundPosition: '-1000px 0',
+            },
+            '100%': {
+              backgroundPosition: '1000px 0',
+            },
+          },
+          buttonPress: {
+            '0%, 100%': { transform: 'scale(1)' },
+            '100%': { transform: 'scale(0.95)' },
+          },
           fadeIn: {
             'from': { opacity: '0' },
             'to': { opacity: '1' },
@@ -51,11 +81,45 @@ module.exports = {
           },
         },
         animation: {
+          'shimmer': 'shimmer 2s infinite linear',
+          'button-press': 'buttonPress 0.1s ease-in-out forwards',
           'fade-in': 'fadeIn 0.3s ease-in-out',
           'fade-out': 'fadeOut 0.3s ease-in-out',
           'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         },
+        gridTemplateColumns: {
+          'responsive': 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+          'auto-fill-sm': 'repeat(auto-fill, minmax(240px, 1fr))',
+          'auto-fill-md': 'repeat(auto-fill, minmax(320px, 1fr))',
+        },
       },
     },
-    plugins: [],
+    plugins: [
+      function({ addComponents, theme }) {
+        addComponents({
+          '.shimmer': {
+            position: 'relative',
+            overflow: 'hidden',
+            backgroundColor: theme('colors.gray.200'),
+            '&::after': {
+              position: 'absolute',
+              top: '0',
+              right: '0',
+              bottom: '0',
+              left: '0',
+              transform: 'translateX(-100%)',
+              backgroundImage: `linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.2) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+              )`,
+              animation: theme('animation.shimmer'),
+              content: '""',
+            }
+          }
+        })
+      }
+    ],
   }

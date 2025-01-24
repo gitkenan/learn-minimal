@@ -33,7 +33,7 @@ function MobileMenu() {
         <div ref={menuRef}>
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 bg-gray-50 rounded-full"
+            className="p-2 hover:bg-gray-50 rounded-lg click-shrink hover-grow"
           >
             <Menu size={20} />
           </button>
@@ -41,34 +41,34 @@ function MobileMenu() {
           {menuOpen && (
             <>
               <div className="bottom-sheet-enhanced__overlay" />
-              <div className="absolute right-0 top-12 w-48 bg-white shadow-strong rounded-lg py-2 z-50 fade-in">
+              <div className="absolute right-0 top-12 w-48 bg-white shadow-soft rounded-lg py-2 z-50 animate-fade-in">
                 <button
                   onClick={() => handleNavigation('/dashboard')}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                  className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
                 >
                   Dashboard
                 </button>
                 <button
                   onClick={() => handleNavigation('/exam')}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                  className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
                 >
                   Exam
                 </button>
                 <button
                   onClick={() => handleNavigation('/calendar')}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                  className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
                 >
                   Calendar
                 </button>
                 <button
                   onClick={() => handleNavigation('/')}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                  className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
                 >
                   Create New Plan
                 </button>
                 <button
                   onClick={signOut}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 interactive"
+                  className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
                 >
                   Sign Out
                 </button>
@@ -86,12 +86,12 @@ export default function Header() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4">
+    <header className="bg-white shadow-soft hero-gradient">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
         {isMobile ? (
           <MobileMenu />
         ) : (
-          <div className="flex items-center justify-between h-16 px-8">
+          <div className="flex items-center justify-between h-16">
             <Link href="/" className="gradient-text-accent text-lg font-bold">
               Learn Minimal
             </Link>
@@ -100,25 +100,25 @@ export default function Header() {
               <nav className="flex gap-4">
                 <Link 
                   href="/" 
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Home
                 </Link>
                 <Link 
                   href="/dashboard" 
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Dashboard
                 </Link>
                 <Link 
                   href="/exam" 
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Exam
                 </Link>
                 <Link 
                   href="/calendar" 
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Calendar
                 </Link>
@@ -126,14 +126,14 @@ export default function Header() {
               {!user ? (
                 <Link
                   href="/auth"
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Sign In
                 </Link>
               ) : (
                 <button
                   onClick={signOut}
-                  className="text-gray-500 hover:text-primary interactive"
+                  className="text-secondary hover:text-accent transition-colors duration-200"
                 >
                   Sign Out
                 </button>
