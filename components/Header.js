@@ -19,7 +19,11 @@ function MobileMenu() {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const handleNavigation = (path) => {
@@ -30,10 +34,10 @@ function MobileMenu() {
   return (
     <div className="md:hidden">
       <div className="flex items-center justify-end px-4 py-3">
-        <div ref={menuRef}>
+        <div ref={menuRef} className="relative">
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 hover:bg-gray-50 rounded-lg click-shrink hover-grow"
+            className="p-2 hover:bg-gray-50 rounded-[4px] card interactive"
           >
             <Menu size={20} />
           </button>
@@ -41,7 +45,9 @@ function MobileMenu() {
           {menuOpen && (
             <>
               <div className="bottom-sheet-enhanced__overlay" />
-              <div className="absolute right-0 top-12 w-48 bg-white shadow-soft rounded-lg py-2 z-50 animate-fade-in">
+              <div className="fixed inset-x-0 bottom-0 top-14 bg-white card py-2 z-[60] animate-fade-in border-t border-gray-100
+                    transform-gpu will-change-transform overflow-visible
+                    animate-slide-up">
                 <button
                   onClick={() => handleNavigation('/dashboard')}
                   className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-gray-50 hover:text-accent transition-colors duration-200"
@@ -86,8 +92,8 @@ export default function Header() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <header className="bg-white shadow-soft hero-gradient">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+    <header className="bg-white shadow-sm hero-gradient relative">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8">
         {isMobile ? (
           <MobileMenu />
         ) : (
