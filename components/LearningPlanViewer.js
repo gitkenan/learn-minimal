@@ -195,35 +195,43 @@ const LearningPlanViewer = ({
     e.preventDefault();
     e.stopPropagation();
 
-    // Find and update the item immediately in local state
-    const updatedSections = parsedContent.sections.map(section => {
-      if (section.id !== sectionId) return section;
-      return {
-        ...section,
-        items: section.items.map(item => {
-          if (item.id !== itemId) return item;
-          return { ...item, isComplete: !item.isComplete };
-        })
-      };
-    });
+    // Store previous state before making updates
+    const previousState = {
+      sections: [...parsedContent.sections],
+      progress: parsedContent.progress
+    };
 
-    // Update local state immediately
-    setParsedContent({
-      ...parsedContent,
-      sections: updatedSections,
-      progress: calculateProgress(updatedSections)
-    });
-
-    // Sync with backend using toggleTask which handles both plan and calendar updates
     try {
-      await toggleTask(sectionId, itemId);
-    } catch (error) {
-      // Revert on error
+      // Find and update the item immediately in local state
+      const updatedSections = parsedContent.sections.map(section => {
+        if (section.id !== sectionId) return section;
+        return {
+          ...section,
+          items: section.items.map(item => {
+            if (item.id !== itemId) return item;
+            return { ...item, isComplete: !item.isComplete };
+          })
+        };
+      });
+
+      // Update local state immediately
       setParsedContent({
         ...parsedContent,
-        sections: parsedContent.sections
+        sections: updatedSections,
+        progress: calculateProgress(updatedSections)
       });
+
+      // Sync with backend using toggleTask which handles both plan and calendar updates
+      await toggleTask(sectionId, itemId);
+    } catch (error) {
+      // Revert on error using stored previous state
+      setParsedContent(prev => ({
+        ...prev,
+        sections: previousState.sections,
+        progress: previousState.progress
+      }));
       console.error('Failed to toggle task:', error);
+      toast.error('Failed to update task status');
     }
   };
 
