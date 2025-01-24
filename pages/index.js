@@ -52,10 +52,10 @@ export default function Home() {
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-screen">
           <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-soft">
-            <h1 className="text-h1 mb-4 text-center">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
               Welcome to Learn Minimal
             </h1>
-            <p className="text-secondary text-center mb-8">
+            <p className="text-secondary text-center mb-8 text-base md:text-lg lg:text-xl opacity-80">
               Please sign in to create and manage your learning plans.
             </p>
             <div className="flex justify-center">
@@ -77,10 +77,10 @@ export default function Home() {
       <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] pt-20">
           <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-soft">
           <div className="mb-8 text-center">
-            <h1 className="text-h1 mb-2">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-2 bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
               Learn Minimal
             </h1>
-            <p className="text-secondary text-lg">
+            <p className="text-secondary text-base md:text-lg lg:text-xl opacity-80">
               Generate your personalized learning plan
             </p>
           </div>

@@ -98,7 +98,7 @@ export default function Header() {
           <MobileMenu />
         ) : (
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="gradient-text-accent text-lg font-bold">
+            <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
               Learn Minimal
             </Link>
             

@@ -96,11 +96,11 @@
 
   .hero-gradient::before {
     content: '';
-    @apply absolute inset-0 opacity-40 pointer-events-none;
+    @apply absolute inset-0 opacity-15 pointer-events-none;
     background: linear-gradient(
-      135deg,
+      160deg,
       theme('colors.accent.DEFAULT') 0%,
-      transparent 50%
+      transparent 70%
     );
   }
 
@@ -165,10 +165,9 @@
   .gradient-text-accent {
     @apply bg-clip-text text-transparent font-semibold;
     background-image: linear-gradient(
-      90deg,
+      45deg,
       theme('colors.accent.DEFAULT') 0%,
-      theme('colors.accent.secondary') 50%,
-      theme('colors.accent.muted') 100%
+      theme('colors.accent.secondary') 100%
     );
   }
 
