@@ -1,9 +1,35 @@
 import handler from '../../../pages/api/generate-plan';
 
 // Mock the imports
-jest.mock('@supabase/auth-helpers-nextjs', () => ({
-  createPagesServerClient: jest.fn()
-}));
+jest.mock('@supabase/supabase-js', () => {
+  const actual = jest.requireActual('@supabase/supabase-js');
+  return {
+    ...actual,
+    createClient: jest.fn((url, key, options) => ({
+      auth: {
+        getSession: jest.fn().mockResolvedValue({
+          data: {
+            session: {
+              user: { id: 'test-user-id' }
+            }
+          }
+        })
+      },
+      from: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {},
+        error: null
+      }),
+      storage: {
+        setItem: jest.fn(),
+        getItem: jest.fn(),
+        removeItem: jest.fn()
+      }
+    }))
+  };
+});
 
 jest.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: jest.fn()
