@@ -1,24 +1,141 @@
 // hooks/usePlan.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useReducer } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { initializeSupabase } from '../lib/supabaseClient';
 import { syncService } from '@/lib/syncService';
 import { calculateProgress } from '../utils/planParserUtils';
 
+// Singleton Supabase client
+const supabase = initializeSupabase();
+
+// Error classification
+const isRecoverableError = (error) => {
+  if (!error) return false;
+  const code = error.code?.toString() || error.status?.toString();
+  return code?.startsWith('40') || code?.startsWith('50');
+};
+
+// State reducer for complex updates
+const planReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_PLAN':
+      return { ...state, plan: action.payload };
+    case 'SET_NOTES':
+      return { ...state, notes: action.payload };
+    case 'ADD_NOTE':
+      return {
+        ...state,
+        notes: {
+          ...state.notes,
+          [action.payload.task_id]: [
+            ...(state.notes[action.payload.task_id] || []),
+            action.payload
+          ]
+        }
+      };
+    case 'DELETE_NOTE':
+      const newNotes = { ...state.notes };
+      Object.keys(newNotes).forEach((taskId) => {
+        newNotes[taskId] = newNotes[taskId].filter(
+          (n) => n.id !== action.payload
+        );
+        if (!newNotes[taskId].length) delete newNotes[taskId];
+      });
+      return { ...state, notes: newNotes };
+    case 'OPTIMISTIC_TOGGLE':
+      return {
+        ...state,
+        plan: {
+          ...state.plan,
+          json_content: {
+            ...state.plan.json_content,
+            version: action.payload.version
+          }
+        }
+      };
+    default:
+      return state;
+  }
+};
+
 export function usePlan(planId) {
   const { user, session } = useAuth();
-  const [plan, setPlan] = useState(null);
-  const [notes, setNotes] = useState({});
+  const [{ plan, notes }, dispatch] = useReducer(planReducer, {
+    plan: null,
+    notes: {}
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
 
-  // Single fetch function
+  // Setup real-time subscription with error handling
+  useEffect(() => {
+    let mounted = true;
+    let channel;
+
+    const setupSubscription = async () => {
+      if (!planId || !user || !mounted) return;
+
+      try {
+        channel = supabase.channel(`plan-${planId}`);
+        
+        // Handle subscription errors
+        channel.on('error', (error) => {
+          console.error('Subscription error:', error);
+          if (mounted && !isRecoverableError(error)) {
+            setError('Real-time sync error: ' + error.message);
+          }
+        });
+
+        // Subscribe to plan changes
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'plans',
+            filter: `id=eq.${planId}`
+          },
+          () => mounted && fetchPlanAndNotes()
+        );
+
+        // Subscribe to notes changes
+        channel.on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'plan_item_notes',
+            filter: `plan_id=eq.${planId}`
+          },
+          () => mounted && fetchPlanAndNotes()
+        );
+
+        await channel.subscribe();
+      } catch (err) {
+        console.error('Failed to setup subscription:', err);
+        if (mounted && !isRecoverableError(err)) {
+          setError('Failed to setup real-time sync: ' + err.message);
+        }
+      }
+    };
+
+    setupSubscription();
+
+    return () => {
+      mounted = false;
+      if (channel) {
+        supabase.removeChannel(channel).catch(console.error);
+      }
+    };
+  }, [planId, user]);
+
+  // Enhanced fetch function with error recovery
   const fetchPlanAndNotes = useCallback(async () => {
     // Handle missing planId/user early but maintain hook shape
     if (!planId || !user) {
-      setPlan(null);
-      setNotes({});
+      dispatch({ type: 'SET_PLAN', payload: null });
+      dispatch({ type: 'SET_NOTES', payload: {} });
       setError('No planId or user');
       setLoading(false);
       return;
@@ -46,12 +163,30 @@ export function usePlan(planId) {
       ]);
 
       // Check errors
-      if (planResult.error) throw planResult.error;
-      if (!planResult.data) throw new Error('Plan not found');
+      if (planResult.error) {
+        const recoverable = isRecoverableError(planResult.error);
+        if (!recoverable) {
+          dispatch({ type: 'SET_PLAN', payload: null });
+          dispatch({ type: 'SET_NOTES', payload: {} });
+        }
+        throw planResult.error;
+      }
+      if (!planResult.data) {
+        dispatch({ type: 'SET_PLAN', payload: null });
+        dispatch({ type: 'SET_NOTES', payload: {} });
+        throw new Error('Plan not found');
+      }
       if (planResult.data.user_id !== user.id) {
+        dispatch({ type: 'SET_PLAN', payload: null });
+        dispatch({ type: 'SET_NOTES', payload: {} });
         throw new Error('Not authorized to access this plan');
       }
-      if (notesResult.error) throw notesResult.error;
+      if (notesResult.error) {
+        if (!isRecoverableError(notesResult.error)) {
+          dispatch({ type: 'SET_NOTES', payload: {} });
+        }
+        throw notesResult.error;
+      }
 
       // Group notes by task_id
       const notesByTask = {};
@@ -60,30 +195,55 @@ export function usePlan(planId) {
         notesByTask[note.task_id].push(note);
       }
 
-      setPlan(planResult.data);
-      setNotes(notesByTask);
+      dispatch({ type: 'SET_PLAN', payload: planResult.data });
+      dispatch({ type: 'SET_NOTES', payload: notesByTask });
     } catch (err) {
       console.error('Error fetching plan and notes:', err);
-      setError(err.message);
-      setPlan(null);
-      setNotes({});
+      const recoverable = isRecoverableError(err);
+      setError(`${err.message}${recoverable ? ' (retrying...)' : ''}`);
+      
+      if (!recoverable) {
+        dispatch({ type: 'SET_PLAN', payload: null });
+        dispatch({ type: 'SET_NOTES', payload: {} });
+      }
+      
+      // If error is recoverable, retry after a delay
+      if (recoverable) {
+        setTimeout(() => {
+          fetchPlanAndNotes();
+        }, 5000);
+      }
     } finally {
       setLoading(false);
     }
   }, [planId, user]);
 
-  // Single effect that calls fetch
+  // Enhanced effect with cleanup
   useEffect(() => {
-    // Only fetch when we have valid planId and user
-    if (planId && user?.id) {
-      fetchPlanAndNotes();
-    } else {
-      // Maintain consistent state when missing requirements
-      setPlan(null);
-      setNotes({});
-      setError(planId ? 'No authenticated user' : 'No plan selected');
-      setLoading(false);
-    }
+    let mounted = true;
+    let retryTimeout;
+
+    const fetchData = async () => {
+      if (!mounted) return;
+      
+      if (planId && user?.id) {
+        await fetchPlanAndNotes();
+      } else {
+        dispatch({ type: 'SET_PLAN', payload: null });
+        dispatch({ type: 'SET_NOTES', payload: {} });
+        setError(planId ? 'No authenticated user' : 'No plan selected');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+      if (retryTimeout) clearTimeout(retryTimeout);
+      dispatch({ type: 'SET_PLAN', payload: null });
+      dispatch({ type: 'SET_NOTES', payload: {} });
+    };
   }, [planId, user?.id]); // Use primitive values in dependencies
 
   // The updatePlan function
@@ -119,10 +279,10 @@ export function usePlan(planId) {
         .single();
       if (error) throw error;
 
-      setNotes((prev) => ({
-        ...prev,
-        [taskId]: [...(prev[taskId] || []), newNote]
-      }));
+      dispatch({
+        type: 'ADD_NOTE',
+        payload: newNote
+      });
       return newNote;
     } catch (err) {
       console.error('Error saving note:', err);
@@ -142,15 +302,9 @@ export function usePlan(planId) {
         .eq('id', noteId);
       if (error) throw error;
 
-      setNotes((prev) => {
-        const newNotes = { ...prev };
-        Object.keys(newNotes).forEach((taskId) => {
-          newNotes[taskId] = newNotes[taskId].filter((n) => n.id !== noteId);
-          if (!newNotes[taskId].length) {
-            delete newNotes[taskId];
-          }
-        });
-        return newNotes;
+      dispatch({
+        type: 'DELETE_NOTE',
+        payload: noteId
       });
     } catch (err) {
       console.error('Error deleting note:', err);
@@ -165,13 +319,10 @@ export function usePlan(planId) {
     try {
       const result = await syncService.toggleTaskCompletion(planId, sectionId, itemId);
       // Update local state with the new version
-      setPlan(prev => ({
-        ...prev,
-        json_content: {
-          ...prev.json_content,
-          version: result.version
-        }
-      }));
+      dispatch({
+        type: 'OPTIMISTIC_TOGGLE',
+        payload: { version: result.version }
+      });
       return result;
     } catch (err) {
       console.error('Failed to toggle task:', err);
