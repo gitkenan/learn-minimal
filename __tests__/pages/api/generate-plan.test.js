@@ -35,7 +35,7 @@ jest.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: jest.fn()
 }));
 
-jest.mock('@/utils/flexiblePlanValidator', () => ({
+jest.mock('../../../utils/flexiblePlanValidator', () => ({
   validatePlanStructure: jest.fn()
 }));
 
