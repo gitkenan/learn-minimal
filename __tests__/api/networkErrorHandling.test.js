@@ -1,6 +1,6 @@
 import { initializeSupabase } from '../../lib/supabaseClient';
 import { syncService } from '../../lib/syncService';
-import { toast } from 'react-hot-toast';
+jest.mock('react-hot-toast');
 
 // Mock network requests
 beforeAll(() => {
