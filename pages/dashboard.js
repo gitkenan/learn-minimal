@@ -176,30 +176,40 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col gap-4 mb-6">
+          <div className="flex gap-4 mb-6">
+            <button
+              type="button"
+              onClick={() => setShowExamResults(false)}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg transition-colors duration-200 ${
+                !showExamResults 
+                  ? 'bg-accent text-white hover:bg-accent-hover'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FaCog className="text-current" />
+              <span>Learning Plans</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowExamResults(true)}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg transition-colors duration-200 ${
+                showExamResults 
+                  ? 'bg-accent text-white hover:bg-accent-hover'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FaGraduationCap className="text-current" />
+              <span>Exam Results</span>
+            </button>
+          </div>
+
           <input
             type="text"
-            placeholder="Search plans..."
+            placeholder={showExamResults ? "Search exam results..." : "Search plans..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border"
           />
-          
-          <button
-            type="button"
-            onClick={() => setShowExamResults(!showExamResults)}
-            className="flex items-center justify-center gap-2 text-accent hover:text-accent-hover transition-colors duration-200 py-2 border border-accent rounded-lg hover:bg-accent/5"
-          >
-            <FaGraduationCap className="text-current" />
-            <span>{showExamResults ? 'Hide' : 'Show'} Exam Results</span>
-            <svg 
-            className={`w-4 h-4 transform transition-transform ${showExamResults ? 'rotate-180' : ''}`}
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-            >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
           </div>
 
           {error && (
@@ -211,30 +221,25 @@ export default function Dashboard() {
           <div className="space-y-8">
           {showExamResults ? (
             <div>
-            <h2 className="text-2xl font-semibold flex items-center gap-2 mb-6">
-              <FaGraduationCap className="text-gray-600" />
-              <span>Exam Results</span>
-            </h2>
-            <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
+              <ExamResults examResults={examResults} onDelete={handleExamDeleteConfirmation} />
             </div>
           ) : (
             <div>
-            <h2 className="text-2xl font-semibold mb-6">Learning Plans</h2>
-            {filteredPlans.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-              {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
-              </div>
-            ) : (
-              <div className="space-y-4">
-              {filteredPlans.map((plan) => (
-                <PlanCard 
-                key={plan.id} 
-                plan={plan} 
-                onDelete={handleDeleteConfirmation}
-                />
-              ))}
-              </div>
-            )}
+              {filteredPlans.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  {searchQuery ? 'No plans match your search.' : 'Create your first learning plan!'}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredPlans.map((plan) => (
+                    <PlanCard 
+                      key={plan.id} 
+                      plan={plan} 
+                      onDelete={handleDeleteConfirmation}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
           </div>
