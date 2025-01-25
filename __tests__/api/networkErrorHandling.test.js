@@ -1,25 +1,19 @@
 import { syncService } from '../../lib/syncService';
 
-// Match generate-plan.test.js mocking patterns
+// Match generate-plan.test.js mocking patterns exactly
 jest.mock('@supabase/auth-helpers-nextjs', () => ({
   createPagesServerClient: jest.fn().mockImplementation(() => ({
     auth: {
-      getSession: jest.fn().mockRejectedValue(new Error('Network error'))
+      getSession: jest.fn().mockRejectedValue(
+        Object.assign(new Error('Network error'), { code: 'ECONNREFUSED' })
+      )
     },
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
-    single: jest.fn().mockRejectedValue(new Error('Database error'))
-  }))
-}));
-
-// Match generate-plan.test.js error code handling
-jest.mock('../../lib/supabaseClient', () => ({
-  initializeSupabase: jest.fn().mockImplementation(() => ({
-    auth: {
-      signInWithPassword: jest.fn().mockRejectedValue(
-        Object.assign(new Error('Network error'), { code: 'ECONNREFUSED' })
-      )
-    }
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockRejectedValue(
+      Object.assign(new Error('Database error'), { code: 'ECONNRESET' })
+    )
   }))
 }));
 beforeAll(() => {
