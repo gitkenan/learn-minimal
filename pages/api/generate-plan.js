@@ -135,10 +135,14 @@ export default async function handler(req, res) {
       // Parse the markdown to JSON structure before saving
       const parsedPlan = parseMarkdownPlan(planContent);
       
+      // Extract title from the first h1 heading or use the user's topic as fallback
+      const titleMatch = planContent.match(/^#\s+(.+)$/m);
+      const extractedTitle = titleMatch ? titleMatch[1].trim() : topic;
+      
       // Try to store both formats, but don't fail if json_content column doesn't exist yet
       const planData = {
         user_id: session.user.id,
-        topic,
+        topic: extractedTitle,  // Use the extracted title as the topic
         content: planContent,           // Keep original markdown
         json_content: {
           ...parsedPlan,
@@ -176,7 +180,7 @@ export default async function handler(req, res) {
           .from('plans')
           .insert({
             user_id: session.user.id,
-            topic,
+            topic: extractedTitle,  // Use the extracted title as the topic
             content: planContent,           // Keep original markdown
             progress: 0,
             validation_result: validation   // Store validation results

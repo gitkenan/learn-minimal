@@ -35,7 +35,7 @@ export default function PlanPage() {
             <div className="max-w-3xl mx-auto">
               <div className="bg-surface p-8 rounded-lg shadow-claude">
                 <div className="flex flex-col gap-2 mb-8">
-                  <h1 className="text-primary text-3xl font-semibold">{plan.topic}</h1>
+                  <h1 className="text-primary text-3xl font-semibold">{plan.title || plan.topic}</h1>
                   <span className="text-gray-400 text-sm">
                     Created {new Date(plan.created_at).toLocaleDateString()}
                   </span>
