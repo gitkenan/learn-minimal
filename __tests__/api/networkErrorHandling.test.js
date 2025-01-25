@@ -1,13 +1,24 @@
-import { initializeSupabase } from '../../lib/supabaseClient';
 import { syncService } from '../../lib/syncService';
 
-// Mock environment variables - match generate-plan.test.js patterns
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:3000';
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
+// Mock Supabase client with error handling similar to generate-plan.test.js
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn().mockImplementation(() => ({
+    auth: {
+      signInWithPassword: jest.fn().mockRejectedValue(new Error('Network error'))
+    },
+    from: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    single: jest.fn().mockRejectedValue(new Error('Database error'))
+  }))
+}));
 
-// Mock network requests using same pattern as generate-plan tests
-jest.mock('@supabase/auth-helpers-nextjs', () => ({
-  createPagesServerClient: jest.fn()
+// Mock environment validation like generate-plan.test.js
+jest.mock('../../lib/supabaseClient', () => ({
+  initializeSupabase: jest.fn().mockImplementation(() => ({
+    auth: {
+      signInWithPassword: jest.fn()
+    }
+  }))
 }));
 beforeAll(() => {
   global.fetch = jest.fn();
@@ -35,20 +46,19 @@ describe('Network Error Handling', () => {
   });
 
   test('should handle plan save network errors', async () => {
-    const mockPlan = { id: '123', content: {} };
-    const error = new Error('Failed to save - network error');
+    // Mock failed update with specific error code like generate-plan.test.js
+    const dbError = new Error('Connection reset');
+    dbError.code = 'ECONNRESET';
+    jest.spyOn(syncService, 'updatePlanContent').mockRejectedValue(dbError);
+
+    // Attempt to save and verify error handling
+    await expect(syncService.updatePlanContent('123', () => ({})))
+      .rejects.toThrow('Connection reset');
     
-    // Mock failed update
-    jest.spyOn(syncService, 'updatePlanContent').mockRejectedValue(error);
-
-    // Attempt to save
-    await expect(syncService.updatePlanContent(mockPlan.id, () => ({})))
-      .rejects.toThrow('Failed to save - network error');
-
-    // Verify error handling - match generate-plan.test.js assertion patterns
+    // Verify error logging matches generate-plan.test.js patterns
     expect(console.error).toHaveBeenCalledWith(
-      'Supabase request failed:',
-      expect.any(Error)
+      'Supabase request failed:', 
+      expect.objectContaining({ code: 'ECONNRESET' })
     );
   });
 
