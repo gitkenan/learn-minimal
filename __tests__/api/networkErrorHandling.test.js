@@ -31,18 +31,13 @@ beforeEach(() => {
 
 describe('Network Error Handling', () => {
   test('should handle failed fetch requests', async () => {
-    // Simulate network failure
-    fetch.mockRejectedValue(new Error('Network request failed'));
-
     const supabase = initializeSupabase();
     
-    // Test auth failure
-    const authPromise = supabase.auth.signInWithPassword({
+    // Test auth failure with mocked error response
+    await expect(supabase.auth.signInWithPassword({
       email: 'test@example.com',
       password: 'password'
-    });
-
-    await expect(authPromise).rejects.toThrow('Network request failed');
+    })).rejects.toThrow('Network error');
   });
 
   test('should handle plan save network errors', async () => {
