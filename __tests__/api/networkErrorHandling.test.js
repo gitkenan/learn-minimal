@@ -1,14 +1,13 @@
 import { initializeSupabase } from '../../lib/supabaseClient';
 import { syncService } from '../../lib/syncService';
-import { toast } from 'react-hot-toast';
 
-// Mock environment variables
+// Mock environment variables - match generate-plan.test.js patterns
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:3000';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
 
-// Mock toast and network requests
-jest.mock('react-hot-toast', () => ({
-  error: jest.fn()
+// Mock network requests using same pattern as generate-plan tests
+jest.mock('@supabase/auth-helpers-nextjs', () => ({
+  createPagesServerClient: jest.fn()
 }));
 beforeAll(() => {
   global.fetch = jest.fn();
@@ -46,10 +45,10 @@ describe('Network Error Handling', () => {
     await expect(syncService.updatePlanContent(mockPlan.id, () => ({})))
       .rejects.toThrow('Failed to save - network error');
 
-    // Verify error handling
-    expect(toast.error).toHaveBeenCalledWith(
-      expect.stringContaining('network error'),
-      expect.objectContaining({ duration: 4000 })
+    // Verify error handling - match generate-plan.test.js assertion patterns
+    expect(console.error).toHaveBeenCalledWith(
+      'Supabase request failed:',
+      expect.any(Error)
     );
   });
 
