@@ -9,8 +9,10 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key';
 jest.mock('../../lib/supabaseClient', () => ({
   initializeSupabase: () => ({
     auth: {
-      signInWithPassword: jest.fn(),
-      getSession: jest.fn()
+      signInWithPassword: jest.fn().mockRejectedValue(
+        Object.assign(new Error('Network error'), { code: 'ECONNREFUSED' })
+      ),
+      getSession: jest.fn().mockRejectedValue(new Error('Session error'))
     },
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
@@ -56,10 +58,13 @@ describe('Network Error Handling', () => {
   });
 
   test('should handle plan save network errors', async () => {
-    // Mock failed update with specific error code like generate-plan.test.js
+    // Mock failed update through Supabase client
     const dbError = new Error('Connection reset');
     dbError.code = 'ECONNRESET';
-    jest.spyOn(syncService, 'updatePlanContent').mockRejectedValue(dbError);
+    const supabase = initializeSupabase();
+    supabase.from.mockImplementation(() => {
+      throw dbError;
+    });
 
     // Attempt to save and verify error handling
     await expect(syncService.updatePlanContent('123', () => ({})))
@@ -78,12 +83,16 @@ describe('Network Error Handling', () => {
   test('should handle query network errors', async () => {
     const supabase = initializeSupabase();
     const error = new Error('Connection reset');
+    error.code = 'ECONNRESET';
     
     // Mock failed query using chained syntax
-    supabase.from.mockReturnThis();
-    supabase.select.mockReturnThis();
-    supabase.eq.mockReturnThis();
-    supabase.single.mockRejectedValue(error);
+    supabase.from.mockImplementation(() => ({
+      select: jest.fn().mockImplementation(() => ({
+        eq: jest.fn().mockImplementation(() => ({
+          single: jest.fn().mockRejectedValue(error)
+        }))
+      }))
+    }));
 
     // Execute query
     const queryPromise = supabase
