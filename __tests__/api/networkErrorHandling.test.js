@@ -1,7 +1,8 @@
 import { syncService } from '../../lib/syncService';
+import { initializeSupabase } from '../../lib/supabaseClient';
 
 // Match generate-plan.test.js mocking patterns exactly
-jest.mock('@supabase/auth-helpers-nextjs', () => ({
+jest.mock('@supabase/supabase-js', () => ({
   createPagesServerClient: jest.fn().mockImplementation(() => ({
     auth: {
       getSession: jest.fn().mockRejectedValue(
@@ -48,8 +49,11 @@ describe('Network Error Handling', () => {
     
     // Verify error logging matches generate-plan.test.js patterns
     expect(console.error).toHaveBeenCalledWith(
-      'Supabase request failed:', 
-      expect.objectContaining({ code: 'ECONNRESET' })
+      'Supabase request failed:',
+      expect.objectContaining({ 
+        message: 'Connection reset',
+        code: 'ECONNRESET'
+      })
     );
   });
 
