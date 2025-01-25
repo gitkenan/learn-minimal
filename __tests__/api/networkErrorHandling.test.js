@@ -16,7 +16,7 @@ jest.mock('@supabase/supabase-js', () => ({
 jest.mock('../../lib/supabaseClient', () => ({
   initializeSupabase: jest.fn().mockImplementation(() => ({
     auth: {
-      signInWithPassword: jest.fn()
+      signInWithPassword: jest.fn().mockRejectedValue(new Error('Network error'))
     }
   }))
 }));
@@ -61,12 +61,11 @@ describe('Network Error Handling', () => {
     const supabase = initializeSupabase();
     const error = new Error('Connection reset');
     
-    // Mock failed query
-    supabase.from('plans').select = jest.fn().mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        single: jest.fn().mockRejectedValue(error)
-      })
-    });
+    // Mock failed query using chained syntax
+    supabase.from.mockReturnThis();
+    supabase.select.mockReturnThis();
+    supabase.eq.mockReturnThis();
+    supabase.single.mockRejectedValue(error);
 
     // Execute query
     const queryPromise = supabase
