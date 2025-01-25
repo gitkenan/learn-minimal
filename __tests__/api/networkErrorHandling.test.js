@@ -1,10 +1,10 @@
 import { syncService } from '../../lib/syncService';
 
-// Mock Supabase client with error handling similar to generate-plan.test.js
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn().mockImplementation(() => ({
+// Match generate-plan.test.js mocking patterns
+jest.mock('@supabase/auth-helpers-nextjs', () => ({
+  createPagesServerClient: jest.fn().mockImplementation(() => ({
     auth: {
-      signInWithPassword: jest.fn().mockRejectedValue(new Error('Network error'))
+      getSession: jest.fn().mockRejectedValue(new Error('Network error'))
     },
     from: jest.fn().mockReturnThis(),
     select: jest.fn().mockReturnThis(),
@@ -12,11 +12,13 @@ jest.mock('@supabase/supabase-js', () => ({
   }))
 }));
 
-// Mock environment validation like generate-plan.test.js
+// Match generate-plan.test.js error code handling
 jest.mock('../../lib/supabaseClient', () => ({
   initializeSupabase: jest.fn().mockImplementation(() => ({
     auth: {
-      signInWithPassword: jest.fn().mockRejectedValue(new Error('Network error'))
+      signInWithPassword: jest.fn().mockRejectedValue(
+        Object.assign(new Error('Network error'), { code: 'ECONNREFUSED' })
+      )
     }
   }))
 }));
