@@ -184,66 +184,62 @@ export default function AIExaminerPage() {
   };
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-screen">
-          <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
-            <h1 className="text-primary text-3xl font-semibold mb-4 text-center">
-              AI Examiner
-            </h1>
-            <p className="text-secondary text-center mb-8">
-              Please sign in to access the AI Examiner.
-            </p>
-            <div className="flex justify-center">
-              <button
-                onClick={() => router.push('/auth')}
-                className="search-button"
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
+    <div className="min-h-screen bg-[#f8faf9] relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
+      <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-screen relative">
+        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
+          AI Examiner
+        </h1>
+        <p className="text-[#3c6e47]/80 text-center mb-8 text-lg md:text-xl lg:text-2xl max-w-2xl">
+          Please sign in to access the AI Examiner.
+        </p>
+        <button
+          onClick={() => router.push('/auth')}
+          className="px-8 py-3 text-[#3c6e47] hover:text-[#98c3a4] transition-colors duration-200"
+        >
+          Sign In
+        </button>
+      </main>
+    </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] pt-20">
-        <div className="w-full max-w-2xl bg-surface p-6 rounded-lg shadow-claude">
+    <div className="min-h-screen bg-[#f8faf9] relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
+      <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative">
           {!showQuiz ? (
-            <>
-                <div className="mb-8 text-center">
-                <h1 className="text-primary text-3xl font-semibold mb-2">
+            <form className="w-full max-w-xl flex flex-col gap-6">
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
                   {subject ? (
-                  <>
-                    {systemInstructions?.includes('specifically about:') 
-                    ? 'Task-Specific Exam'
-                    : systemInstructions?.includes('from the section:')
-                      ? 'Section Exam'
-                      : 'Full Plan Exam'}
-                  </>
+                    <>
+                      {systemInstructions?.includes('specifically about:') 
+                        ? 'Deep Dive Assessment'
+                        : systemInstructions?.includes('from the section:')
+                          ? 'Milestone Check'
+                          : 'Learning Compass'}
+                    </>
                   ) : (
-                  'AI Examiner Setup'
+                    'AI Learning Guide'
                   )}
                 </h1>
                 {subject && (
-                  <p className="text-secondary text-lg mb-2">
-                  {subject}
+                  <p className="text-[#3c6e47] text-xl mb-2 text-center">
+                    Exploring {subject}
                   </p>
                 )}
-                <p className="text-secondary text-lg">
-                  Configure your examination session
+                <p className="text-[#3c6e47]/80 text-center mb-12 text-lg md:text-xl lg:text-2xl max-w-2xl">
+                  {subject 
+                    ? "Embark on an interactive journey to explore and validate your expertise"
+                    : "Craft your personalized learning experience with our adaptive AI companion"}
                 </p>
-                </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-6">
                 <input
                   type="text"
                   placeholder="Subject"
-                  className="w-full p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
+                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   disabled={isLoading}
@@ -252,18 +248,16 @@ export default function AIExaminerPage() {
                 <input
                   type="text"
                   placeholder="Experience (optional)"
-                  className="w-full p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
+                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
                   disabled={isLoading}
                 />
 
                 <select
-                  className="w-full p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
+                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
                   disabled={isLoading}
@@ -274,9 +268,8 @@ export default function AIExaminerPage() {
                 </select>
 
                 <select
-                  className="w-full p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
+                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={questionType}
                   onChange={(e) => setQuestionType(e.target.value)}
                   disabled={isLoading}
@@ -288,9 +281,8 @@ export default function AIExaminerPage() {
 
                 <textarea
                   placeholder="System Instructions (optional) - e.g., 'give me medical cases to diagnose'"
-                  className="w-full p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200 min-h-[100px]"
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
+                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200 min-h-[100px]"
                   value={systemInstructions}
                   onChange={(e) => setSystemInstructions(e.target.value)}
                   disabled={isLoading}
@@ -299,9 +291,9 @@ export default function AIExaminerPage() {
                 <button 
                   onClick={startQuiz}
                   disabled={!subject.trim() || isLoading}
-                  className="w-full p-4 bg-accent hover:bg-accent-hover text-white rounded-lg
-                           transition-colors duration-200 disabled:opacity-50
-                           font-medium text-base flex items-center justify-center"
+                  className="w-full px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg 
+                           transition-all duration-200 disabled:opacity-50 disabled:bg-[#3c6e47]/50 
+                           flex items-center justify-center font-medium text-base"
                 >
                   {isLoading ? (
                     <>
@@ -316,18 +308,18 @@ export default function AIExaminerPage() {
                   )}
                 </button>
               </div>
-            </>
+            </form>
           ) : (
-            <div className="flex flex-col h-full gap-4">
+            <div className="w-full max-w-2xl flex flex-col h-full gap-4">
               <div className="flex-1">
-                <div ref={chatRef} className="h-[calc(100vh-300px)] overflow-y-auto bg-background rounded-lg p-4 border border-claude-border">
+                <div ref={chatRef} className="h-[calc(100vh-300px)] overflow-y-auto rounded-lg p-6">
                   {messages.map((m, i) => (
                     <div key={i} className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'}`}>
                       <div
                         className={`inline-block max-w-[80%] px-4 py-3 rounded-lg ${
                           m.isAI 
-                            ? 'bg-surface border border-claude-border text-primary' 
-                            : 'bg-accent text-white'
+                            ? 'bg-white border border-[#3c6e47]/10 text-[#3c6e47]' 
+                            : 'bg-[#3c6e47] text-white'
                         }`}
                       >
                         <ReactMarkdown>{m.text}</ReactMarkdown>
@@ -337,11 +329,10 @@ export default function AIExaminerPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-4 mb-4">
                 <input
-                  className="flex-1 p-4 text-primary bg-background border border-claude-border 
-                           rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                           transition-colors duration-200"
+                  className="flex-1 px-4 py-3 text-[#3c6e47] bg-white border border-[#3c6e47]/20 
+                           rounded-lg focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   onKeyDown={(e) => {
@@ -356,21 +347,22 @@ export default function AIExaminerPage() {
                 <button 
                   onClick={submitAnswer}
                   disabled={isLoading || !userAnswer.trim()}
-                  className="px-6 bg-accent hover:bg-accent-hover text-white rounded-lg
-                           transition-colors duration-200 disabled:opacity-50"
+                  className="px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg
+                           transition-all duration-200 disabled:opacity-50"
                 >
                   Send
                 </button>
                 <button 
                   onClick={finalizeExam}
                   disabled={isLoading || messages.length < 2}
-                  className="px-6 bg-gray-500 hover:bg-gray-600 text-white rounded-lg
-                           transition-colors duration-200 disabled:opacity-50"
+                  className="px-6 py-3 bg-[#3c6e47]/60 hover:bg-[#3c6e47]/80 text-white rounded-lg
+                           transition-all duration-200 disabled:opacity-50"
                 >
                   Finish
                 </button>
+      
               </div>
-
+              
               {error && (
                 <div className="text-red-500 text-sm mt-2">
                   {error}
@@ -378,7 +370,6 @@ export default function AIExaminerPage() {
               )}
             </div>
           )}
-        </div>
       </main>
     </div>
   );
