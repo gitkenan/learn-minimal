@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(to bottom, #e8f0eb, transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@layer base {
   /* Enhanced color contrast and typography */
   p {
     @apply leading-paragraph text-primary;
@@ -19,17 +30,17 @@
 
 @layer components {
   .search-input {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 
-           focus:outline-none focus:ring-2 focus:ring-accent/80 focus:border-transparent
-           focus:ring-offset-1 focus:ring-offset-white
+    @apply w-full px-4 py-3 rounded-lg bg-white border border-[#3c6e47]/20 
+           text-[#3c6e47] placeholder-[#3c6e47]/50
+           focus:outline-none focus:border-[#3c6e47]
            transition duration-200 ease-in-out;
   }
 
   .search-button {
-    @apply px-6 py-3 bg-accent text-white rounded-xl
-           hover:bg-accent-hover transition duration-200 ease-in-out
-           focus:outline-none focus:ring-2 focus:ring-accent/80 focus:ring-offset-2
-           active:animate-button-press;
+    @apply px-6 py-3 bg-[#3c6e47] text-white rounded-lg
+           hover:bg-[#98c3a4] transition duration-200 ease-in-out
+           focus:outline-none focus:ring-2 focus:ring-[#3c6e47]/20
+           disabled:opacity-50 disabled:bg-[#3c6e47]/50;
   }
 }
 
@@ -80,13 +91,11 @@
 
   /* Modern Card Styles */
   .card {
-    @apply bg-white rounded-[4px] transition-all duration-200;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    @apply bg-white/50 backdrop-blur-sm rounded-lg border border-[#3c6e47]/10 transition-all duration-200;
   }
 
   .card:hover {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
-    transform: translateY(-2px);
+    @apply bg-white/60;
   }
 
   /* Hero Section Gradients */
@@ -96,10 +105,10 @@
 
   .hero-gradient::before {
     content: '';
-    @apply absolute inset-0 opacity-15 pointer-events-none;
+    @apply absolute inset-0 opacity-5 pointer-events-none;
     background: linear-gradient(
       160deg,
-      theme('colors.accent.DEFAULT') 0%,
+      #3c6e47 0%,
       transparent 70%
     );
   }
@@ -119,22 +128,21 @@
   input[type="url"],
   textarea,
   select {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-200
-           focus:outline-none focus:ring-2 focus:ring-accent/80 
-           focus:ring-offset-1 focus:ring-offset-white focus:border-transparent
-           transition duration-200 ease-in-out
-           bg-white text-primary placeholder:text-secondary/60;
+    @apply w-full px-4 py-3 rounded-lg bg-white border border-[#3c6e47]/20 
+           text-[#3c6e47] placeholder-[#3c6e47]/50
+           focus:outline-none focus:border-[#3c6e47]
+           transition duration-200 ease-in-out;
   }
 
   /* Button base styles */
   button:not([class*="search-button"]) {
     @apply transition duration-200 ease-in-out
-           focus:outline-none focus:ring-2 focus:ring-accent/80 focus:ring-offset-2
-           active:animate-button-press;
+           focus:outline-none focus:ring-2 focus:ring-[#3c6e47]/20
+           active:scale-[0.98];
   }
   
 .interactive:hover {
-    @apply text-accent;
+    @apply text-[#3c6e47];
   }
 
   .interactive:active {
@@ -226,12 +234,12 @@
   }
 
   .bottom-sheet__header {
-    @apply absolute top-0 left-0 right-0 h-12 bg-gray-100 border-b border-gray-200
+    @apply absolute top-0 left-0 right-0 h-12 bg-white/80 backdrop-blur-sm border-b border-[#3c6e47]/10
            flex items-center justify-between px-4;
   }
 
   .bottom-sheet__content {
-    @apply h-full pt-12 overflow-hidden bg-white;
+    @apply h-full pt-12 overflow-hidden bg-white/80 backdrop-blur-sm;
   }
 
   .bottom-sheet-enhanced {

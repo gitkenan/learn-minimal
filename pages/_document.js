@@ -5,7 +5,7 @@ class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head />
-        <body className="antialiased">
+        <body className="antialiased bg-[#f8faf9] relative">
           <Main />
           <NextScript />
         </body>
