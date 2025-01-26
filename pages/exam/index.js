@@ -49,7 +49,7 @@ export default function AIExaminerPage() {
     // Start with an initial user message to set up the exam
     const initialMessages = [{
       isAI: false,
-      text: `I want to take an exam on ${subject}. My experience level is ${experience || 'beginner'}.
+      text: `I want to take an exam on ${subject}. My experience level is ${experience || 'average'}.
       Please ask me questions at ${difficulty} difficulty level.`
     }];
     
@@ -58,12 +58,11 @@ export default function AIExaminerPage() {
     
     // Send a more structured initial prompt
     const initialPrompt = `You are an AI examiner conducting a ${difficulty} level exam on ${subject}.
-      Student experience level: ${experience || 'beginner'}
+      Student experience level: ${experience || 'average'}
       ${systemInstructions ? `Special instructions: ${systemInstructions}` : ''}
 
-      Begin by asking a question. Do not provide the answer yet.
-      Keep the difficulty at ${difficulty} level throughout the exam.
-      Focus on core concepts and practical applications.`;
+      Begin by asking a good question. Do not provide the answer yet.
+      Keep the difficulty at ${difficulty} level throughout the exam.`;
 
     await handleAIRequest(initialPrompt, initialMessages);
   };
@@ -109,8 +108,7 @@ export default function AIExaminerPage() {
     setUserAnswer('');
     await handleAIRequest(
       `The student answered: ${userAnswer}.
-      Provide immediate feedback on this answer and ask the next question.
-      Do not evaluate overall performance yet.`,
+      Do not evaluate yet. Simply ask another question.`,
       newChat
     );
   };

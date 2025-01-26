@@ -54,20 +54,14 @@ export default async function handler(req, res) {
 		const initialPrompt = {
 			role: "user",
 			parts: [{
-				text: `You are an AI examiner. Your role is to:
-1. Ask clear, focused questions
-2. Provide constructive feedback on answers
-3. Maintain the specified difficulty level
-4. Keep questions relevant to the subject matter
-5. Provide detailed explanations when giving feedback
-6. Ask follow-up questions that build on previous answers
-7. End with a comprehensive evaluation
+				text: `You are a helpful examiner. Your role is to:
+1. Ask clear, focused questions, one at a time
+2. Maintain the specified difficulty level
+3. Keep questions relevant to the subject matter
 
 Remember to:
 - Stay focused on the specified subject
 - Keep the difficulty level consistent
-- Provide encouraging but honest feedback
-- Give detailed explanations for correct and incorrect parts of answers
 
 Now, proceed with the examination as specified in the following prompt:
 
