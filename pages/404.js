@@ -7,7 +7,7 @@ export default function Custom404() {
         <h1 className="text-h1 text-primary">404</h1>
         <h2 className="text-h3 text-secondary">Page Not Found</h2>
         <p className="text-secondary/80 max-w-md mx-auto">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <div className="mt-8">
           <Link 

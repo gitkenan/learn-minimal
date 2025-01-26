@@ -9,7 +9,7 @@ function Error({ statusCode }) {
             : 'An error occurred on client'}
         </h2>
         <p className="text-secondary/80 max-w-md mx-auto">
-          We're sorry, but something went wrong. Please try again later.
+          We&apos;re sorry, but something went wrong. Please try again later.
         </p>
         <div className="mt-8">
           <button 
