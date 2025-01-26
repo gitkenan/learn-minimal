@@ -35,8 +35,8 @@ export default function App({ Component, pageProps }) {
         <WorkflowProvider>
           <Layout>
             {isLoading && (
-              <div className="fixed top-0 left-0 w-full z-50">
-                <Loading variant="shimmer" className="w-full" />
+              <div className="fixed top-0 left-0 w-full h-1 z-50">
+                <Loading variant="shimmer" className="w-full bg-opacity-50" />
               </div>
             )}
             <Component {...pageProps} />

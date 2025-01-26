@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
@@ -9,8 +9,11 @@ import { usePlan } from '@/hooks/usePlan';
 import { initializeSupabase } from '@/lib/supabaseClient';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ErrorBoundary } from 'react-error-boundary';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Loading } from '@/components/ui/loading';
+import { Spinner } from '@/components/ui/spinner';
 
 const locales = {
   'en-US': require('date-fns/locale/en-US'),
@@ -93,6 +96,13 @@ export default function CalendarPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [taskCache, setTaskCache] = useState({});
+  
+  const calendarRef = useRef(null);
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
 
   const { toggleTask: planToggleTask, refresh: refreshPlan, plan } = usePlan(selectedTask?.planId || null);
   
@@ -145,27 +155,113 @@ export default function CalendarPage() {
     }
   }, [user?.id, fetchTasks]);
 
-  useEffect(() => {
-    if (selectedTask?.status || plan?.json_content?.version) {
-      fetchTasks();
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape' && selectedTask) {
+      setSelectedTask(null);
+      if (calendarRef.current) {
+        calendarRef.current.scrollTop = scrollPosition;
+      }
     }
-  }, [selectedTask?.status, plan?.json_content?.version, fetchTasks]);
+  }, [selectedTask, scrollPosition]);
 
-  const handleTaskClick = useCallback((event) => {
-    setSelectedTask(event);
-  }, []);
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  // Focus management
+  useEffect(() => {
+    if (selectedTask && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [selectedTask]);
+
+  const handleTaskClick = useCallback(async (event) => {
+    if (calendarRef.current) {
+      setScrollPosition(calendarRef.current.scrollTop);
+    }
+
+    setDetailLoading(true);
+    
+    try {
+      // Check cache first
+      if (taskCache[event.id]) {
+        setSelectedTask(taskCache[event.id]);
+        setDetailLoading(false);
+        return;
+      }
+
+      // Fetch additional task details if needed
+      const supabase = initializeSupabase();
+      const { data, error } = await supabase
+        .from('calendar_tasks')
+        .select('*, plans:plan_id (*)')
+        .eq('id', event.id)
+        .single();
+
+      if (error) throw error;
+
+      const enrichedTask = {
+        ...event,
+        ...data,
+        planDetails: data.plans
+      };
+
+      // Update cache
+      setTaskCache(prev => ({
+        ...prev,
+        [event.id]: enrichedTask
+      }));
+
+      setSelectedTask(enrichedTask);
+    } catch (err) {
+      console.error('Error fetching task details:', err);
+      setError('Failed to load task details');
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [taskCache]);
 
   const handleMarkComplete = async () => {
     if (!selectedTask) return;
 
     try {
       setError('');
-      await toggleTask();
-      await Promise.all([refreshPlan(), fetchTasks()]);
+      
+      // Optimistically update the task in the local state
+      const updatedTasks = tasks.map(task => {
+        if (task.id === selectedTask.id) {
+          return { ...task, status: 'completed' };
+        }
+        return task;
+      });
+      setTasks(updatedTasks);
+      
+      // Update task cache
+      if (taskCache[selectedTask.id]) {
+        setTaskCache(prev => ({
+          ...prev,
+          [selectedTask.id]: { ...prev[selectedTask.id], status: 'completed' }
+        }));
+      }
+
+      // Close modal before the async operation
       setSelectedTask(null);
+
+      // Perform the actual update - no need to fetchTasks since we have optimistic updates
+      await toggleTask();
+      
+      // Note: We don't need to fetchTasks here since:
+      // 1. We've already updated the UI optimistically above
+      // 2. The toggleTask function in usePlan.js handles the optimistic update
+      // 3. Any real-time updates will be handled by the Supabase subscription
     } catch (err) {
       console.error('Error marking task complete:', err);
       setError('Failed to update task status');
+      
+      // Revert optimistic update on error
+      fetchTasks();
     }
   };
 
@@ -178,11 +274,51 @@ export default function CalendarPage() {
       color: '#fff',
       border: 'none',
       display: 'block',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+      transform: 'translateY(0)',
     };
 
     return {
-      style: baseStyle
+      style: baseStyle,
+      className: 'calendar-event-interactive'
     };
+  }, []);
+
+  // Add styles for hover and focus states
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .calendar-event-interactive {
+        position: relative;
+      }
+      .calendar-event-interactive:hover,
+      .calendar-event-interactive:focus-within {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        opacity: 0.9 !important;
+      }
+      .calendar-event-interactive:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+      }
+      .rbc-calendar {
+        position: relative;
+      }
+      .rbc-calendar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        transition: background-color 0.2s ease;
+      }
+      .rbc-calendar.loading::after {
+        background-color: rgba(255, 255, 255, 0.5);
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
   }, []);
 
   if (loading) {
@@ -201,7 +337,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-2 sm:p-4">
+    <div className="min-h-screen bg-background pt-3 px-2 sm:px-4">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0">Learning Calendar</h1>
@@ -251,65 +387,134 @@ export default function CalendarPage() {
           />
         </div>
 
-        {selectedTask && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setSelectedTask(null)}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-0 sm:p-2 transform scale-95 opacity-0 animate-dialog"
+        <AnimatePresence>
+          {selectedTask && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]"
+              onClick={() => {
+                setSelectedTask(null);
+                if (calendarRef.current) {
+                  calendarRef.current.scrollTop = scrollPosition;
+                }
+              }}
+              role="dialog"
+              aria-labelledby="task-detail-title"
+              aria-modal="true"
             >
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Task Details</h3>
-                  <button 
-                    onClick={() => setSelectedTask(null)}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              <ErrorBoundary
+                FallbackComponent={({ error, resetErrorBoundary }) => (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl shadow-xl p-6 m-4 max-w-sm w-full"
                   >
-                    <FaTimes className="text-gray-400 hover:text-gray-600" size={18} />
-                  </button>
-                </div>
-                
-                <div className="space-y-3 mb-4">
-                  <p className="text-gray-600">
-                    <span className="font-medium text-gray-900">Task:</span> {selectedTask.title}
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium text-gray-900">Plan:</span> {selectedTask.planName}
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium text-gray-900">Status:</span>{' '}
-                    <span className={`${
-                      selectedTask.status === 'completed' ? 'text-accent' : 'text-gray-700'
-                    }`}>
-                      {selectedTask.status === 'completed' ? 'Completed' : 'Pending'}
-                    </span>
-                  </p>
-                </div>
-
-                {selectedTask.status !== 'completed' && (
-                  <div className="flex justify-end">
+                    <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Task</h3>
+                    <p className="text-gray-600 mb-4">{error.message}</p>
                     <button
-                      onClick={handleMarkComplete}
-                      className="px-4 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200"
+                      onClick={resetErrorBoundary}
+                      className="px-4 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors duration-200"
                     >
-                      <FaCheck size={14} />
-                      <span>Mark Complete</span>
+                      Try Again
                     </button>
-                  </div>
+                  </motion.div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
+                onReset={() => {
+                  handleTaskClick(selectedTask);
+                }}
+              >
+                <motion.div
+                  ref={modalRef}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-0 sm:p-2 isolate"
+                  role="document"
+                  tabIndex="-1"
+                >
+                  <div className="p-4 sm:p-6">
+                    {detailLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loading
+                          variant="spinner"
+                          size="lg"
+                          message="Loading task details..."
+                          className="text-accent"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 id="task-detail-title" className="text-lg font-semibold text-gray-900">
+                            Task Details
+                          </h3>
+                          <button
+                            ref={closeButtonRef}
+                            onClick={() => {
+                              setSelectedTask(null);
+                              if (calendarRef.current) {
+                                calendarRef.current.scrollTop = scrollPosition;
+                              }
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                            aria-label="Close task details"
+                          >
+                            <FaTimes className="text-gray-400 hover:text-gray-600" size={18} />
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-3 mb-4">
+                          <p className="text-gray-600">
+                            <span className="font-medium text-gray-900">Task:</span> {selectedTask.title}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-medium text-gray-900">Plan:</span> {selectedTask.planName}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-medium text-gray-900">Status:</span>{' '}
+                            <span className={`${
+                              selectedTask.status === 'completed' ? 'text-accent' : 'text-gray-700'
+                            }`}>
+                              {selectedTask.status === 'completed' ? 'Completed' : 'Pending'}
+                            </span>
+                          </p>
+                        </div>
+
+                        {selectedTask.status !== 'completed' && (
+                          <div className="flex justify-end">
+                            <button
+                              onClick={handleMarkComplete}
+                              className="px-4 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-200"
+                            >
+                              <FaCheck size={14} />
+                              <span>Mark Complete</span>
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              </ErrorBoundary>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <style jsx global>{`
           .rbc-calendar {
-            background: white;
+            background: transparent;
             padding: 0.25rem;
             border-radius: 0.5rem;
             font-size: 14px;
+          }
+          .rbc-month-view,
+          .rbc-time-view {
+            background: white;
+            border-radius: 0.5rem;
           }
           @media (min-width: 640px) {
             .rbc-calendar {

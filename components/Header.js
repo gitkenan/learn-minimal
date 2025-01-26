@@ -92,7 +92,7 @@ export default function Header() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm relative z-50 border-b border-[#3c6e47]/10">
+    <header className="bg-white/40 backdrop-blur-[2px] relative z-50 border-b border-[#3c6e47]/5">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         {isMobile ? (
           <MobileMenu />
