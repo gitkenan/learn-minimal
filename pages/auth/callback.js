@@ -13,39 +13,29 @@ export default function AuthCallback() {
         console.log('Auth callback started');
         console.log('Current URL:', window.location.href);
 
-        // Get the initial session state
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        console.log('Initial session check:', sessionData, sessionError);
+        // Exchange code for session
+        const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(
+          window.location.hash.substring(1)
+        );
 
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw sessionError;
+        if (error) {
+          console.error('Exchange error:', error);
+          throw error;
         }
 
-        if (sessionData?.session) {
-          console.log('Session found immediately');
-          return router.push('/');
+        if (!session) {
+          throw new Error('No session returned from code exchange');
         }
 
-        // If no session, try to get the user
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        console.log('User data check:', userData, userError);
+        // Set session in local storage
+        window.localStorage.setItem('supabase.auth.token', JSON.stringify({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_at: session.expires_at,
+        }));
 
-        if (userError) {
-          console.error('User error:', userError);
-          throw userError;
-        }
-
-        if (!userData?.user) {
-          throw new Error('No user found after authentication');
-        }
-
-        // One final session check
-        const { data: finalSession } = await supabase.auth.getSession();
-        if (finalSession?.session) {
-          console.log('Session established on final check');
-          return router.push('/');
-        }
+        console.log('Session established successfully');
+        return router.push('/');
 
         throw new Error(
           'Failed to establish session. Please verify:\n' +

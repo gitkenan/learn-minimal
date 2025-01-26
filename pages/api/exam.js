@@ -14,15 +14,26 @@ export default async function handler(req, res) {
 	}
 
 	try {
-		const supabase = createPagesServerClient({ req, res });
-		const { data: { user } } = await supabase.auth.getUser();
-
-		if (!user) {
+		const authToken = req.headers['x-supabase-auth'];
+		if (!authToken) {
+			console.error('No auth token found in request headers');
 			return handleApiError(res, {
 				statusCode: 401,
 				type: 'UNAUTHORIZED',
-				message: 'Unauthorized'
-			}, 'Unauthorized');
+				message: 'Authentication required'
+			}, 'Authentication required');
+		}
+
+		const supabase = createPagesServerClient({ req, res });
+		const { data: { user }, error: userError } = await supabase.auth.getUser(authToken);
+
+		if (userError || !user) {
+			console.error('User verification error:', userError);
+			return handleApiError(res, {
+				statusCode: 401,
+				type: 'UNAUTHORIZED',
+				message: 'Authentication required'
+			}, 'Authentication required');
 		}
 
 		const { prompt, messages } = req.body;
