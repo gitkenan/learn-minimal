@@ -71,15 +71,9 @@ export default function SavedExamResultPage() {
             <h1 className="text-3xl font-semibold mb-6">
               Exam Results: {examResult.subject}
             </h1>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-              <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
-                <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
-                <p className="font-medium text-gray-900">{examResult.difficulty}</p>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
-                <span className="text-gray-500 text-sm block mb-1">Type</span>
-                <p className="font-medium text-gray-900">{examResult.question_type}</p>
-              </div>
+            <div className="bg-gray-50 px-4 py-3 rounded-lg inline-block">
+              <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
+              <p className="font-medium text-gray-900">{examResult.difficulty}</p>
             </div>
           </div>
 

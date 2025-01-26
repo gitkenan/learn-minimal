@@ -218,7 +218,7 @@ export default function AIExaminerPage() {
                           : 'Learning Compass'}
                     </>
                   ) : (
-                    'AI Learning Guide'
+                    'Learning Guide'
                   )}
                 </h1>
                 {subject && (

@@ -36,7 +36,6 @@ export default function ExamResultsPage() {
               user_id: user.id,
               subject: results.subject,
               difficulty: results.difficulty,
-              question_type: results.questionType,
               messages: results.messages,
               final_analysis: results.finalAnalysis,
             },
@@ -106,10 +105,6 @@ function ExamResultDisplay({ examResults }) {
               <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
                 <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
                 <p className="font-medium text-gray-900">{examResults.difficulty}</p>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
-                <span className="text-gray-500 text-sm block mb-1">Type</span>
-                <p className="font-medium text-gray-900">{examResults.questionType}</p>
               </div>
             </div>
           </div>
