@@ -327,9 +327,9 @@ export default function AIExaminerPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mb-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 <input
-                  className="flex-1 px-4 py-3 text-[#3c6e47] bg-white border border-[#3c6e47]/20 
+                  className="w-full px-4 py-3 text-[#3c6e47] bg-white border border-[#3c6e47]/20
                            rounded-lg focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
@@ -342,22 +342,24 @@ export default function AIExaminerPage() {
                   placeholder="Type your answer..."
                   disabled={isLoading}
                 />
-                <button 
-                  onClick={submitAnswer}
-                  disabled={isLoading || !userAnswer.trim()}
-                  className="px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg
-                           transition-all duration-200 disabled:opacity-50"
-                >
-                  Send
-                </button>
-                <button 
-                  onClick={finalizeExam}
-                  disabled={isLoading || messages.length < 2}
-                  className="px-6 py-3 bg-[#3c6e47]/60 hover:bg-[#3c6e47]/80 text-white rounded-lg
-                           transition-all duration-200 disabled:opacity-50"
-                >
-                  Finish
-                </button>
+                <div className="flex flex-row sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={submitAnswer}
+                    disabled={isLoading || !userAnswer.trim()}
+                    className="flex-1 sm:flex-initial px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg
+                             transition-all duration-200 disabled:opacity-50 min-w-[100px]"
+                  >
+                    Send
+                  </button>
+                  <button
+                    onClick={finalizeExam}
+                    disabled={isLoading || messages.length < 2}
+                    className="flex-1 sm:flex-initial px-6 py-3 bg-[#3c6e47]/60 hover:bg-[#3c6e47]/80 text-white rounded-lg
+                             transition-all duration-200 disabled:opacity-50 min-w-[100px]"
+                  >
+                    Finish
+                  </button>
+                </div>
       
               </div>
               
