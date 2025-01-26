@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
 import ExamResults from '@/components/ExamResults';
 import { FaCheck, FaTrashAlt, FaTimes, FaCog, FaGraduationCap } from 'react-icons/fa';
+import { Loading } from '@/components/ui/loading';
 
 export default function Dashboard() {
   const { user, session, loading: authLoading, sessionReady } = useAuth();
@@ -153,8 +154,12 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-accent"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading your learning plans...</p>
+          <Loading
+            variant="spinner"
+            message="Loading your learning plans..."
+            className="text-accent-DEFAULT"
+            size="lg"
+          />
         </div>
       </div>
     );

@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChat } from '@/hooks/useChat';
+import { Loading } from './ui/loading';
 
 export default function LearningChat({ planId, topic, initialContext }) {
   const [newMessage, setNewMessage] = useState('');
@@ -66,10 +67,12 @@ export default function LearningChat({ planId, topic, initialContext }) {
   if (isInitializing || isCreatingDiscussion) {
     return (
       <div className="flex flex-col h-full items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="text-gray-600 mt-2">
-          {isCreatingDiscussion ? 'Starting new chat...' : 'Initializing chat...'}
-        </p>
+        <Loading
+          variant="spinner"
+          size="sm"
+          message={isCreatingDiscussion ? 'Starting new chat...' : 'Initializing chat...'}
+          className="text-primary"
+        />
       </div>
     );
   }
@@ -179,8 +182,12 @@ export default function LearningChat({ planId, topic, initialContext }) {
           >
           {isLoading ? (
             <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>Sending</span>
+              <Loading
+                variant="spinner"
+                size="sm"
+                className="text-white border-white"
+              />
+              <span>Sending</span>
             </div>
           ) : (
             'Send'

@@ -63,6 +63,14 @@ module.exports = {
               backgroundPosition: '1000px 0',
             },
           },
+          shimmer: {
+            '0%': { transform: 'translateX(-100%)' },
+            '100%': { transform: 'translateX(100%)' }
+          },
+          spin: {
+            'from': { transform: 'rotate(0deg)' },
+            'to': { transform: 'rotate(360deg)' }
+          },
           buttonPress: {
             '0%, 100%': { transform: 'scale(1)' },
             '100%': { transform: 'scale(0.95)' },
@@ -86,6 +94,9 @@ module.exports = {
           'fade-in': 'fadeIn 0.3s ease-in-out',
           'fade-out': 'fadeOut 0.3s ease-in-out',
           'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'shimmer': 'shimmer 2s linear infinite',
+          'spin': 'spin 1.5s linear infinite',
+          'fade-in': 'fadeIn 0.3s ease-in-out',
         },
         gridTemplateColumns: {
           'responsive': 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',

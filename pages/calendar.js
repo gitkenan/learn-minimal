@@ -10,6 +10,7 @@ import { initializeSupabase } from '@/lib/supabaseClient';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { Loading } from '@/components/ui/loading';
 
 const locales = {
   'en-US': require('date-fns/locale/en-US'),
@@ -188,8 +189,12 @@ export default function CalendarPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-accent"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading your calendar...</p>
+          <Loading
+            variant="spinner"
+            size="lg"
+            message="Loading your calendar..."
+            className="text-accent"
+          />
         </div>
       </div>
     );

@@ -8,13 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 
-function LoadingIndicator() {
-  return (
-    <div className="fixed top-0 left-0 w-full h-1 z-50">
-      <div className="h-full bg-accent animate-shimmer" />
-    </div>
-  );
-}
+import { Loading } from '@/components/ui/loading';
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
@@ -40,7 +34,11 @@ export default function App({ Component, pageProps }) {
       <AuthProvider>
         <WorkflowProvider>
           <Layout>
-            {isLoading && <LoadingIndicator />}
+            {isLoading && (
+              <div className="fixed top-0 left-0 w-full z-50">
+                <Loading variant="shimmer" className="w-full" />
+              </div>
+            )}
             <Component {...pageProps} />
             <ToastContainer
               position="bottom-right"

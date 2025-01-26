@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import TaskNotes from './TaskNotes';
+import { Loading } from '@/components/ui/loading';
 import { useAuth } from '@/context/AuthContext';
 import { usePlan } from '@/hooks/usePlan';
 import { useWorkflow } from '@/context/WorkflowContext';
@@ -306,7 +307,16 @@ const LearningPlanViewer = ({
 
   // Loading state
   if (loading) {
-    return <div className="animate-pulse">Loading plan...</div>;
+    return (
+      <div className="space-y-8">
+        <Loading
+          variant="skeleton"
+          size="lg"
+          lines={3}
+          message="Loading plan..."
+        />
+      </div>
+    );
   }
 
   // Error state
