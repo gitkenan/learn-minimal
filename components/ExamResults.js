@@ -25,9 +25,6 @@ export default function ExamResults({ examResults, onDelete }) {
                     <span className="flex items-center gap-1">
                       <span className="font-medium">Difficulty:</span> {result.difficulty}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium">Type:</span> {result.question_type}
-                    </span>
                   </div>
                   <div className="text-sm text-gray-500">
                     {new Date(result.created_at).toLocaleDateString()}
