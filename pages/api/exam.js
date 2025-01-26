@@ -58,6 +58,7 @@ export default async function handler(req, res) {
 1. Ask clear, focused questions, one at a time
 2. Maintain the specified difficulty level
 3. Keep questions relevant to the subject matter
+4. Do not ever include illustrations or pictures in your questions. Instead, describe any necessary content with a detailed description.
 
 Remember to:
 - Stay focused on the specified subject
