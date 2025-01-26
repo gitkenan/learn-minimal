@@ -119,6 +119,17 @@ export default function AIExaminerPage() {
       ? messages.slice(0, -1) 
       : messages;
     
+    // Extract Q&A pairs from messages
+    const qaHistory = messagesToAnalyze.reduce((pairs, msg, i) => {
+      if (msg.isAI && messagesToAnalyze[i + 1] && !messagesToAnalyze[i + 1].isAI) {
+        pairs.push({
+          question: msg.text,
+          answer: messagesToAnalyze[i + 1].text
+        });
+      }
+      return pairs;
+    }, []);
+
     const fullHistory = messagesToAnalyze.map((m) => (m.isAI ? `AI: ${m.text}` : `Student: ${m.text}`)).join('\n');
     
     try {
@@ -166,6 +177,7 @@ export default function AIExaminerPage() {
         subject,
         difficulty,
         messages: messagesToAnalyze, // Store only answered Q&A pairs
+        qaHistory, // Store structured Q&A pairs
         finalAnalysis: data.response, // Store final analysis separately
         finishedAt: new Date().toISOString(),
       };

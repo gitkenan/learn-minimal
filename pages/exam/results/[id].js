@@ -12,6 +12,7 @@ export default function SavedExamResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showQA, setShowQA] = useState(false);
 
   useEffect(() => {
     async function fetchExamResult() {
@@ -62,6 +63,7 @@ export default function SavedExamResultPage() {
   }
 
   const chatMessages = examResult.messages || [];
+  const qaHistory = examResult.qa_history || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,6 +96,46 @@ export default function SavedExamResultPage() {
                 <p className="text-gray-500">
                   No final analysis found.
                 </p>
+              )}
+            </section>
+
+            <section className="bg-white rounded-lg border p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Questions & Answers</h2>
+                <button
+                  onClick={() => setShowQA(!showQA)}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
+                >
+                  {showQA ? '↑ Hide' : '↓ Show'} Q&A
+                </button>
+              </div>
+
+              {showQA && (
+                <div className="max-h-[32rem] overflow-y-auto border rounded-lg bg-white shadow-sm">
+                  {qaHistory.map((qa, i) => (
+                    <div
+                      key={i}
+                      className={`p-4 ${i !== 0 ? 'border-t' : ''}`}
+                    >
+                      <div className="mb-4">
+                        <div className="text-sm font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-800 inline-block mb-2">
+                          Question {i + 1}
+                        </div>
+                        <div className="prose prose-sm max-w-none prose-p:text-gray-600 prose-strong:text-gray-900">
+                          <ReactMarkdown>{qa.question}</ReactMarkdown>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium px-3 py-1 rounded-full bg-green-50 text-green-800 inline-block mb-2">
+                          Your Answer
+                        </div>
+                        <div className="prose prose-sm max-w-none prose-p:text-gray-600 prose-strong:text-gray-900">
+                          <ReactMarkdown>{qa.answer}</ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </section>
 
