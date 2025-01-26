@@ -11,11 +11,11 @@ export default function AIExaminerPage() {
   const [subject, setSubject] = useState('');
   const [experience, setExperience] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
-  const [questionType, setQuestionType] = useState('short-answer');
   const [systemInstructions, setSystemInstructions] = useState('');
   const [messages, setMessages] = useState([]);
   const [userAnswer, setUserAnswer] = useState('');
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const chatRef = useRef(null);
 
   useEffect(() => {
@@ -26,13 +26,12 @@ export default function AIExaminerPage() {
       const config = JSON.parse(examConfig);
       setSubject(config.subject);
       setDifficulty(config.difficulty);
-      setQuestionType(config.questionType);
       setSystemInstructions(config.systemInstructions);
       
       // Update title based on section/item context
-      document.title = config.itemId 
+      document.title = config.itemId
         ? `Exam: ${config.subject}`
-        : config.sectionId 
+        : config.sectionId
           ? `Section Exam: ${config.subject}`
           : 'Full Plan Exam';
           
@@ -50,8 +49,8 @@ export default function AIExaminerPage() {
     // Start with an initial user message to set up the exam
     const initialMessages = [{
       isAI: false,
-      text: `I want to take an exam on ${subject}. My experience level is ${experience || 'beginner'}. 
-      Please ask me ${questionType} questions at ${difficulty} difficulty level.`
+      text: `I want to take an exam on ${subject}. My experience level is ${experience || 'beginner'}.
+      Please ask me questions at ${difficulty} difficulty level.`
     }];
     
     setMessages(initialMessages);
@@ -60,10 +59,9 @@ export default function AIExaminerPage() {
     // Send a more structured initial prompt
     const initialPrompt = `You are an AI examiner conducting a ${difficulty} level exam on ${subject}.
       Student experience level: ${experience || 'beginner'}
-      Question type: ${questionType}
       ${systemInstructions ? `Special instructions: ${systemInstructions}` : ''}
 
-      Begin by asking a single ${questionType} question. Do not provide the answer yet.
+      Begin by asking a question. Do not provide the answer yet.
       Keep the difficulty at ${difficulty} level throughout the exam.
       Focus on core concepts and practical applications.`;
 
@@ -169,7 +167,6 @@ export default function AIExaminerPage() {
       const examResults = {
         subject,
         difficulty,
-        questionType,
         messages: messagesToAnalyze, // Store only answered Q&A pairs
         finalAnalysis: data.response, // Store final analysis separately
         finishedAt: new Date().toISOString(),
@@ -235,59 +232,60 @@ export default function AIExaminerPage() {
                     : "Craft your personalized learning experience with our adaptive AI companion"}
                 </p>
 
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4">
                 <input
                   type="text"
-                  placeholder="Subject"
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
-                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Enter a subject to be examined on..."
+                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
                   disabled={isLoading}
                 />
-                
-                <input
-                  type="text"
-                  placeholder="Experience (optional)"
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
-                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  disabled={isLoading}
-                />
-
-                <select
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
-                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  disabled={isLoading}
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="flex items-center justify-center gap-2 text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
                 >
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
+                  <span>{showAdvanced ? 'Hide' : 'Show'} Advanced Options</span>
+                  <svg
+                    className={`w-4 h-4 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-                <select
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
-                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
-                  value={questionType}
-                  onChange={(e) => setQuestionType(e.target.value)}
-                  disabled={isLoading}
-                >
-                  <option value="short-answer">Short-Answer</option>
-                  <option value="multiple-choice">Multiple Choice</option>
-                  <option value="essay">Essay</option>
-                </select>
-
-                <textarea
-                  placeholder="System Instructions (optional) - e.g., 'give me medical cases to diagnose'"
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] 
-                           placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200 min-h-[100px]"
-                  value={systemInstructions}
-                  onChange={(e) => setSystemInstructions(e.target.value)}
-                  disabled={isLoading}
-                />
+                {showAdvanced && (
+                  <>
+                    <input
+                      type="text"
+                      value={experience}
+                      onChange={(e) => setExperience(e.target.value)}
+                      placeholder="Tell us about your experience with this subject (optional)"
+                      className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
+                      disabled={isLoading}
+                    />
+                    <select
+                      className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value)}
+                      disabled={isLoading}
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                    <textarea
+                      placeholder="System Instructions (optional) - e.g., 'give me medical cases to diagnose'"
+                      className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200 min-h-[100px]"
+                      value={systemInstructions}
+                      onChange={(e) => setSystemInstructions(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </>
+                )}
 
                 <button 
                   onClick={startQuiz}

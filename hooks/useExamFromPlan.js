@@ -35,7 +35,6 @@ export function useExamFromPlan() {
 		const examConfig = {
 			subject,
 			difficulty: 'medium',
-			questionType: 'short-answer',
 			systemInstructions,
 			planId: activePlanId,
 			sectionId,
