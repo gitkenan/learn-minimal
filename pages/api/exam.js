@@ -25,18 +25,28 @@ export default async function handler(req, res) {
 		}
 
 		const supabase = createPagesServerClient({ req, res });
-		const { data: { user }, error: userError } = await supabase.auth.getUser(authToken);
-
-		if (userError || !user) {
-			console.error('User verification error:', userError);
+		// Refresh session before long-running operation
+		const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+		if (refreshError || !session?.user) {
+			console.error('Session refresh error:', refreshError);
 			return handleApiError(res, {
 				statusCode: 401,
-				type: 'UNAUTHORIZED',
-				message: 'Authentication required'
-			}, 'Authentication required');
+				type: 'SESSION_EXPIRED',
+				message: 'Session expired - please refresh the page'
+			}, 'Session refresh failed');
 		}
 
+		// Setup session keep-alive
+		let keepAliveInterval = setInterval(async () => {
+			try {
+				await supabase.auth.refreshSession();
+			} catch (error) {
+				console.error('Keep-alive refresh failed:', error);
+			}
+		}, 30000); // Refresh every 30 seconds
+
 		const { prompt, messages } = req.body;
+		let aiResponse = null;
 
 		// Initialize AI model
 		const model = genAI.getGenerativeModel({ 
@@ -94,17 +104,25 @@ ${prompt}`
 			history: history
 		});
 
-		const result = await chat.sendMessage([{ text: prompt }]);
-		
-		if (!result || !result.response) {
-			return handleApiError(res, {
-				statusCode: 502,
-				type: 'AI_RESPONSE_FORMAT_ERROR',
-				message: 'The AI returned an invalid response format'
-			}, 'Invalid AI response format');
+		try {
+			const result = await chat.sendMessage([{ text: prompt }]);
+			
+			if (!result?.response) {
+				throw new Error('AI response format invalid');
+			}
+
+			aiResponse = result.response.text();
+		} finally {
+			clearInterval(keepAliveInterval);
 		}
 
-		const responseText = result.response.text();
+		if (!aiResponse) {
+			return handleApiError(res, {
+				statusCode: 502,
+				type: 'AI_SERVICE_UNAVAILABLE',
+				message: 'AI service unavailable - try again later'
+			}, 'Empty AI response');
+		}
 		if (!responseText || typeof responseText !== 'string') {
 			return handleApiError(res, {
 				statusCode: 502,
@@ -113,7 +131,13 @@ ${prompt}`
 			}, 'Empty or invalid AI response');
 		}
 
-		return res.status(200).json({ response: responseText });
+		return res.status(200).json({
+			response: aiResponse,
+			session: { // Return fresh session details
+				access_token: session.access_token,
+				expires_at: session.expires_at
+			}
+		});
 	} catch (error) {
 		console.error('Exam API Error:', error);
 		

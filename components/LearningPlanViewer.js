@@ -204,22 +204,22 @@ const LearningPlanViewer = ({
       };
 
       // Create optimistic update
-      const updatedSections = parsedContent.sections.map(section => {
-        if (section.id !== sectionId) return section;
-        return {
-          ...section,
-          items: section.items.map(item => {
-            if (item.id !== itemId) return item;
-            return { ...item, isComplete: !item.isComplete };
-          })
-        };
-      });
+    const updatedSections = parsedContent.sections.map(section => {
+      if (section.id !== sectionId) return section;
+      return {
+        ...section,
+        items: section.items.map(item => {
+          if (item.id !== itemId) return item;
+          return { ...item, isComplete: !item.isComplete };
+        })
+      };
+    });
 
       // Apply optimistic update using functional update to ensure latest state
       setParsedContent(currentState => ({
         ...currentState,
-        sections: updatedSections,
-        progress: calculateProgress(updatedSections)
+      sections: updatedSections,
+      progress: calculateProgress(updatedSections)
       }));
 
       // Sync with backend using toggleTask which handles both plan and calendar updates
@@ -326,38 +326,38 @@ const LearningPlanViewer = ({
 
   return (
     <div className="space-y-8">
-        <div className="flex justify-end mb-4">
-            <ActionMenu 
+      <div className="flex justify-end mb-4">
+          <ActionMenu 
             onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic })}
             onChat={() => handleStartChat(parsedContent)}
             onAddToCalendar={(date) => handleAddToCalendar(date)}
             label="entire plan"
+          />
+      </div>
+
+      {openChats.has('plan-main') && (
+        <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key="plan-main">
+          <div className="relative h-[500px]">
+            <button 
+              onClick={() => handleStartChat(parsedContent)}
+              className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
+              aria-label="Close chat"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <LearningChat 
+              planId={planId}
+              topic={parsedContent?.topic || 'Learning Plan'}
+              initialContext={`This chat is about the entire learning plan`}
+              key="plan-main"
             />
-        </div>
-
-        {openChats.has('plan-main') && (
-          <div className="mb-8 border rounded-lg shadow-sm transition-all duration-200 ease-in-out" data-chat-key="plan-main">
-            <div className="relative h-[500px]">
-              <button 
-                onClick={() => handleStartChat(parsedContent)}
-                className="absolute top-2 right-2 z-10 p-1 rounded-full hover:bg-gray-100"
-                aria-label="Close chat"
-              >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <LearningChat 
-                planId={planId}
-                topic={parsedContent?.topic || 'Learning Plan'}
-                initialContext={`This chat is about the entire learning plan`}
-                key="plan-main"
-              />
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {parsedContent?.sections.map(section => (
+      {parsedContent?.sections.map(section => (
         <div key={section.id} className="space-y-4">
           <div className="flex items-center justify-between">
             {section.headingLevel === 2 ? (
@@ -371,12 +371,12 @@ const LearningPlanViewer = ({
                 dangerouslySetInnerHTML={{ __html: section.title }}
               />
             )}
-            <ActionMenu 
-              onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id)}
-              onChat={() => handleStartChat(parsedContent, section.id)}
+              <ActionMenu 
+                onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id)}
+                onChat={() => handleStartChat(parsedContent, section.id)}
               onAddToCalendar={(date) => handleAddToCalendar(date, section.id)}
-              label="this section"
-            />
+                label="this section"
+              />
           </div>
 
           {openChats.has(`${section.id}-main`) && (
@@ -432,13 +432,13 @@ const LearningPlanViewer = ({
                           dangerouslySetInnerHTML={{ __html: item.content }}
                         />
                       </button>
-                      <ActionMenu 
-                        onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
-                        onChat={() => handleStartChat(parsedContent, section.id, item.id)}
+                        <ActionMenu 
+                          onExam={() => startExamFromPlan({ ...parsedContent, topic: plan?.topic || parsedContent?.topic }, section.id, item.id)}
+                          onChat={() => handleStartChat(parsedContent, section.id, item.id)}
                         onAddNote={() => setActiveNoteItem(item.id)}
                         onAddToCalendar={(date) => handleAddToCalendar(date, section.id, item.id)}
-                        label="this task"
-                      />
+                          label="this task"
+                        />
                     </div>
 
                     {openChats.has(`${section.id}-${item.id}`) && (
@@ -477,8 +477,8 @@ const LearningPlanViewer = ({
                 ) : (
                   <div 
                     className="text-gray-700 py-1"
-                    dangerouslySetInnerHTML={{ __html: item.content }}
-                  />
+                      dangerouslySetInnerHTML={{ __html: item.content }}
+                    />
                 )}
               </div>
             ))}

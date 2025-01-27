@@ -84,7 +84,12 @@ export default function AIExaminerPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to process request');
+        const errorMessage = data.error || data.message || 'Failed to process request';
+        if (data.session) { // Update client-side session with fresh tokens
+          localStorage.setItem('sb-access-token', data.session.access_token);
+          localStorage.setItem('sb-expires-at', data.session.expires_at);
+        }
+        throw new Error(errorMessage);
       }
 
       if (!data?.response) {

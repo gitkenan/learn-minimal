@@ -28,7 +28,7 @@ export default function PlanPage() {
   return (
     <div className="min-h-screen bg-background">
       
-        <div className="flex min-h-screen pt-20">
+      <div className="flex min-h-screen pt-20">
         <main className="flex-1">
 
           <div className="container mx-auto px-4 py-8">
@@ -44,7 +44,7 @@ export default function PlanPage() {
                 <LearningPlanViewer
                   initialContent={plan.json_content || plan.content}
                   planId={plan.id}
-                    contentType={plan.json_content ? 'json' : 'markdown'}
+                  contentType={plan.json_content ? 'json' : 'markdown'}
                     onChatStart={isMobile ? handleMobileChat : undefined}
                 />
 
@@ -64,35 +64,35 @@ export default function PlanPage() {
             </div>
           </div>
         </main>
-        </div>
+      </div>
 
-        {/* Mobile Chat Overlay */}
-        {isMobile && activeMobileChat && (
+      {/* Mobile Chat Overlay */}
+      {isMobile && activeMobileChat && (
         <div className="fixed inset-0 bg-white z-50">
           <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b bg-white">
-            <h3 className="font-medium text-lg truncate flex-1 mr-4">
-            {activeMobileChat.title}
-            </h3>
-            <button
-            onClick={() => setActiveMobileChat(null)}
-            className="p-2 hover:bg-gray-100 rounded-full"
-            >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            </button>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <LearningChat
-            planId={plan.id}
-            topic={activeMobileChat.title}
-            initialContext={activeMobileChat.context}
-            />
-          </div>
+            <div className="flex items-center justify-between p-4 border-b bg-white">
+              <h3 className="font-medium text-lg truncate flex-1 mr-4">
+                {activeMobileChat.title}
+              </h3>
+              <button
+                onClick={() => setActiveMobileChat(null)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <LearningChat
+                planId={plan.id}
+                topic={activeMobileChat.title}
+                initialContext={activeMobileChat.context}
+              />
+            </div>
           </div>
         </div>
-        )}
-      </div>
-      );
-    }
+      )}
+    </div>
+  );
+}
