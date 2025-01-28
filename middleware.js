@@ -1,54 +1,65 @@
+// middleware.js
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
+function isProtectedRoute(pathname) {
+  return ['/dashboard', '/exam', '/plan'].some(prefix => 
+    pathname.startsWith(prefix)
+  );
+}
+
 export async function middleware(req) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  // Create response first so we can modify headers
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
 
-  // Refresh session if needed
-  const { data: { session }, error } = await supabase.auth.getSession()
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-  // Handle API routes
-  if (req.nextUrl.pathname.startsWith('/api/')) {
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+    if (error) {
+      console.error('Auth session error:', error.message);
+      return NextResponse.json({ error: 'Authentication error' }, { status: 500 });
     }
 
-    // Add session token to request headers
-    const requestHeaders = new Headers(req.headers)
-    requestHeaders.set('Authorization', `Bearer ${session.access_token}`)
-    
-    const response = NextResponse.next({
-      request: {
-        headers: requestHeaders
+    // Handle API routes
+    if (req.nextUrl.pathname.startsWith('/api/')) {
+      if (!session) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       }
-    })
 
-    // Copy cookies from Supabase auth response
-    res.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'set-cookie') {
-        response.headers.append(key, value)
-      }
-    })
+      // Create new response with auth headers
+      const response = NextResponse.next({
+        request: {
+          headers: new Headers({
+            ...Object.fromEntries(req.headers),
+            Authorization: `Bearer ${session.access_token}`,
+          }),
+        },
+      });
 
-    return response
+      // IMPORTANT: Copy ALL headers from the middleware response
+      res.headers.forEach((value, key) => {
+        if (key.toLowerCase() === 'set-cookie') {
+          response.headers.append(key, value);
+        }
+      });
+
+      return response;
+    }
+
+    // Protected routes handling
+    if (!session && isProtectedRoute(req.nextUrl.pathname)) {
+      const redirectUrl = new URL('/auth', req.url);
+      redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Important: Return the response with potentially modified headers
+    return res;
+  } catch (error) {
+    console.error('Middleware error:', error);
+    return NextResponse.redirect(new URL('/auth', req.url));
   }
-
-  // Handle protected routes
-  if (!session && (
-    req.nextUrl.pathname.startsWith('/dashboard') ||
-    req.nextUrl.pathname.startsWith('/exam') ||
-    req.nextUrl.pathname.startsWith('/plan')
-  )) {
-    const redirectUrl = new URL('/auth', req.url)
-    redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  return res
 }
 
 export const config = {

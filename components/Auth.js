@@ -1,3 +1,4 @@
+// components/Auth.js
 import { useState, useEffect } from 'react';
 import { getSupabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
