@@ -8,9 +8,9 @@ export async function middleware(req) {
   // Refresh session if needed
   const { data: { session }, error } = await supabase.auth.getSession()
 
+  // Handle API routes
   if (req.nextUrl.pathname.startsWith('/api/')) {
     if (!session) {
-      console.error('No session found in middleware')
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -18,29 +18,44 @@ export async function middleware(req) {
     }
 
     // Add session token to request headers
-    const headers = new Headers(req.headers)
-    headers.set('x-supabase-auth', session.access_token)
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set('Authorization', `Bearer ${session.access_token}`)
     
-    // Create new response with modified headers
-    const newRes = NextResponse.next({
+    const response = NextResponse.next({
       request: {
-        headers
+        headers: requestHeaders
       }
     })
 
-    // Copy over any Set-Cookie headers
+    // Copy cookies from Supabase auth response
     res.headers.forEach((value, key) => {
       if (key.toLowerCase() === 'set-cookie') {
-        newRes.headers.append(key, value)
+        response.headers.append(key, value)
       }
     })
 
-    return newRes
+    return response
+  }
+
+  // Handle protected routes
+  if (!session && (
+    req.nextUrl.pathname.startsWith('/dashboard') ||
+    req.nextUrl.pathname.startsWith('/exam') ||
+    req.nextUrl.pathname.startsWith('/plan')
+  )) {
+    const redirectUrl = new URL('/auth', req.url)
+    redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
   return res
 }
 
 export const config = {
-  matcher: ['/api/:path*']
+  matcher: [
+    '/api/:path*',
+    '/dashboard/:path*',
+    '/exam/:path*',
+    '/plan/:path*'
+  ]
 }

@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
 import { parseMarkdownPlan } from '../../components/LearningPlanViewer';
 import { handleApiError } from '../../utils/apiUtils';
+import { getSupabase } from '@/lib/supabaseClient';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -19,6 +20,25 @@ class PlanGenerationError extends Error {
 const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 
 export default async function handler(req, res) {
+  const supabase = getSupabase();
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (!session) {
+    // Also check Authorization header
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (user && !error) {
+        // Use this user/session
+        session.user = user;
+      } else {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+    } else {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+  }
+
   if (req.method !== 'POST') {
     return handleApiError(res, { 
       statusCode: 405,
@@ -28,9 +48,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const supabase = createPagesServerClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
-
     const { topic, experience, timeline } = req.body;
 
     // Check required field

@@ -27,13 +27,6 @@ export default function AuthCallback() {
           throw new Error('No session returned from code exchange');
         }
 
-        // Set session in local storage
-        window.localStorage.setItem('supabase.auth.token', JSON.stringify({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_at: session.expires_at,
-        }));
-
         console.log('Session established successfully');
         return router.push('/');
       } catch (error) {
