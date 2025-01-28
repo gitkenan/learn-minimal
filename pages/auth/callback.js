@@ -13,9 +13,9 @@ export default function AuthCallback() {
         console.log('Auth callback started');
         console.log('Current URL:', window.location.href);
 
-        // Exchange code for session
+        // Exchange code for session using query parameters
         const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(
-          window.location.hash.substring(1)
+          window.location.search.substring(1)
         );
 
         if (error) {
@@ -36,8 +36,7 @@ export default function AuthCallback() {
 
         console.log('Session established successfully');
         return router.push('/');
-
-        throw new Error(
+      } catch (error) {
           'Failed to establish session. Please verify:\n' +
           '1. Supabase Auth settings include http://localhost:3000/auth/callback\n' +
           '2. Google OAuth includes http://localhost:3000 and http://localhost:3000/auth/callback\n' +
