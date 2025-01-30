@@ -127,7 +127,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
               message.is_ai 
               ? message.is_system
                 ? 'bg-accent-muted text-primary' 
-                : 'bg-surface text-primary shadow-sm border border-chat-border'
+                : 'card text-primary'
               : 'bg-accent text-white'
             } ${message.is_ai ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
             >
