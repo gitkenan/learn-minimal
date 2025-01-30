@@ -74,7 +74,8 @@ export default function AIExaminerPage() {
   const handleAIRequest = async (prompt, localMessages = messages) => {
     setIsLoading(true);
     setError(null);
-    
+    let hasReceivedFirstChunk = false; // Track first chunk arrival
+
     try {
       const response = await fetch('/api/exam', {
         method: 'POST',
@@ -102,6 +103,12 @@ export default function AIExaminerPage() {
           const data = JSON.parse(line.replace('data: ', ''));
           
           if (data.chunk) {
+            // Immediately hide loading when first chunk arrives
+            if (!hasReceivedFirstChunk) {
+              setIsLoading(false);
+              hasReceivedFirstChunk = true;
+            }
+
             // Split the chunk into words
             const words = data.chunk.split(' ');
             for (const word of words) {
