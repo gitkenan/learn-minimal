@@ -76,8 +76,11 @@ export default function AIExaminerPage() {
     try {
       const response = await fetch('/api/exam', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Add this to include cookies in the request
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        credentials: 'include',
         body: JSON.stringify({ prompt, messages: localMessages }),
       });
 

@@ -14,26 +14,30 @@ export default async function handler(req, res) {
 	}
 
 	try {
-		const authToken = req.headers['x-supabase-auth'];
-		if (!authToken) {
-			console.error('No auth token found in request headers');
-			return handleApiError(res, {
-				statusCode: 401,
-				type: 'UNAUTHORIZED',
-				message: 'Authentication required'
-			}, 'Authentication required');
-		}
-
 		const supabase = createPagesServerClient({ req, res });
-		// Refresh session before long-running operation
-		const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-		if (refreshError || !session?.user) {
-			console.error('Session refresh error:', refreshError);
-			return handleApiError(res, {
-				statusCode: 401,
-				type: 'SESSION_EXPIRED',
-				message: 'Session expired - please refresh the page'
-			}, 'Session refresh failed');
+		const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+		// Handle both cookie-based session and authorization header fallback
+		if (!session) {
+			const token = req.headers.authorization?.replace('Bearer ', '');
+			if (token) {
+				const { data: { user }, error } = await supabase.auth.getUser(token);
+				if (user && !error) {
+					session.user = user;
+				} else {
+					return handleApiError(res, {
+						statusCode: 401,
+						type: 'UNAUTHORIZED',
+						message: 'Authentication required'
+					}, 'Authentication required');
+				}
+			} else {
+				return handleApiError(res, {
+					statusCode: 401,
+					type: 'UNAUTHORIZED',
+					message: 'Authentication required'
+				}, 'Authentication required');
+			}
 		}
 
 		// Setup session keep-alive

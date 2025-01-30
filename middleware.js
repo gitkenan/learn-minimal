@@ -36,6 +36,7 @@ export async function middleware(req) {
       // Clone the request headers and add Supabase auth headers
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-user-id', session?.user?.id || '');
+      requestHeaders.set('authorization', `Bearer ${session?.access_token || ''}`);
       
       // Create a response that propagates cookies
       const response = NextResponse.next({
