@@ -1,33 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Cookies from 'js-cookie';
 
 export default function CookieTest() {
   const [cookieValue, setCookieValue] = useState('Loading...');
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    // Try to set a test cookie
-    try {
-      Cookies.set('testCookie', 'testValue');
-      console.log('Test cookie set attempt completed');
-      console.log('All cookies:', document.cookie);
-      console.log('Direct cookie read:', Cookies.get('testCookie'));
-    } catch (error) {
-      console.error('Error setting cookie:', error);
-    }
+    if (hasRun.current) return;
+    hasRun.current = true;
 
-    // Try to read cookies in different ways
-    try {
-      const cookieData = {
-        documentCookie: document.cookie,
-        jsCookieGet: Cookies.get(),
-        specificCookie: Cookies.get('testCookie')
-      };
-      console.log('Cookie API check:', cookieData);
-      setCookieValue(document.cookie || 'No cookies found');
-    } catch (error) {
-      console.error('Error reading cookies:', error);
-      setCookieValue('Error reading cookies');
-    }
+    const testCookies = () => {
+      console.group('Cookie Test Results');
+      try {
+        // Set test cookie
+        Cookies.set('testCookie', 'testValue');
+        
+        // Gather all cookie data
+        const cookieData = {
+          documentCookie: document.cookie,
+          jsCookieGet: Cookies.get(),
+          specificCookie: Cookies.get('testCookie')
+        };
+        
+        console.log('Cookie Test Status: Success');
+        console.table(cookieData);
+        setCookieValue(document.cookie || 'No cookies found');
+      } catch (error) {
+        console.error('Cookie Test Status: Failed');
+        console.error('Error:', error);
+        setCookieValue('Error reading cookies');
+      }
+      console.groupEnd();
+    };
+
+    testCookies();
+
+    return () => {
+      // Cleanup test cookie on unmount
+      Cookies.remove('testCookie');
+    };
   }, []);
 
   return (
