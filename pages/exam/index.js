@@ -225,8 +225,8 @@ export default function AIExaminerPage() {
     <div className="min-h-screen bg-[#f8faf9] relative">
       <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
       <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative">
-          {!showQuiz ? (
-            <form className="w-full max-w-xl flex flex-col gap-6">
+          <div className="w-full relative">
+            <form className={`w-full max-w-xl flex flex-col gap-6 mx-auto transition-all duration-500 ease-in-out transform ${!showQuiz ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 absolute inset-0'}`}>
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
                   {subject ? (
                     <>
@@ -328,8 +328,8 @@ export default function AIExaminerPage() {
                 </button>
               </div>
             </form>
-          ) : (
-            <div className="w-full max-w-2xl flex flex-col h-full gap-4">
+          </div>
+          <div className={`w-full max-w-2xl flex flex-col h-full gap-4 mx-auto transition-all duration-500 ease-in-out transform ${showQuiz ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 absolute inset-0'}`}>
               <div className="flex-1">
                 <div ref={chatRef} className="h-[calc(100vh-300px)] overflow-y-auto rounded-lg p-6">
                   {messages.map((m, i) => (
@@ -390,7 +390,6 @@ export default function AIExaminerPage() {
                 </div>
               )}
             </div>
-          )}
       </main>
     </div>
   );
