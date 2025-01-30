@@ -1,6 +1,6 @@
 // middleware.js
-import { supabase } from './lib/supabaseClient'; 
-import { NextResponse } from 'next/server'
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { NextResponse } from 'next/server';
 
 function isProtectedRoute(pathname) {
   return ['/dashboard', '/exam', '/plan'].some(prefix => 
@@ -9,44 +9,38 @@ function isProtectedRoute(pathname) {
 }
 
 export async function middleware(req) {
-  // Create response first so we can modify headers
   const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
 
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
+    console.log('Middleware session check:', {
+      hasSession: !!session,
+      user: session?.user?.id,
+      path: req.nextUrl.pathname
+    });
 
     if (error) {
       console.error('Auth session error:', error.message);
       return NextResponse.json({ error: 'Authentication error' }, { status: 500 });
     }
 
-    // Handle API routes with detailed logging
+    // Handle API routes
     if (req.nextUrl.pathname.startsWith('/api/')) {
-      console.log('Middleware - API Route:', {
-        path: req.nextUrl.pathname,
-        hasSession: !!session,
-        hasAccessToken: !!session?.access_token,
-        headers: Object.fromEntries(req.headers)
-      });
-
-      // TEMPORARY: Allow all API requests through for testing
-      const response = NextResponse.next({
+      // If no session, block API access
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      
+      // Add user ID to request headers for API routes
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-user-id', session.user.id);
+      
+      return NextResponse.next({
         request: {
-          headers: new Headers({
-            ...Object.fromEntries(req.headers),
-            'x-supabase-auth': session?.access_token || '',
-          }),
+          headers: requestHeaders,
         },
       });
-
-      // Copy cookies
-      res.headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') {
-          response.headers.append(key, value);
-        }
-      });
-
-      return response;
     }
 
     // Protected routes handling
