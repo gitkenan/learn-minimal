@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getSupabase } from '../../lib/supabaseClient';
+import { getSupabase } from '@/lib/supabaseClient';
 import { Loading } from '../../components/ui/loading';
 
 export default function AuthCallback() {
