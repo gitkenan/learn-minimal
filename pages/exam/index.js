@@ -116,6 +116,7 @@ export default function AIExaminerPage() {
     // Immediately show user's message
     setMessages(prev => [...prev, { isAI: false, text: currentAnswer }]);
     setUserAnswer('');
+    scrollToBottom();
     
     // Then send to AI
     await handleAIRequest(
