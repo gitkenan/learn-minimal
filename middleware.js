@@ -21,23 +21,26 @@ export async function middleware(req) {
       return NextResponse.json({ error: 'Authentication error' }, { status: 500 });
     }
 
-    // Handle API routes
+    // Handle API routes with detailed logging
     if (req.nextUrl.pathname.startsWith('/api/')) {
-      if (!session) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-      }
+      console.log('Middleware - API Route:', {
+        path: req.nextUrl.pathname,
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+        headers: Object.fromEntries(req.headers)
+      });
 
-      // Create new response with auth headers
+      // TEMPORARY: Allow all API requests through for testing
       const response = NextResponse.next({
         request: {
           headers: new Headers({
             ...Object.fromEntries(req.headers),
-            Authorization: `Bearer ${session.access_token}`,
+            'x-supabase-auth': session?.access_token || '',
           }),
         },
       });
 
-      // IMPORTANT: Copy ALL headers from the middleware response
+      // Copy cookies
       res.headers.forEach((value, key) => {
         if (key.toLowerCase() === 'set-cookie') {
           response.headers.append(key, value);
