@@ -1,4 +1,4 @@
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabaseClient';
 
 export default async function handler(req, res) {
   console.log('API - Request headers:', {
@@ -10,9 +10,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const supabase = createPagesServerClient({ req, res });
-    
+  try {    
     // Log the token we're receiving
     const token = req.headers.authorization?.replace('Bearer ', '');
     console.log('API - Token check:', {

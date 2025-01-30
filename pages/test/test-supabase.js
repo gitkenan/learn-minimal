@@ -1,6 +1,6 @@
 // pages/test-supabase.js
 import { useState, useEffect } from 'react';
-import { initializeSupabase } from '@/lib/supabaseClient'; // Import
+import { supabase } from '@/lib/supabaseClient'; // Import
 
 export default function TestSupabase() {
   const [status, setStatus] = useState('Trying to sign in...');
@@ -8,7 +8,6 @@ export default function TestSupabase() {
 
   useEffect(() => {
     const signIn = async () => {
-      const supabase = initializeSupabase(); // Initialize on the client
       if (!supabase) {
         setStatus('Failed to initialize Supabase client.');
         return;

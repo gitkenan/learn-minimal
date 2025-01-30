@@ -1,6 +1,6 @@
 // components/Auth.js
 import { useState, useEffect } from 'react';
-import { getSupabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 
 export default function Auth() {
@@ -9,7 +9,6 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const supabase = getSupabase();
 
   useEffect(() => {
     const urlError = router.query.error;
