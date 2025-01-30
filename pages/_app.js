@@ -1,5 +1,6 @@
 import '@/styles/globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { WorkflowProvider } from '@/context/WorkflowContext';
 import Layout from '@/components/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -24,7 +25,6 @@ export default function App({ Component, pageProps }) {
 
     // Ensure client-side auth state syncs with cookies
     if (typeof window !== 'undefined') {
-      const supabase = initializeSupabase();
       supabase.auth.startAutoRefresh();
     }
 
