@@ -123,13 +123,14 @@ export default function LearningChat({ planId, topic, initialContext }) {
             className={`flex ${message.is_ai ? 'justify-start' : 'justify-end'}`}
           >
             <div
-            className={`max-w-[85%] rounded-2xl px-4 py-2 ${
+            className={`max-w-[85%] rounded-2xl px-4 py-2 transform transition-opacity duration-200 ${
               message.is_ai 
               ? message.is_system
                 ? 'bg-accent-muted text-primary' 
                 : 'card text-primary'
               : 'bg-accent text-white'
             } ${message.is_ai ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
+            style={{ willChange: 'transform, opacity' }}
             >
             {message.is_system ? (
               <div className="space-y-2 text-sm">

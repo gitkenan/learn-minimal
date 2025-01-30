@@ -380,16 +380,16 @@ export default function AIExaminerPage() {
                 <div ref={chatRef} className="h-[calc(100vh-300px)] overflow-y-auto rounded-lg p-6">
                   {messages.map((m, i) => (
                     <div 
-                      key={i} 
-                      className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'} animate-fade-in`}
-                      style={{ animationDelay: `${i * 100}ms` }}
+                      key={`${i}-${m.text.substring(0,5)}`}
+                      className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'}`}
                     >
                       <div
-                        className={`transform transition-all duration-200 ${
+                        className={`transform transition-all duration-200 will-change-transform ${
                           m.isAI 
                             ? 'chat-message-ai hover:shadow-soft' 
                             : 'chat-message-user hover:bg-accent-hover'
-                        } px-6 py-4`} // 6/4 = 1.5 (approximate φ ratio)
+                        } px-6 py-4`}
+                        style={{ transform: 'translateZ(0)' }}
                       >
                         <ReactMarkdown>{m.text}</ReactMarkdown>
                       </div>
