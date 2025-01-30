@@ -7,7 +7,7 @@ import { Loading } from '@/components/ui/loading';
 
 export default function AIExaminerPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [subject, setSubject] = useState('');
   const [experience, setExperience] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
