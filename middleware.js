@@ -1,5 +1,5 @@
 // middleware.js
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from './lib/supabaseClient'; 
 import { NextResponse } from 'next/server'
 
 function isProtectedRoute(pathname) {
@@ -11,7 +11,6 @@ function isProtectedRoute(pathname) {
 export async function middleware(req) {
   // Create response first so we can modify headers
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
 
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
