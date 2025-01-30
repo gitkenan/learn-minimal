@@ -126,7 +126,7 @@ function ExamResultDisplay({ examResults }) {
               )}
             </section>
 
-            <section className="bg-white rounded-lg border p-6">
+            {/* <section className="bg-white rounded-lg border p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold">Questions & Answers</h2>
                 <button
@@ -164,7 +164,7 @@ function ExamResultDisplay({ examResults }) {
                   ))}
                 </div>
               )}
-            </section>
+            </section> */}
 
             <section className="bg-white rounded-lg border p-6">
               <div className="flex justify-between items-center mb-6">
