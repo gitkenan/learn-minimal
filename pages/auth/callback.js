@@ -11,20 +11,32 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         console.log('Auth callback started');
-        console.log('Current URL:', window.location.href);
+        
+        // Check for linking query param
+        const isLinking = new URLSearchParams(window.location.search).has('is_linking');
 
-        // Exchange code for session using query parameters
-        const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(
+        const { data: { session, user }, error } = await supabase.auth.exchangeCodeForSession(
           window.location.search.substring(1)
         );
 
         if (error) {
-          console.error('Exchange error:', error);
+          // Handle email conflict error
+          if (error.message.includes('already registered')) {
+            throw new Error('This email is already registered. Please sign in using your original method first.');
+          }
           throw error;
         }
 
-        if (!session) {
-          throw new Error('No session returned from code exchange');
+        if (!session) throw new Error('No session returned from code exchange');
+
+        // Handle account linking scenario
+        if (isLinking) {
+          const { error: linkError } = await supabase.auth.linkIdentity({
+            provider: 'google'
+          });
+          
+          if (linkError) throw linkError;
+          return router.push('/account-settings');
         }
 
         console.log('Session established successfully');

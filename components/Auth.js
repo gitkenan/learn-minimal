@@ -30,7 +30,8 @@ export default function Auth() {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback?is_linking=true`
         }
       });
 
@@ -39,7 +40,11 @@ export default function Auth() {
       console.log('Google sign in initiated successfully');
     } catch (error) {
       console.error('Google sign in error:', error);
-      setError(error.message);
+      let message = error.message;
+      if (error.message.includes('already registered')) {
+        message = 'This email is already registered. Please sign in using your original method first, then link Google in account settings.';
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +62,13 @@ export default function Auth() {
         password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // Handle "Email already in use" case
+        if (signInError.message.includes('Email already in use')) {
+          throw new Error('This email is associated with a Google account. Please sign in with Google first.');
+        }
+        throw signInError;
+      }
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
