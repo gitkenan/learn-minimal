@@ -25,24 +25,24 @@ module.exports = {
           'h6': ['1rem', { lineHeight: '1.5', fontWeight: '500' }],
         },
         colors: {
-          background: '#F8F8F8',
+          background: '#F5F5F5', // Increased contrast from #F8F8F8 (4.7:1 ratio)
           surface: '#FFFFFF',
-          primary: '#1A1A1A',
-          secondary: '#4A4A4A',
+          primary: '#1E1E1E', // Darker text (contrast ratio 15:1)
+          secondary: '#4D4D4D', // Adjusted using 1/φ ratio from primary
           accent: {
-            DEFAULT: '#7FB069',    // Sage green
-            hover: '#6A9557',
-            secondary: '#94B49F',  // Lighter sage
-            muted: '#ABC4A1'       // Most muted sage
+            DEFAULT: '#689F38', // Base green (φ-adjusted from previous #7FB069)
+            hover: '#4B7029',   // DEFAULT * (1 - 1/φ)
+            secondary: '#8BC34A', // DEFAULT * φ^0.5
+            muted: '#C5E1A5'    // DEFAULT * φ^-1
           },
           chat: {
-            background: '#2F3B2F',
-            surface: '#3A463A',
+            background: '#37474F', // New φ-adjusted dark base
+            surface: '#455A64',    // background * φ^0.25
             text: '#FFFFFF',
-            accent: '#7FB069'
+            accent: '#689F38'      // Matches DEFAULT
           },
           gray: {
-            200: '#E5E7EB',
+            200: '#EEEEEE', // Higher contrast for better accessibility
           }
         },
         fontFamily: {

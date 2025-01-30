@@ -91,7 +91,7 @@
 
   /* Modern Card Styles */
   .card {
-    @apply bg-white/50 backdrop-blur-sm rounded-lg border border-[#3c6e47]/10 transition-all duration-200;
+    @apply bg-white/80 backdrop-blur-sm rounded-lg border border-[#689F38]/10 transition-all duration-200;
   }
 
   .card:hover {
@@ -108,7 +108,7 @@
     @apply absolute inset-0 opacity-5 pointer-events-none;
     background: linear-gradient(
       160deg,
-      #3c6e47 0%,
+      #689F38 0%,          /* accent.DEFAULT */
       transparent 70%
     );
   }
@@ -128,9 +128,9 @@
   input[type="url"],
   textarea,
   select {
-    @apply w-full px-4 py-3 rounded-lg bg-white border border-[#3c6e47]/20 
-           text-[#3c6e47] placeholder-[#3c6e47]/50
-           focus:outline-none focus:border-[#3c6e47]
+    @apply w-full px-4 py-3 rounded-lg bg-white border border-[#689F38]/30 
+           text-[#689F38] placeholder-[#689F38]/50
+           focus:outline-none focus:border-[#689F38]/80
            transition duration-200 ease-in-out;
   }
 
@@ -154,9 +154,9 @@
     @apply bg-clip-text text-transparent font-semibold text-xl;
     background-image: linear-gradient(
       90deg,
-      theme('colors.accent.DEFAULT') 0%,
-      theme('colors.accent.secondary') 50%,
-      theme('colors.accent.muted') 100%
+      #689F38 0%,          /* accent.DEFAULT */
+      #8BC34A 50%,         /* accent.secondary */
+      #C5E1A5 100%         /* accent.muted */
     );
   }
 
@@ -200,7 +200,7 @@
   }
 
   .prose pre {
-    @apply bg-chat-background text-chat-text p-4 rounded-lg overflow-x-auto;
+    @apply bg-[#37474F] text-white p-4 rounded-lg overflow-x-auto;
   }
 
   /* Typography enhancements */
