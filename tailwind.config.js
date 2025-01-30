@@ -41,6 +41,14 @@ module.exports = {
             text: '#FFFFFF',
             accent: '#689F38'      // Matches DEFAULT
           },
+          exam: {
+            DEFAULT: '#1E1E1E',     // primary-600 (φ-adjusted)
+            container: '#F5F5F5',   // background-50
+            question: '#4D4D4D',    // secondary-500
+            answer: '#689F38',      // accent.DEFAULT
+            highlight: '#8BC34A',   // accent.secondary
+            border: '#C5E1A5'       // accent.muted
+          },
           gray: {
             200: '#EEEEEE', // Higher contrast for better accessibility
           }

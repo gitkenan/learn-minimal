@@ -283,6 +283,27 @@
     animation: fade-in 0.3s ease-out forwards;
   }
 
+  /* Exam chat specific styles */
+  .chat-message-ai {
+    @apply bg-surface border border-exam-border text-exam-question;
+    max-width: 61.8%; /* Golden ratio width */
+    margin-right: auto;
+    border-radius: 1rem 1rem 1.618rem 0.382rem; /* φ-based radii */
+  }
+
+  .chat-message-user {
+    @apply bg-exam-answer text-chat-text;
+    max-width: 38.2%; /* Golden ratio complement */
+    margin-left: auto;
+    border-radius: 1rem 1rem 0.382rem 1.618rem; /* φ-based radii */
+  }
+
+  .chat-message-timing {
+    @apply text-exam-question/50 text-sm;
+    font-size: 0.618rem; /* φ-derived size */
+    line-height: 1.2;
+  }
+
   /* Mobile chat overlay styles */
   .mobile-chat-overlay {
     @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-50;
