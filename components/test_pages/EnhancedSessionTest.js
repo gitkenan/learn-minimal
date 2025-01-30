@@ -19,11 +19,12 @@ const EnhancedSessionTest = () => {
 
     try {
       const response = await fetch('/api/auth-test', {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include'  // Important! This tells fetch to send cookies
+        credentials: 'same-origin'
       });
       
       console.log('Test - API Response:', {

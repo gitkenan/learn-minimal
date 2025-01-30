@@ -50,10 +50,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log('AuthContext initializing...');
     let isMounted = true;
     
     const loadInitialSession = async () => {
+      if (!isMounted) return;
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
@@ -62,18 +62,16 @@ export const AuthProvider = ({ children }) => {
           throw error;
         }
 
-        if (initialSession) {
-          console.log('Initial session found');
-          setSession(initialSession);
-          setUser(initialSession.user);
-        } else {
-          console.log('No initial session found');
+        if (isMounted) {
+          if (initialSession) {
+            setSession(initialSession);
+            setUser(initialSession.user);
+          }
+          setLoading(false);
+          setSessionReady(true);
         }
       } catch (error) {
         console.error('Error loading initial session:', error);
-      } finally {
-        setLoading(false);
-        setSessionReady(true);
       }
     };
 
