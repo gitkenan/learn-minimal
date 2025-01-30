@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 const PlanTest = () => {
   const { user, loading, refreshSession } = useAuth();
   const [planId, setPlanId] = useState('');
   const [testResults, setTestResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = initializeSupabase();
+  // initializeSupabase was here!
 
   const addResult = (name, status, message) => {
     setTestResults(prev => [{

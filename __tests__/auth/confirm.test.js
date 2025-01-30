@@ -2,7 +2,7 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useRouter } from 'next/router';
 import ConfirmEmail from '@/pages/auth/confirm';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn()

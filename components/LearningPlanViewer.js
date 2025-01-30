@@ -8,7 +8,7 @@ import { useWorkflow } from '@/context/WorkflowContext';
 import { useExamFromPlan } from '@/hooks/useExamFromPlan';
 import LearningChat from './LearningChat';
 import ActionMenu from './ActionMenu';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 import { 
   detectSectionType,

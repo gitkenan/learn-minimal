@@ -117,7 +117,7 @@ export default function Dashboard() {
     if (!planToDelete) return;
 
     try {
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
       const { error } = await supabase
         .from('plans')
         .delete()

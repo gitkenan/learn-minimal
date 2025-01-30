@@ -6,7 +6,7 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import { useAuth } from '@/context/AuthContext';
 import { usePlan } from '@/hooks/usePlan';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -117,7 +117,7 @@ export default function CalendarPage() {
     try {
       setLoading(true);
       setError('');
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
 
       const { data: calendarTasks, error: tasksError } = await supabase
         .from('calendar_tasks')
@@ -193,7 +193,7 @@ export default function CalendarPage() {
       }
 
       // Fetch additional task details if needed
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
       const { data, error } = await supabase
         .from('calendar_tasks')
         .select('*, plans:plan_id (*)')

@@ -263,7 +263,7 @@ export function usePlan(planId) {
   const saveNote = async (taskId, content) => {
     if (!session || !plan) return;
     try {
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
       const { data: newNote, error } = await supabase
         .from('plan_item_notes')
         .insert({
@@ -291,7 +291,7 @@ export function usePlan(planId) {
   const deleteNote = async (noteId) => {
     if (!session || !plan) return;
     try {
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
       const { error } = await supabase
         .from('plan_item_notes')
         .delete()

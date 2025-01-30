@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ConfirmEmail() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function ConfirmEmail() {
       }
 
       try {
-        const supabase = initializeSupabase();
+        // initializeSupabase was here!
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash,
           type

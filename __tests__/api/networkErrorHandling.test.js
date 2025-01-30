@@ -1,5 +1,5 @@
 import { syncService } from '../../lib/syncService';
-import { initializeSupabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 
 // Mock environment variables required by supabaseClient
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:3000';
@@ -48,7 +48,7 @@ beforeEach(() => {
 
 describe('Network Error Handling', () => {
   test('should handle failed fetch requests', async () => {
-    const supabase = initializeSupabase();
+    // initializeSupabase was here!
     
     // Test auth failure with mocked error response
     await expect(supabase.auth.signInWithPassword({
@@ -61,7 +61,7 @@ describe('Network Error Handling', () => {
     // Mock failed update through Supabase client
     const dbError = new Error('Connection reset');
     dbError.code = 'ECONNRESET';
-    const supabase = initializeSupabase();
+    // initializeSupabase was here!
     supabase.from.mockImplementation(() => {
       throw dbError;
     });
@@ -81,7 +81,7 @@ describe('Network Error Handling', () => {
   });
 
   test('should handle query network errors', async () => {
-    const supabase = initializeSupabase();
+    // initializeSupabase was here!
     const error = new Error('Connection reset');
     error.code = 'ECONNRESET';
     

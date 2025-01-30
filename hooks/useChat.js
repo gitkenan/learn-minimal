@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
 export function useChat({ discussionId, planId, topics, initialContext } = {}) {
@@ -17,7 +17,7 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 			if (!planId || !user || discussionId) return;
 			
 			try {
-				const supabase = initializeSupabase();
+				// initializeSupabase was here!
 				const { data, error } = await supabase
 					.from('plan_discussions')
 					.select('*')
@@ -46,7 +46,7 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 			if (!discussionId || !user) return;
 			
 			try {
-				const supabase = initializeSupabase();
+				// initializeSupabase was here!
 				const { data, error } = await supabase
 					.from('plan_discussions')
 					.select('*')
@@ -75,7 +75,7 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 			}
 
 			try {
-				const supabase = initializeSupabase();
+				// initializeSupabase was here!
 				const { data, error } = await supabase
 					.from('discussion_messages')
 					.select('*')
@@ -97,7 +97,7 @@ export function useChat({ discussionId, planId, topics, initialContext } = {}) {
 		if (!planId || !user) return;
 		
 		try {
-			const supabase = initializeSupabase();
+			// initializeSupabase was here!
 			const title = `Chat ${discussions.length + 1}`;
 			
 			// Create initial system message content
@@ -150,7 +150,7 @@ Let's focus our discussion on this specific topic. What would you like to know?`
 		setError(null);
 
 		try {
-			const supabase = initializeSupabase();
+			// initializeSupabase was here!
 			
 			// Add user message
 			const { data: userMessage, error: messageError } = await supabase

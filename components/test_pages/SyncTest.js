@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePlan } from '@/hooks/usePlan';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'react-toastify';
 
 const SyncTest = ({ planId, sectionId, itemId }) => {
@@ -10,7 +10,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
   const { toggleTask, plan } = usePlan(planId);
 
   const refreshStatus = useCallback(async () => {
-    const supabase = initializeSupabase();
+    // initializeSupabase was here!
     
     // Get plan item status
     const planItem = plan?.json_content?.sections
@@ -35,7 +35,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
       if (source === 'plan') {
         await toggleTask(sectionId, itemId);
       } else {
-        const supabase = initializeSupabase();
+        // initializeSupabase was here!
         const { data: task } = await supabase
           .from('calendar_tasks')
           .select('status')
@@ -56,7 +56,7 @@ const SyncTest = ({ planId, sectionId, itemId }) => {
       toast.success(`Toggled from ${source} - checking sync...`);
       
       // Verify versions
-      const supabase = initializeSupabase();
+      // initializeSupabase was here!
       const { data: planData } = await supabase
         .from('plans')
         .select('json_content->version')
