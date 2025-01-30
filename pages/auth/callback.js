@@ -30,6 +30,7 @@ export default function AuthCallback() {
         console.log('Session established successfully');
         return router.push('/');
       } catch (error) {
+        console.error(
           'Failed to establish session. Please verify:\n' +
           '1. Supabase Auth settings include http://localhost:3000/auth/callback\n' +
           '2. Google OAuth includes http://localhost:3000 and http://localhost:3000/auth/callback\n' +
