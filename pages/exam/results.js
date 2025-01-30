@@ -34,7 +34,6 @@ export default function ExamResultsPage() {
             {
               user_id: user.id,
               subject: results.subject,
-              difficulty: results.difficulty,
               messages: results.messages,
               final_analysis: results.finalAnalysis,
             },
@@ -99,21 +98,19 @@ function ExamResultDisplay({ examResults }) {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="space-y-6">
           <div className="mb-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold text-gray-900">
-                {examResults.title || examResults.subject}
-              </h1>
-              <div className="flex gap-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                  {examResults.subject}
-                </span>
+            <h1 className="text-3xl font-semibold mb-6">
+              Exam Results: {examResults.subject}
+            </h1>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+              <div className="bg-gray-50 px-4 py-3 rounded-lg flex-1">
+                <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
+                <p className="font-medium text-gray-900">{examResults.difficulty}</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-10">
             <section className="bg-white rounded-lg border p-6">
-              <h2 className="text-2xl font-semibold mb-6">Detailed Report</h2>
               {examResults.final_analysis ? (
                 <div className="bg-gray-50 p-6 rounded-lg border">
                   <div className="prose prose-gray prose-headings:font-semibold prose-headings:text-gray-900 prose-p:text-gray-600">
@@ -127,7 +124,7 @@ function ExamResultDisplay({ examResults }) {
               )}
             </section>
 
-            {/* <section className="bg-white rounded-lg border p-6">
+            <section className="bg-white rounded-lg border p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold">Questions & Answers</h2>
                 <button
@@ -165,7 +162,7 @@ function ExamResultDisplay({ examResults }) {
                   ))}
                 </div>
               )}
-            </section> */}
+            </section>
 
             <section className="bg-white rounded-lg border p-6">
               <div className="flex justify-between items-center mb-6">

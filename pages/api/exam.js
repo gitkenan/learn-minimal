@@ -83,7 +83,7 @@ export default async function handler(req, res) {
 1. Ask clear, focused questions, one at a time
 2. Keep questions relevant to the subject matter
 3. Do not ever include illustrations or pictures in your questions. Instead, describe any necessary content with a detailed description.
-4. Only provide the question itself, without any metadata or difficulty indicators
+4. Only provide the question itself
 5. Keep your responses focused and direct - do not include any additional commentary about difficulty or relevance
 
 Remember to:
