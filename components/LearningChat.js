@@ -78,8 +78,8 @@ export default function LearningChat({ planId, topic, initialContext }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface rounded-lg shadow-soft overflow-hidden">
-      <div className="flex-none p-4 border-b border-chat-border bg-surface">
+    <div className="flex flex-col h-full bg-surface rounded-lg shadow-soft overflow-hidden border border-gray-200">
+      <div className="flex-none p-4 border-b border-gray-200 bg-surface">
       <div className="flex items-center gap-4">
         <div className="flex-1 overflow-x-auto no-scrollbar">
         <div className="flex gap-2">
@@ -88,10 +88,10 @@ export default function LearningChat({ planId, topic, initialContext }) {
             key={discussion.id}
             onClick={() => setCurrentDiscussion(discussion)}
             className={`flex-none px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors ${
-            currentDiscussion?.id === discussion.id
-            ? 'bg-accent text-white'
-            : 'bg-background text-secondary hover:bg-gray-100'
-            }`}
+              currentDiscussion?.id === discussion.id
+                ? 'bg-accent text-white hover:bg-accent-hover'
+                : 'bg-background text-secondary hover:bg-gray-100'
+            } interactive`}
           >
             {discussion.title}
           </button>
@@ -100,7 +100,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
         </div>
         <button
         onClick={startNewDiscussion}
-        className="flex-none p-2 rounded-full hover:bg-accent/10 text-accent transition-colors"
+        className="flex-none p-2 rounded-full hover:bg-accent/10 text-accent transition-colors interactive"
         >
         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -177,12 +177,12 @@ export default function LearningChat({ planId, topic, initialContext }) {
               : 'Type your message...'
           }
           disabled={isLoading || !currentDiscussion}
-          className="flex-1 px-4 py-2 border border-chat-border rounded-full bg-surface text-primary placeholder-secondary/60 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-transparent disabled:bg-background transition-colors"
+          className="search-input"
           />
           <button
           type="submit"
           disabled={isLoading || !currentDiscussion || !newMessage.trim()}
-          className="px-4 py-2 bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-50 disabled:hover:bg-accent transition-colors"
+          className="search-button"
           >
           {isLoading ? (
             <div className="flex items-center gap-2">
