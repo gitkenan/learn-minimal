@@ -102,19 +102,25 @@ export default function AIExaminerPage() {
           const data = JSON.parse(line.replace('data: ', ''));
           
           if (data.chunk) {
-            aiMessage.text += data.chunk;
-            setMessages(prev => {
-              const existing = prev.find(m => m === aiMessage);
-              return existing ? [...prev] : [...prev, aiMessage];
-            });
+            // Split the chunk into words
+            const words = data.chunk.split(' ');
+            for (const word of words) {
+              aiMessage.text += word + ' ';
+              setMessages(prev => {
+                const existing = prev.find(m => m === aiMessage);
+                return existing ? [...prev] : [...prev, aiMessage];
+              });
+              scrollToBottom();
+              await new Promise(resolve => setTimeout(resolve, 50)); // Delay for word-by-word effect
+            }
           }
-          
+
           if (data.response) { // Final message
             setMessages(prev => [
               ...prev.filter(m => m !== aiMessage),
               { isAI: true, text: data.response }
             ]);
-            
+
             // Handle session refresh if needed
             if (data.session) {
               localStorage.setItem('sb-access-token', data.session.access_token);
@@ -122,7 +128,6 @@ export default function AIExaminerPage() {
             }
           }
         }
-        scrollToBottom();
       }
     } catch (err) {
       console.error('Stream error:', err);
