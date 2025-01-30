@@ -78,8 +78,8 @@ export default function LearningChat({ planId, topic, initialContext }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-none p-4 border-b bg-white">
+    <div className="flex flex-col h-full bg-surface rounded-lg shadow-soft overflow-hidden">
+      <div className="flex-none p-4 border-b border-chat-border bg-surface">
       <div className="flex items-center gap-4">
         <div className="flex-1 overflow-x-auto no-scrollbar">
         <div className="flex gap-2">
@@ -89,8 +89,8 @@ export default function LearningChat({ planId, topic, initialContext }) {
             onClick={() => setCurrentDiscussion(discussion)}
             className={`flex-none px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors ${
             currentDiscussion?.id === discussion.id
-            ? 'bg-primary text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ? 'bg-accent text-white'
+            : 'bg-background text-secondary hover:bg-gray-100'
             }`}
           >
             {discussion.title}
@@ -100,7 +100,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
         </div>
         <button
         onClick={startNewDiscussion}
-        className="flex-none p-2 rounded-full hover:bg-gray-100 transition-colors"
+        className="flex-none p-2 rounded-full hover:bg-accent/10 text-accent transition-colors"
         >
         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -114,7 +114,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
 
         <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-background"
         >
         {currentDiscussion ? (
           messages.map((message) => (
@@ -126,9 +126,9 @@ export default function LearningChat({ planId, topic, initialContext }) {
             className={`max-w-[85%] rounded-2xl px-4 py-2 ${
               message.is_ai 
               ? message.is_system
-              ? 'bg-gray-100 text-gray-800' 
-              : 'bg-white text-gray-800 shadow-sm'
-              : 'bg-primary text-white'
+                ? 'bg-accent-muted text-primary' 
+                : 'bg-surface text-primary shadow-sm border border-chat-border'
+              : 'bg-accent text-white'
             } ${message.is_ai ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
             >
             {message.is_system ? (
@@ -139,7 +139,11 @@ export default function LearningChat({ planId, topic, initialContext }) {
               ))}
               </div>
             ) : (
-              <ReactMarkdown className={`prose ${message.is_ai ? 'prose-gray' : 'prose-invert'} max-w-none`}>
+              <ReactMarkdown className={`prose ${
+                message.is_ai 
+                ? 'prose-primary text-primary' 
+                : 'prose-invert text-white'
+              } max-w-none`}>
               {message.content}
               </ReactMarkdown>
             )}
@@ -147,7 +151,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
           </div>
           ))
         ) : (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-secondary mt-8">
           <p>Select a chat or start a new one</p>
           </div>
         )}
@@ -159,7 +163,7 @@ export default function LearningChat({ planId, topic, initialContext }) {
         </div>
       )}
 
-        <div className="flex-none p-4 bg-white border-t">
+        <div className="flex-none p-4 bg-surface border-t border-chat-border">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
           type="text"
@@ -173,12 +177,12 @@ export default function LearningChat({ planId, topic, initialContext }) {
               : 'Type your message...'
           }
           disabled={isLoading || !currentDiscussion}
-          className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-gray-50"
+          className="flex-1 px-4 py-2 border border-chat-border rounded-full bg-surface text-primary placeholder-secondary/60 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-transparent disabled:bg-background transition-colors"
           />
           <button
           type="submit"
           disabled={isLoading || !currentDiscussion || !newMessage.trim()}
-          className="px-4 py-2 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary transition-colors"
+          className="px-4 py-2 bg-accent text-white rounded-full hover:bg-accent-hover disabled:opacity-50 disabled:hover:bg-accent transition-colors"
           >
           {isLoading ? (
             <div className="flex items-center gap-2">
