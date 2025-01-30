@@ -112,12 +112,16 @@ export default function AIExaminerPage() {
   };
 
   const submitAnswer = async () => {
-    const newChat = [...messages, { isAI: false, text: userAnswer }];
+    const currentAnswer = userAnswer;
+    // Immediately show user's message
+    setMessages(prev => [...prev, { isAI: false, text: currentAnswer }]);
     setUserAnswer('');
+    
+    // Then send to AI
     await handleAIRequest(
-      `The student answered: ${userAnswer}.
+      `The student answered: ${currentAnswer}.
       Do not evaluate yet. Simply ask another question.`,
-      newChat
+      [...messages, { isAI: false, text: currentAnswer }]
     );
   };
 
