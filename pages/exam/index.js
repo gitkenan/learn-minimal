@@ -181,8 +181,10 @@ export default function AIExaminerPage() {
     try {
         const response = await fetch('/api/exam', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Add this to include cookies in the request
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           prompt: `Here is the complete Q&A session:\n${fullHistory}\n\n
           You are an AI examiner conducting a final analysis. ${systemInstructions ? `This was a specialized exam with instructions: "${systemInstructions}". ` : ''}

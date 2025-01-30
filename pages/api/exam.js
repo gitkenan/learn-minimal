@@ -110,31 +110,50 @@ ${prompt}`
 			history: history
 		});
 
-		res.setHeader('Content-Type', 'text/event-stream');
-		res.setHeader('Cache-Control', 'no-cache');
-		res.setHeader('Connection', 'keep-alive');
+		// Check if this is a streaming request or final analysis
+		const isStreaming = !prompt.includes('You are an AI examiner conducting a final analysis');
 
-		try {
-			const result = await chat.sendMessageStream(prompt);
-			let fullResponse = '';
-			
-			for await (const chunk of result.stream) {
-				const chunkText = chunk.text();
-				fullResponse += chunkText;
-				res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
+		if (isStreaming) {
+			res.setHeader('Content-Type', 'text/event-stream');
+			res.setHeader('Cache-Control', 'no-cache');
+			res.setHeader('Connection', 'keep-alive');
+
+			try {
+				const result = await chat.sendMessageStream(prompt);
+				let fullResponse = '';
+				
+				for await (const chunk of result.stream) {
+					const chunkText = chunk.text();
+					fullResponse += chunkText;
+					res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
+				}
+
+				// Send final response with full text and session data
+				res.write(`data: ${JSON.stringify({
+					response: fullResponse,
+					session: {
+						access_token: session.access_token,
+						expires_at: session.expires_at
+					}
+				})}\n\n`);
+			} finally {
+				clearInterval(keepAliveInterval);
+				res.end();
 			}
-
-			// Send final response with full text and session data
-			res.write(`data: ${JSON.stringify({
-				response: fullResponse,
+		} else {
+			// For final analysis, use regular JSON response
+			const result = await chat.sendMessage(prompt);
+			const response = result.response.text();
+			
+			clearInterval(keepAliveInterval);
+			
+			return res.status(200).json({
+				response,
 				session: {
 					access_token: session.access_token,
 					expires_at: session.expires_at
 				}
-			})}\n\n`);
-		} finally {
-			clearInterval(keepAliveInterval);
-			res.end();
+			});
 		}
 
 		if (!aiResponse) {
