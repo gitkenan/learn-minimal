@@ -142,7 +142,7 @@
   }
   
 .interactive:hover {
-    @apply text-[#3c6e47];
+    @apply text-[#689F38]; /* accent.DEFAULT */
   }
 
   .interactive:active {
