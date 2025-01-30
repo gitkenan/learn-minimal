@@ -22,6 +22,12 @@ export default function App({ Component, pageProps }) {
     router.events.on('routeChangeComplete', handleComplete);
     router.events.on('routeChangeError', handleComplete);
 
+    // Ensure client-side auth state syncs with cookies
+    if (typeof window !== 'undefined') {
+      const supabase = initializeSupabase();
+      supabase.auth.startAutoRefresh();
+    }
+
     return () => {
       router.events.off('routeChangeStart', handleStart);
       router.events.off('routeChangeComplete', handleComplete);
