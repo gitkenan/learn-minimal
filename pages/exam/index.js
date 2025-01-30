@@ -201,9 +201,9 @@ export default function AIExaminerPage() {
   };
   if (!user) {
     return (
-    <div className="min-h-screen bg-[#f8faf9] relative">
+    <div className="min-h-screen bg-[#f8faf9] relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
-      <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-screen relative">
+      <main className={`container mx-auto px-4 flex flex-col items-center justify-center min-h-screen relative transition-all duration-500 ease-in-out ${showQuiz ? 'translate-x-0 opacity-100' : 'translate-x-0 opacity-100'}`}>
         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
           AI Examiner
         </h1>
