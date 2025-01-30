@@ -110,16 +110,31 @@ ${prompt}`
 			history: history
 		});
 
+		res.setHeader('Content-Type', 'text/event-stream');
+		res.setHeader('Cache-Control', 'no-cache');
+		res.setHeader('Connection', 'keep-alive');
+
 		try {
-			const result = await chat.sendMessage([{ text: prompt }]);
+			const result = await chat.sendMessageStream(prompt);
+			let fullResponse = '';
 			
-			if (!result?.response) {
-				throw new Error('AI response format invalid');
+			for await (const chunk of result.stream) {
+				const chunkText = chunk.text();
+				fullResponse += chunkText;
+				res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
 			}
 
-			aiResponse = result.response.text();
+			// Send final response with full text and session data
+			res.write(`data: ${JSON.stringify({
+				response: fullResponse,
+				session: {
+					access_token: session.access_token,
+					expires_at: session.expires_at
+				}
+			})}\n\n`);
 		} finally {
 			clearInterval(keepAliveInterval);
+			res.end();
 		}
 
 		if (!aiResponse) {

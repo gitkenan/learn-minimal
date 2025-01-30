@@ -39,9 +39,11 @@ export default function AIExaminerPage() {
   }, [user]);
 
   const scrollToBottom = () => {
-    setTimeout(() => {
-      chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
-    }, 100);
+    requestAnimationFrame(() => {
+      if (chatRef.current) {
+        chatRef.current.scrollTop = chatRef.current.scrollHeight;
+      }
+    });
   };
 
   const startQuiz = async () => {
@@ -72,6 +74,7 @@ export default function AIExaminerPage() {
   const handleAIRequest = async (prompt, localMessages = messages) => {
     setIsLoading(true);
     setError(null);
+    
     try {
       const response = await fetch('/api/exam', {
         method: 'POST',
@@ -79,33 +82,51 @@ export default function AIExaminerPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
-        credentials: 'include',
         body: JSON.stringify({ prompt, messages: localMessages }),
       });
 
-      const data = await response.json();
+      if (!response.ok) throw new Error('Stream failed to start');
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let aiMessage = { isAI: true, text: '' };
 
-      if (!response.ok) {
-        const errorMessage = data.error || data.message || 'Failed to process request';
-        if (data.session) { // Update client-side session with fresh tokens
-          localStorage.setItem('sb-access-token', data.session.access_token);
-          localStorage.setItem('sb-expires-at', data.session.expires_at);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
+        
+        for (const line of lines) {
+          const data = JSON.parse(line.replace('data: ', ''));
+          
+          if (data.chunk) {
+            aiMessage.text += data.chunk;
+            setMessages(prev => {
+              const existing = prev.find(m => m === aiMessage);
+              return existing ? [...prev] : [...prev, aiMessage];
+            });
+          }
+          
+          if (data.response) { // Final message
+            setMessages(prev => [
+              ...prev.filter(m => m !== aiMessage),
+              { isAI: true, text: data.response }
+            ]);
+            
+            // Handle session refresh if needed
+            if (data.session) {
+              localStorage.setItem('sb-access-token', data.session.access_token);
+              localStorage.setItem('sb-expires-at', data.session.expires_at);
+            }
+          }
         }
-        throw new Error(errorMessage);
+        scrollToBottom();
       }
-
-      if (!data?.response) {
-        throw new Error('Invalid response from server');
-      }
-
-      setMessages([...localMessages, { isAI: true, text: data.response }]);
-      scrollToBottom();
     } catch (err) {
-      console.error('Error in exam:', err);
-      setError(err.message || 'An error occurred while processing your request');
-      if (userAnswer) {
-        setUserAnswer(userAnswer); // Preserve user's message on error
-      }
+      console.error('Stream error:', err);
+      setError(err.message || 'Error during stream');
     } finally {
       setIsLoading(false);
     }
