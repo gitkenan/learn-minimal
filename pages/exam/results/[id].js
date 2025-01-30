@@ -86,7 +86,6 @@ export default function SavedExamResultPage() {
 
           <div className="space-y-10">
             <section className="bg-white rounded-lg border p-6">
-              <h2 className="text-2xl font-semibold mb-6">Detailed Report</h2>
               {examResult.final_analysis ? (
                 <div className="bg-gray-50 p-8 rounded-lg border">
                   <div className="prose prose-lg max-w-none prose-gray 
