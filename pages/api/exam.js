@@ -127,7 +127,7 @@ ${prompt}`
 				message: 'AI service unavailable - try again later'
 			}, 'Empty AI response');
 		}
-		if (!responseText || typeof responseText !== 'string') {
+		if (!aiResponse || typeof aiResponse !== 'string') {
 			return handleApiError(res, {
 				statusCode: 502,
 				type: 'AI_RESPONSE_CONTENT_ERROR',

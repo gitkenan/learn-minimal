@@ -142,7 +142,6 @@ export function usePlan(planId) {
       setLoading(true);
       setError(null);
 
-      const supabase = initializeSupabase();
       if (!supabase) throw new Error('Failed to initialize Supabase client');
 
       // Parallel fetch: plan + notes
