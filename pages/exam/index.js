@@ -231,7 +231,6 @@ export default function AIExaminerPage() {
       const examResults = {
         title,
         subject,
-        difficulty,
         messages: messagesToAnalyze, // Store only answered Q&A pairs
         qaHistory, // Store structured Q&A pairs
         finalAnalysis: analysis, // Store final analysis separately

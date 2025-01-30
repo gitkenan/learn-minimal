@@ -77,9 +77,6 @@ export default function SavedExamResultPage() {
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                   {examResult.subject}
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700">
-                  {examResult.difficulty.charAt(0).toUpperCase() + examResult.difficulty.slice(1)} Difficulty
-                </span>
               </div>
             </div>
           </div>
