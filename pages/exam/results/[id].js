@@ -69,12 +69,18 @@ export default function SavedExamResultPage() {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="space-y-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold mb-6">
-              Exam Results: {examResult.subject}
-            </h1>
-            <div className="bg-gray-50 px-4 py-3 rounded-lg inline-block">
-              <span className="text-gray-500 text-sm block mb-1">Difficulty</span>
-              <p className="font-medium text-gray-900">{examResult.difficulty}</p>
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold text-gray-900">
+                {examResult.title || examResult.subject}
+              </h1>
+              <div className="flex gap-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                  {examResult.subject}
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700">
+                  {examResult.difficulty.charAt(0).toUpperCase() + examResult.difficulty.slice(1)} Difficulty
+                </span>
+              </div>
             </div>
           </div>
 

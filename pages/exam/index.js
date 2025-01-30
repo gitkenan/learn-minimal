@@ -188,7 +188,8 @@ export default function AIExaminerPage() {
         body: JSON.stringify({
           prompt: `Here is the complete Q&A session:\n${fullHistory}\n\n
           You are an AI examiner conducting a final analysis. ${systemInstructions ? `This was a specialized exam with instructions: "${systemInstructions}". ` : ''}
-          Based ONLY on the actual exchanges above, provide a comprehensive analysis of the student's performance.
+          First, provide a concise, engaging title for this exam session that captures its essence (max 60 chars). Format as: TITLE: your title here
+          Then, based ONLY on the actual exchanges above, provide a comprehensive analysis of the student's performance.
           
           Please provide a comprehensive analysis with the following elements, using natural language and clear formatting:
 
@@ -221,13 +222,19 @@ export default function AIExaminerPage() {
         throw new Error('Invalid response from server');
       }
 
+      // Extract title from response if present
+      const titleMatch = data.response.match(/TITLE: (.*)\n/);
+      const title = titleMatch ? titleMatch[1].trim() : subject;
+      const analysis = data.response.replace(/TITLE: .*\n/, '').trim();
+
       // Store messages and final analysis separately, excluding last unanswered question if present
       const examResults = {
+        title,
         subject,
         difficulty,
         messages: messagesToAnalyze, // Store only answered Q&A pairs
         qaHistory, // Store structured Q&A pairs
-        finalAnalysis: data.response, // Store final analysis separately
+        finalAnalysis: analysis, // Store final analysis separately
         finishedAt: new Date().toISOString(),
       };
 
