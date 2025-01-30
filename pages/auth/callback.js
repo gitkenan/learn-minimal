@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { Loading } from '../../components/ui/loading';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const supabase = getSupabase();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
