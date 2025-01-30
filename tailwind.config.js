@@ -76,8 +76,14 @@ module.exports = {
             '100%': { transform: 'scale(0.95)' },
           },
           fadeIn: {
-            'from': { opacity: '0' },
-            'to': { opacity: '1' },
+            'from': { 
+              opacity: '0',
+              transform: 'translateY(10px)'
+            },
+            'to': { 
+              opacity: '1',
+              transform: 'translateY(0)'
+            },
           },
           fadeOut: {
             'from': { opacity: '1' },
@@ -91,7 +97,8 @@ module.exports = {
         animation: {
           'shimmer': 'shimmer 2s infinite linear',
           'button-press': 'buttonPress 0.1s ease-in-out forwards',
-          'fade-in': 'fadeIn 0.3s ease-in-out',
+          'fade-in': 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          'bounce': 'bounce 1s infinite',
           'fade-out': 'fadeOut 0.3s ease-in-out',
           'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           'shimmer': 'shimmer 2s linear infinite',

@@ -333,18 +333,33 @@ export default function AIExaminerPage() {
               <div className="flex-1">
                 <div ref={chatRef} className="h-[calc(100vh-300px)] overflow-y-auto rounded-lg p-6">
                   {messages.map((m, i) => (
-                    <div key={i} className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'}`}>
+                    <div 
+                      key={i} 
+                      className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'} animate-fade-in`}
+                      style={{ animationDelay: `${i * 100}ms` }}
+                    >
                       <div
-                        className={`inline-block max-w-[80%] px-4 py-3 rounded-lg ${
+                        className={`inline-block max-w-[80%] px-4 py-3 rounded-lg transform transition-all duration-200 ${
                           m.isAI 
-                            ? 'bg-white border border-[#3c6e47]/10 text-[#3c6e47]' 
-                            : 'bg-[#3c6e47] text-white'
+                            ? 'bg-white border border-[#3c6e47]/10 text-[#3c6e47] hover:shadow-soft' 
+                            : 'bg-[#3c6e47] text-white hover:bg-[#3c6e47]/90'
                         }`}
                       >
                         <ReactMarkdown>{m.text}</ReactMarkdown>
                       </div>
                     </div>
                   ))}
+                  {isLoading && (
+                    <div className="text-left mb-4 animate-fade-in">
+                      <div className="inline-block bg-white border border-[#3c6e47]/10 text-[#3c6e47] px-4 py-3 rounded-lg">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-[#3c6e47]/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-[#3c6e47]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-[#3c6e47]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
