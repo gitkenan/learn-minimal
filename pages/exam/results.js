@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
 export default function ExamResultsPage() {
@@ -28,7 +28,6 @@ export default function ExamResultsPage() {
       const results = JSON.parse(stored);
       
       try {
-        const supabase = initializeSupabase();
         const { data, error } = await supabase
           .from('exam_results')
           .insert([

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
 
 export default function SavedExamResultPage() {
@@ -19,7 +19,6 @@ export default function SavedExamResultPage() {
       if (!id || !user) return;
 
       try {
-        const supabase = initializeSupabase();
         const { data, error } = await supabase
           .from('exam_results')
           .select('*')
