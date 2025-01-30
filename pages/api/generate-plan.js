@@ -1,10 +1,9 @@
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
-import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { validatePlanStructure } from '../../utils/flexiblePlanValidator';
 import { parseMarkdownPlan } from '../../components/LearningPlanViewer';
 import { handleApiError } from '../../utils/apiUtils';
-import { getSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
@@ -20,7 +19,7 @@ class PlanGenerationError extends Error {
 const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 
 export default async function handler(req, res) {
-  const supabase = getSupabase();
+  const supabase = createPagesServerClient({ req, res });
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (!session) {

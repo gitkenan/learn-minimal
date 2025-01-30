@@ -1,12 +1,9 @@
 // hooks/usePlan.js
 import { useState, useEffect, useCallback, useReducer } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { initializeSupabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { syncService } from '@/lib/syncService';
 import { calculateProgress } from '../utils/planParserUtils';
-
-// Singleton Supabase client
-const supabase = initializeSupabase();
 
 // Error classification
 const isRecoverableError = (error) => {

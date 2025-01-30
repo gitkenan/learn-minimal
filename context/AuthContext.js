@@ -14,18 +14,25 @@ export const AuthProvider = ({ children }) => {
   const refreshSession = async () => {
     console.log('Refreshing session...');
     try {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      const [sessionResult, userResult] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.auth.getUser()
+      ]);
       
-      if (error) {
-        console.error('Session refresh error:', error);
-        throw error;
+      const currentSession = sessionResult.data.session;
+      const currentUser = userResult.data.user;
+
+      if (sessionResult.error && !currentUser) {
+        console.error('Session refresh error:', sessionResult.error);
+        throw sessionResult.error;
       }
 
-      console.log('Session refresh result:', currentSession ? 'Session found' : 'No session');
+      console.log('Session refresh result:', 
+        currentSession || currentUser ? 'Session/User found' : 'No session/user');
       
       setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      return currentSession;
+      setUser(currentUser ?? currentSession?.user ?? null);
+      return currentSession || (currentUser ? { user: currentUser } : null);
     } catch (error) {
       console.error('Error refreshing session:', error);
       setSession(null);

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
-import { initializeSupabase } from '@/lib/supabaseClient';
 import { Loading } from '@/components/ui/loading';
 
 export default function Home() {

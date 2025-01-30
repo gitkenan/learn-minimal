@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { initializeSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import PlanCard from '@/components/PlanCard';
 import ExamResults from '@/components/ExamResults';
@@ -33,11 +33,6 @@ export default function Dashboard() {
         setLoading(true);
         setError('');
 
-        const supabase = initializeSupabase();
-
-        if (!supabase) {
-          throw new Error('Failed to initialize Supabase client');
-        }
 
         // Fetch plans
         const { data: plansData, error: plansError } = await supabase
@@ -96,7 +91,6 @@ export default function Dashboard() {
     if (!examToDelete) return;
 
     try {
-      const supabase = initializeSupabase();
       const { error } = await supabase
         .from('exam_results')
         .delete()

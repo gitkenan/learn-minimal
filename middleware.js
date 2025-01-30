@@ -13,17 +13,23 @@ export async function middleware(req) {
   const supabase = createMiddlewareClient({ req, res });
 
   try {
+    // Get session from both cookie and Supabase client
     const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { user: cookieUser } } = await supabase.auth.getUser();
+
     console.log('Middleware session check:', {
-      hasSession: !!session,
-      user: session?.user?.id,
+      hasSession: !!session || !!cookieUser,
+      user: session?.user?.id || cookieUser?.id,
       path: req.nextUrl.pathname
     });
 
-    if (error) {
+    if (error && !cookieUser) {
       console.error('Auth session error:', error.message);
       return NextResponse.json({ error: 'Authentication error' }, { status: 500 });
     }
+
+    // Use combined session check
+    const hasValidSession = !!session || !!cookieUser;
 
     // Handle API routes
     if (req.nextUrl.pathname.startsWith('/api/')) {
@@ -49,7 +55,7 @@ export async function middleware(req) {
     }
 
     // Protected routes handling
-    if (!session && isProtectedRoute(req.nextUrl.pathname)) {
+    if (!hasValidSession && isProtectedRoute(req.nextUrl.pathname)) {
       const redirectUrl = new URL('/auth', req.url);
       redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
       return NextResponse.redirect(redirectUrl);

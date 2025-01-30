@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Dashboard from "@/pages/dashboard";
 import { useAuth } from "@/context/AuthContext";
-import { initializeSupabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 import { render, screen, within, waitFor } from '@testing-library/react';
 
 // Mock window.matchMedia
@@ -36,7 +36,7 @@ jest.mock("@/context/AuthContext", () => ({
 
 // Mock Supabase client
 jest.mock("@/lib/supabaseClient", () => ({
-  initializeSupabase: jest.fn(() => ({
+  supabase: {
     from: jest.fn().mockImplementation(() => ({
       select: jest.fn().mockImplementation(() => ({
         eq: jest.fn().mockImplementation(() => ({
@@ -110,7 +110,7 @@ describe("Dashboard Page", () => {
   });
 
   it("should show error message when plan fetch fails", async () => {
-    initializeSupabase().from().select().eq().order.mockImplementationOnce(() => ({
+    supabase.from().select().eq().order.mockImplementationOnce(() => ({
       then: jest.fn().mockImplementation((callback) => {
         callback({
           data: null,
