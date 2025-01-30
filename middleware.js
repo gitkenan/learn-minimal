@@ -27,20 +27,25 @@ export async function middleware(req) {
 
     // Handle API routes
     if (req.nextUrl.pathname.startsWith('/api/')) {
-      // If no session, block API access
-      if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      
-      // Add user ID to request headers for API routes
+      // Clone the request headers and add Supabase auth headers
       const requestHeaders = new Headers(req.headers);
-      requestHeaders.set('x-user-id', session.user.id);
+      requestHeaders.set('x-user-id', session?.user?.id || '');
       
-      return NextResponse.next({
+      // Create a response that propagates cookies
+      const response = NextResponse.next({
         request: {
           headers: requestHeaders,
         },
       });
+
+      // Ensure cookies are preserved
+      res.headers.forEach((value, key) => {
+        if (key.toLowerCase() === 'set-cookie') {
+          response.headers.append(key, value);
+        }
+      });
+
+      return response;
     }
 
     // Protected routes handling

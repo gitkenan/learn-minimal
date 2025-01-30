@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 
 export default async function handler(req, res) {
   console.log('API Test - Full request details:', {
@@ -21,8 +21,11 @@ export default async function handler(req, res) {
       supabaseAuth: supabaseAuth
     });
 
-    // First try getting session
-    const { data: { session } } = await supabase.auth.getSession();
+    // Create server-side supabase client with proper cookie handling
+    const supabase = createPagesServerClient({ req, res });
+    
+    // Get session from cookies
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (session) {
       return res.status(200).json({
