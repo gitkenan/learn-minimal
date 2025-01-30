@@ -1,6 +1,6 @@
 // context/AuthContext.js
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getSupabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 const AuthContext = createContext({});
 
@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
 
-  const supabase = getSupabase();
 
   const refreshSession = async () => {
     console.log('Refreshing session...');
@@ -52,6 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('AuthContext initializing...');
+    let isMounted = true;
     
     const loadInitialSession = async () => {
       try {
@@ -81,6 +81,7 @@ export const AuthProvider = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        if (!isMounted) return;
         console.log('Auth state change:', event, currentSession ? 'Session exists' : 'No session');
         
         setSession(currentSession);
@@ -96,6 +97,7 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => {
+      isMounted = false;
       console.log('Cleaning up auth subscriptions');
       subscription?.unsubscribe();
     };
