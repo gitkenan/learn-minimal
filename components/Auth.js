@@ -23,15 +23,20 @@ export default function Auth() {
       setError(null);
       console.log('Starting Google sign in...');
 
+      const isProduction = process.env.NODE_ENV === 'production';
+      const baseUrl = isProduction 
+        ? 'https://learn-minimum.vercel.app'
+        : window.location.origin;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${baseUrl}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?is_linking=true`
+          emailRedirectTo: `${baseUrl}/auth/callback?is_linking=true`
         }
       });
 
