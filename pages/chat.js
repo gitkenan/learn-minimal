@@ -1,12 +1,11 @@
+// pages/chat.js
 import { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuth } from '@/context/AuthContext';
-import { useWorkflow } from '@/context/WorkflowContext';
 import Layout from '@/components/Layout';
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { activePlanId } = useWorkflow();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -14,8 +13,8 @@ export default function ChatPage() {
   const [error, setError] = useState(null);
 
   const sendMessageToApi = async (message) => {
-    if (!user || !activePlanId) {
-      setError('No active learning plan selected');
+    if (!user) {
+      setError('No user active');
       return null;
     }
 
@@ -35,8 +34,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           message,
           topic: 'Learning Plan Discussion', // Get from actual plan data
-          discussionId,
-          planId: activePlanId
+          discussionId
         })
       });
 
@@ -81,7 +79,6 @@ export default function ChatPage() {
   };
 
   return (
-    <Layout>
       <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] bg-white/80 backdrop-blur-sm rounded-xl border border-[#3c6e47]/10">
         {/* Chat Header */}
         <div className="flex items-center p-4 border-b border-[#3c6e47]/10 bg-white/90 backdrop-blur-sm">
@@ -141,6 +138,5 @@ export default function ChatPage() {
           </p>
         </div>
       </div>
-    </Layout>
   );
 }
