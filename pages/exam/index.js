@@ -381,18 +381,39 @@ export default function AIExaminerPage() {
                   {messages.map((m, i) => (
                     <div 
                       key={`${i}-${m.text.substring(0,5)}`}
-                      className={`mb-4 ${m.isAI ? 'text-left' : 'text-right'}`}
+                      className={`group relative mb-6 ${m.isAI ? 'pl-12' : 'pr-12'}`}
                     >
-                      <div
-                        className={`transform transition-all duration-200 will-change-transform ${
-                          m.isAI 
-                            ? 'chat-message-ai' 
-                            : 'chat-message-user'
-                        } px-4 py-3`}
-                        style={{ transform: 'translateZ(0)' }}
-                      >
-                        <ReactMarkdown>{m.text}</ReactMarkdown>
-                      </div>
+                      {m.isAI ? (
+                        <div className="prose max-w-none text-primary">
+                          <ReactMarkdown
+                            components={{
+                              code({node, className, children, ...props}) {
+                                return <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm" {...props}>{children}</code>
+                              }
+                            }}
+                          >
+                            {m.text}
+                          </ReactMarkdown>
+                          <div className="absolute left-0 top-0 -ml-8 mt-1.5">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10">
+                              <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="ml-auto max-w-3xl bg-accent/5 border border-accent/10 rounded-lg p-4">
+                          <div className="text-primary">{m.text}</div>
+                          <div className="absolute right-0 top-0 -mr-8 mt-1.5">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10">
+                              <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {isLoading && (
@@ -409,40 +430,41 @@ export default function AIExaminerPage() {
                 </div>
               </div>
 
-              <div className="border-t border-[#3c6e47]/10 pt-4">
-                <input
-                  className="w-full px-4 py-3 text-[#3c6e47] bg-white border border-[#3c6e47]/20
-                           rounded-lg focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
-                  value={userAnswer}
-                  onChange={(e) => setUserAnswer(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submitAnswer();
-                    }
-                  }}
-                  placeholder="Type your answer..."
-                  disabled={isLoading}
-                />
-                <div className="flex flex-row sm:flex-row gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={submitAnswer}
-                    disabled={isLoading || !userAnswer.trim()}
-                    className="flex-1 sm:flex-initial px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg
-                             transition-all duration-200 disabled:opacity-50 min-w-[100px]"
-                  >
-                    Send
-                  </button>
-                  <button
-                    onClick={finalizeExam}
-                    disabled={isLoading || messages.length < 2}
-                    className="flex-1 sm:flex-initial px-6 py-3 bg-[#3c6e47]/60 hover:bg-[#3c6e47]/80 text-white rounded-lg
-                             transition-all duration-200 disabled:opacity-50 min-w-[100px]"
-                  >
-                    Finish
-                  </button>
+              <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t border-accent/10 pt-4">
+                <div className="relative max-w-3xl mx-auto">
+                  <textarea
+                    className="w-full px-4 py-3 text-primary bg-surface rounded-lg border border-accent/20
+                             focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30
+                             resize-none pr-16 transition-all duration-200"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Type your answer..."
+                    rows={Math.min(userAnswer.split('\n').length + 1, 4)}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute right-3 bottom-3 flex gap-2">
+                    <button
+                      onClick={submitAnswer}
+                      disabled={isLoading || !userAnswer.trim()}
+                      className="p-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors
+                               disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={finalizeExam}
+                      disabled={isLoading || messages.length < 2}
+                      className="p-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors
+                               disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-      
               </div>
               
               {error && (

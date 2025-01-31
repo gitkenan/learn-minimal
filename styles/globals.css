@@ -189,18 +189,33 @@
     );
   }
 
-  /* Code block styles */
-  pre[class*='language-'] {
-    @apply text-sm leading-relaxed !important;
-    max-height: 400px;
+  /* Improved markdown rendering */
+  .prose {
+    @apply text-primary leading-relaxed;
   }
 
-  :not(pre) > code {
-    @apply font-mono text-sm;
+  .prose p {
+    @apply my-4;
+  }
+
+  .prose ul {
+    @apply list-disc pl-6;
+  }
+
+  .prose ol {
+    @apply list-decimal pl-6;
+  }
+
+  .prose code:not(pre code) {
+    @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-primary;
   }
 
   .prose pre {
-    @apply bg-[#37474F] text-white p-4 rounded-lg overflow-x-auto;
+    @apply bg-surface border border-accent/10 rounded-lg p-4 overflow-x-auto my-4;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0 text-primary/90;
   }
 
   /* Typography enhancements */
