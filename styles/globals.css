@@ -293,7 +293,7 @@
 
   .chat-message-user {
     @apply bg-exam-answer text-chat-text;
-    max-width: 38.2%; /* Golden ratio complement */
+    max-width: 50%; /* Increase width for more flexibility */
     margin-left: auto;
     border-radius: 1rem 1rem 0.382rem 1.618rem; /* φ-based radii */
   }
