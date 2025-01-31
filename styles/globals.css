@@ -11,6 +11,7 @@
     pointer-events: none;
     z-index: 0;
   }
+  word-wrap: break-word; /* Ensure long words break properly */
 }
 
 @layer base {
@@ -308,7 +309,7 @@
 
   .chat-message-user {
     @apply bg-exam-answer text-chat-text;
-    max-width: 50%; /* Increase width for more flexibility */
+    max-width: 100%; /* Allow full width for flexibility */
     margin-left: auto;
     border-radius: 1rem 1rem 0.382rem 1.618rem; /* φ-based radii */
   }

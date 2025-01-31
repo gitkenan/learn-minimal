@@ -396,7 +396,7 @@ export default function AIExaminerPage() {
                           </ReactMarkdown>
                         </div>
                       ) : (
-                        <div className="ml-auto max-w-3xl bg-accent/5 border border-accent/10 rounded-lg p-4">
+                        <div className="ml-auto bg-accent/5 border border-accent/10 rounded-lg p-4 max-w-full">
                           <div className="text-primary">{m.text}</div>
                         </div>
                       )}
