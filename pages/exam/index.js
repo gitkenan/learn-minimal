@@ -375,7 +375,7 @@ export default function AIExaminerPage() {
               </div>
             </form>
           </div>
-          <div className={`w-full max-w-2xl flex flex-col h-full gap-4 mx-auto transition-all duration-500 ease-in-out transform ${showQuiz ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 absolute inset-0'}`}>
+          <div className={`w-full flex flex-col h-full mx-auto transition-all duration-500 ease-in-out transform ${showQuiz ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 absolute inset-0'}`}>
               <div className="flex-1">
                 <div ref={chatRef} className="h-[calc(100vh-200px)] overflow-y-auto">
                   {messages.map((m, i) => (
