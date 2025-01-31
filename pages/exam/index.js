@@ -386,9 +386,9 @@ export default function AIExaminerPage() {
                       <div
                         className={`transform transition-all duration-200 will-change-transform ${
                           m.isAI 
-                            ? 'chat-message-ai hover:shadow-soft' 
-                            : 'chat-message-user hover:bg-accent-hover'
-                        } px-6 py-4`}
+                            ? 'chat-message-ai' 
+                            : 'chat-message-user'
+                        } px-4 py-3`}
                         style={{ transform: 'translateZ(0)' }}
                       >
                         <ReactMarkdown>{m.text}</ReactMarkdown>
