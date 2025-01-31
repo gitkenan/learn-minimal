@@ -1,23 +1,83 @@
 import { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useAuth } from '@/context/AuthContext';
+import { useWorkflow } from '@/context/WorkflowContext';
 import Layout from '@/components/Layout';
-import { useGoogleChat } from '@/hooks/useGoogleChat';
 
 export default function ChatPage() {
+  const { user } = useAuth();
+  const { activePlanId } = useWorkflow();
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const { messages, isLoading, error, initializeChat, sendMessage } = useGoogleChat();
   const [inputMessage, setInputMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    initializeChat(`You are a learning assistant with expertise in personalized education...`);
-  }, [initializeChat]);
+  const sendMessageToApi = async (message) => {
+    if (!user || !activePlanId) {
+      setError('No active learning plan selected');
+      return null;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Create or get existing discussion ID (simplified example)
+      const discussionId = 'test-discussion'; // In real use, fetch/create from your DB
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.session.access_token}`
+        },
+        body: JSON.stringify({
+          message,
+          topic: 'Learning Plan Discussion', // Get from actual plan data
+          discussionId,
+          planId: activePlanId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const { response: aiResponse } = await response.json();
+      return aiResponse;
+    } catch (error) {
+      console.error('Chat error:', error);
+      setError(error.message);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
     
-    await sendMessage(inputMessage.trim());
+    // Add user message immediately
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      content: inputMessage.trim(),
+      isAI: false
+    }]);
+
+    const userInput = inputMessage.trim();
     setInputMessage('');
+
+    // Get AI response
+    const aiResponse = await sendMessageToApi(userInput);
+    if (aiResponse) {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        content: aiResponse,
+        isAI: true
+      }]);
+    }
   };
 
   return (
