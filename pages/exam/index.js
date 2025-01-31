@@ -381,7 +381,7 @@ export default function AIExaminerPage() {
                   {messages.map((m, i) => (
                     <div 
                       key={`${i}-${m.text.substring(0,5)}`}
-                      className={`group relative mb-6 ${m.isAI ? 'pl-12' : 'pr-12'}`}
+                      className={`group relative mb-6 ${m.isAI ? 'pl-4' : 'pr-12'}`}
                     >
                       {m.isAI ? (
                         <div className="prose max-w-none text-primary">
@@ -394,24 +394,10 @@ export default function AIExaminerPage() {
                           >
                             {m.text}
                           </ReactMarkdown>
-                          <div className="absolute left-0 top-0 -ml-8 mt-1.5">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10">
-                              <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                            </div>
-                          </div>
                         </div>
                       ) : (
                         <div className="ml-auto max-w-3xl bg-accent/5 border border-accent/10 rounded-lg p-4">
                           <div className="text-primary">{m.text}</div>
-                          <div className="absolute right-0 top-0 -mr-8 mt-1.5">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10">
-                              <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                            </div>
-                          </div>
                         </div>
                       )}
                     </div>
