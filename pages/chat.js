@@ -1,13 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import Layout from '@/components/Layout';
+import { useGoogleChat } from '@/hooks/useGoogleChat';
 
 export default function ChatPage() {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [messages, setMessages] = useState([
-    { id: 1, content: 'Hello! How can I help you today?', isAI: true },
-    { id: 2, content: 'I need help with my learning plan', isAI: false },
-  ]);
+  const { messages, isLoading, error, initializeChat, sendMessage } = useGoogleChat();
+  const [inputMessage, setInputMessage] = useState('');
+
+  useEffect(() => {
+    initializeChat(`You are a learning assistant with expertise in personalized education...`);
+  }, [initializeChat]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || isLoading) return;
+    
+    await sendMessage(inputMessage.trim());
+    setInputMessage('');
+  };
 
   return (
     <Layout>
@@ -47,18 +58,23 @@ export default function ChatPage() {
         {/* Input Area */}
         <div className="p-4 border-t border-[#3c6e47]/10 bg-white/90 backdrop-blur-sm">
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              disabled
-              className="w-full pr-16 bg-surface border border-accent-DEFAULT/10 rounded-xl focus:border-accent-DEFAULT/30"
-            />
-            <button
-              disabled
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-accent-DEFAULT text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50"
-            >
-              Send
-            </button>
+            <form onSubmit={handleSubmit} className="w-full">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                disabled={isLoading}
+                className="w-full pr-16 bg-surface border border-accent-DEFAULT/10 rounded-xl focus:border-accent-DEFAULT/30"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !inputMessage.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-accent-DEFAULT text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50"
+              >
+                {isLoading ? 'Sending...' : 'Send'}
+              </button>
+            </form>
           </div>
           <p className="text-center text-sm text-secondary/60 mt-2">
             AI assistant powered by your learning content
