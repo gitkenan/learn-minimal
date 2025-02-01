@@ -2,15 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAuth } from '@/context/AuthContext';
+import { useGoogleChat } from '@/hooks/useGoogleChat';
+import { ThumbsUp, RotateCcw } from 'lucide-react'; // Import icons we'll use
 
 export default function ChatPage() {
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [inputMessage, setInputMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const { messages, isLoading, error: chatError, sendMessage, resetChat } = useGoogleChat();
 
   const handleSubmit = async (e) => {
@@ -24,74 +23,82 @@ export default function ChatPage() {
   };
 
   return (
-      <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] bg-surface rounded-xl border border-accent-DEFAULT/10">
-        {/* Chat Header */}
-        <div className="flex items-center p-4 border-b border-accent-DEFAULT/10 bg-white/90 backdrop-blur-sm rounded-t-xl">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-accent-DEFAULT flex items-center justify-center shadow-soft">
-              <span className="text-white font-semibold text-lg">AI</span>
-            </div>
-            <div>
-              <h2 className="text-h3 text-primary font-semibold">Learning Assistant</h2>
-              <p className="text-sm text-secondary">Ready to help you learn</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-background to-surface">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isAI ? 'justify-start' : 'justify-end'} animate-fade-in`}
-            >
-              <div
-                className={message.isAI ? 'chat-message-ai p-4' : 'chat-message-user p-4'}
-              >
-                <p className="text-pretty leading-relaxed">
-                  {message.content}
-                </p>
-                <div className="chat-message-timing mt-1">
-                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    // Darker green background
+    <div className="flex flex-col h-screen bg-[#1a2b23]">
+      {/* Messages Container - adjusted padding and spacing */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.isAI ? 'justify-start' : 'justify-end'} max-w-3xl mx-auto w-full`}
+          >
+            {/* AI Message */}
+            {message.isAI && (
+              <div className="flex items-start space-x-3 max-w-[85%]">
+                <div className="h-8 w-8 rounded-full bg-[#2d8a4e] flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm">AI</span>
+                </div>
+                <div className="text-gray-100">
+                  <p className="text-pretty leading-relaxed">{message.content}</p>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  {/* Action buttons */}
+                  <div className="flex space-x-2 mt-2">
+                    <button className="p-1.5 hover:bg-[#2a3d33] rounded-md transition-colors">
+                      <ThumbsUp size={16} className="text-gray-400" />
+                    </button>
+                    <button className="p-1.5 hover:bg-[#2a3d33] rounded-md transition-colors">
+                      <RotateCcw size={16} className="text-gray-400" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+            
+            {/* User Message - adjusted to darker green */}
+            {!message.isAI && (
+              <div className="max-w-[85%]">
+                <div className="bg-[#2d8a4e] rounded-2xl p-4 text-white">
+                  <p className="text-pretty leading-relaxed">{message.content}</p>
+                  <div className="text-xs text-[#a3d4b8] mt-1">
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                {/* Action buttons */}
+                <div className="flex justify-end space-x-2 mt-2">
+                  <button className="p-1.5 hover:bg-[#2a3d33] rounded-md transition-colors">
+                    <ThumbsUp size={16} className="text-gray-400" />
+                  </button>
+                  <button className="p-1.5 hover:bg-[#2a3d33] rounded-md transition-colors">
+                    <RotateCcw size={16} className="text-gray-400" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t border-accent-DEFAULT/10 bg-white/90 backdrop-blur-sm rounded-b-xl">
-          <form onSubmit={handleSubmit} className="relative flex items-center">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              disabled={isLoading}
-              className="w-full pr-24 py-3 px-4 bg-surface border border-accent-DEFAULT/20 rounded-xl 
-                         focus:border-accent-DEFAULT focus:ring-2 focus:ring-accent-DEFAULT/10 
-                         disabled:opacity-50 transition-all duration-200"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !inputMessage.trim()}
-              className="absolute right-2 h-10 px-4 bg-accent-DEFAULT text-white rounded-lg
-                         hover:bg-accent-hover transition-colors disabled:opacity-50 
-                         disabled:hover:bg-accent-DEFAULT click-shrink"
-            >
-              {isLoading ? (
-                <span className="flex items-center space-x-1">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                </span>
-              ) : (
-                'Send'
-              )}
-            </button>
-          </form>
+      {/* Input Area */}
+      <div className="p-4 border-t border-[#2a3d33]">
+        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto">
+          <input
+            type="text"
+            placeholder="Message ChatGPT"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            disabled={isLoading}
+            className="w-full py-3 px-4 bg-[#2a3d33] text-white rounded-lg 
+                     placeholder-gray-400 border border-[#3d5447]
+                     focus:border-[#2d8a4e] focus:ring-1 focus:ring-[#2d8a4e]
+                     disabled:opacity-50 transition-all duration-200"
+          />
           {error && (
             <p className="text-red-500 text-sm mt-2">{error}</p>
           )}
-        </div>
+        </form>
       </div>
+    </div>
   );
 }

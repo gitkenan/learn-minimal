@@ -10,12 +10,8 @@ export default async function handler(req, res) {
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
     
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
-      safetySettings: Object.values(HarmCategory).map(category => ({
-        category,
-        threshold: HarmBlockThreshold.BLOCK_NONE,
-      }))
-    });
+      model: "gemini-pro"
+      });
 
     const chat = model.startChat({
       history: [

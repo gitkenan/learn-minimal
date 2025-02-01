@@ -20,10 +20,10 @@ export default async function handler(req, res) {
   try {
     // Get the authenticated session
     const supabase = createPagesServerClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (!session) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (sessionError || !session) {
+      return res.status(401).json({ error: 'Unauthorized', details: sessionError?.message });
     }
 
     ({ message, topic, discussionId, planId } = req.body);
