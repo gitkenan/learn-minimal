@@ -11,54 +11,16 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const sendMessageToApi = async (message) => {
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message,
-          discussionId
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.response;
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    }
-  };
+  const { messages, isLoading, error: chatError, sendMessage, resetChat } = useGoogleChat();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
     
-    // Add user message immediately
-    setMessages(prev => [...prev, {
-      id: Date.now(),
-      content: inputMessage.trim(),
-      isAI: false
-    }]);
-
     const userInput = inputMessage.trim();
     setInputMessage('');
 
-    // Get AI response
-    const aiResponse = await sendMessageToApi(userInput);
-    if (aiResponse) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        content: aiResponse,
-        isAI: true
-      }]);
-    }
+    await sendMessage(userInput, "You are a helpful learning assistant. Be concise and clear in your responses.");
   };
 
   return (

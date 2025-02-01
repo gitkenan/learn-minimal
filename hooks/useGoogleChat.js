@@ -1,46 +1,11 @@
 import { useState, useCallback } from 'react';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 export const useGoogleChat = (initialHistory = []) => {
   const [messages, setMessages] = useState(initialHistory);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [chatInstance, setChatInstance] = useState(null);
 
-  const initializeChat = useCallback(async (systemPrompt) => {
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-pro",
-        safetySettings: Object.values(HarmCategory).map(category => ({
-          category,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        }))
-      });
-      
-      const chat = model.startChat({
-        history: [
-          {
-            role: "user",
-            parts: [{ text: systemPrompt }]
-          }
-        ]
-      });
-      
-      setChatInstance(chat);
-      setError(null);
-    } catch (error) {
-      setError(error.message);
-      console.error('Chat initialization error:', error);
-    }
-  }, []);
-
-  const sendMessage = useCallback(async (message, stream = false) => {
-    if (!chatInstance) {
-      setError('Chat not initialized');
-      return;
-    }
-
+  const sendMessage = useCallback(async (message, systemPrompt) => {
     setIsLoading(true);
     setError(null);
 
@@ -52,27 +17,41 @@ export const useGoogleChat = (initialHistory = []) => {
         isAI: false 
       }]);
 
-      const result = await chatInstance.sendMessage(message);
-      const response = await result.response;
-      const responseText = response.text();
+      const response = await fetch('/api/g-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message,
+          systemPrompt
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
+      }
+
+      const { response: aiResponse } = await response.json();
 
       // Add AI response
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
-        content: responseText,
+        content: aiResponse,
         isAI: true
       }]);
+
     } catch (error) {
       setError(error.message);
-      console.error('Message sending error:', error);
+      console.error('Chat error:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [chatInstance]);
+  }, []);
 
   const resetChat = useCallback(() => {
     setMessages([]);
-    setChatInstance(null);
     setError(null);
     setIsLoading(false);
   }, []);
@@ -81,7 +60,6 @@ export const useGoogleChat = (initialHistory = []) => {
     messages, 
     isLoading, 
     error, 
-    initializeChat, 
     sendMessage, 
     resetChat 
   };
