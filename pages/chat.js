@@ -35,7 +35,7 @@ export default function ChatPage() {
             {/* AI Message */}
             {message.isAI && (
               <div className="flex items-start space-x-3 max-w-[85%]">
-                <div className="h-8 w-8 rounded-full bg-[#2d8a4e] flex items-center justify-center flex-shrink-0">
+                <div className="h-8 w-8 rounded-full bg-[#1d332b] flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm">AI</span>
                 </div>
                 <div className="text-gray-100">
@@ -59,9 +59,9 @@ export default function ChatPage() {
             {/* User Message - adjusted to darker green */}
             {!message.isAI && (
               <div className="max-w-[85%]">
-                <div className="bg-[#2d8a4e] rounded-2xl p-4 text-white">
+                <div className="bg-[#1d332b] rounded-2xl p-4 text-white">
                   <p className="text-pretty leading-relaxed">{message.content}</p>
-                  <div className="text-xs text-[#a3d4b8] mt-1">
+                  <div className="text-xs text-[#8abf9e] mt-1">
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -90,8 +90,8 @@ export default function ChatPage() {
             onChange={(e) => setInputMessage(e.target.value)}
             disabled={isLoading}
             className="w-full py-3 px-4 bg-[#2a3d33] text-white rounded-lg 
-                     placeholder-gray-400 border border-[#3d5447]
-                     focus:border-[#2d8a4e] focus:ring-1 focus:ring-[#2d8a4e]
+                     placeholder-gray-400 border border-[#2a3d33]
+                     focus:border-[#1d332b] focus:ring-1 focus:ring-[#1d332b]
                      disabled:opacity-50 transition-all duration-200"
           />
           {error && (
