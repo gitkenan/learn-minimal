@@ -66,7 +66,7 @@ function MobileMenu() {
               onClick={() => handleNavigation('/')}
               className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
             >
-              Create New Plan
+              Plan
             </button>
             <button
               onClick={signOut}
