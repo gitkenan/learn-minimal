@@ -86,26 +86,26 @@ export default function Header() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <header className="absolute right-4 top-4 z-50">
+    <header className="fixed top-0 left-0 w-full z-50 bg-[#1a2b23] py-3">
       {isMobile ? (
         <MobileMenu />
       ) : (
-        <nav className="flex gap-2">
+        <nav className="flex gap-4 justify-center">
           <Link 
             href="/dashboard" 
-            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+            className="px-4 py-2 bg-[#1a2b23] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm border border-white/10"
           >
             Dashboard
           </Link>
           <Link 
             href="/exam" 
-            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+            className="px-4 py-2 bg-[#1a2b23] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm border border-white/10"
           >
             Exam
           </Link>
           <Link 
             href="/calendar" 
-            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+            className="px-4 py-2 bg-[#1a2b23] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm border border-white/10"
           >
             Calendar
           </Link>
