@@ -115,6 +115,12 @@ export default function Header() {
           >
             Plan
           </Link>
+          <Link 
+            href="/chat" 
+            className="px-4 py-2 bg-[#1a2b23] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm border border-white/10"
+          >
+            Chat
+          </Link>
           {!user ? (
             <Link
               href="/auth"
