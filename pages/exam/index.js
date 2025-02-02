@@ -269,7 +269,7 @@ export default function AIExaminerPage() {
 
     return (
         <div className="min-h-screen bg-[#f8faf9] relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
+            <div className="absolute inset-0 bg-[#e8f0ed]"></div>
             <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative">
                 {/* The landing page */}
                 <div className="w-full relative">
@@ -280,11 +280,10 @@ export default function AIExaminerPage() {
                             startQuiz();
                         }}
                     >
-                        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
+                        <h1 className="text-lg md:text-xl lg:text-2xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent gap-4">
+                        {"What would you like to be examined on?"}
                         </h1>
-                        <p className="text-[#3c6e47]/80 text-center mb-12 text-lg md:text-xl lg:text-2xl max-w-2xl">
-                            {"What would you like to be examined on?"}
-                        </p>
+
 
                         <div className="flex flex-col gap-4">
                             <div className="relative">
