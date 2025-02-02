@@ -1,3 +1,4 @@
+// components/Header.js
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
