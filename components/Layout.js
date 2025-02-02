@@ -3,7 +3,7 @@ import Header from './Header'
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#1a2b23]">
       <Header />
       <main className="flex-1 w-full relative flex flex-col">
         {children}

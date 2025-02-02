@@ -19,7 +19,13 @@ export default function ChatPage() {
         const userInput = inputMessage.trim();
         setInputMessage('');
 
-        await sendMessage(userInput, "You are a helpful learning assistant. Be concise and clear in your responses.");
+        await sendMessage(
+            userInput,
+            "Writing in the style of George Orwell, " + 
+            "teaching the user who is your student. " +
+            "providing no titles or subtitles in your answer, " +
+            "provide authentic information as a response to the student's questions."
+        );
     };
 
     return (
@@ -83,10 +89,11 @@ export default function ChatPage() {
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             disabled={isLoading}
-                            className="w-full py-3 px-4 bg-[#1d332b] text-white rounded-lg 
-                       placeholder-gray-400 border border-[#1d332b]
-                       focus:border-[#1d332b] focus:ring-1 focus:ring-[#1d332b]
-                       disabled:opacity-50 transition-all duration-200"
+                            className="w-full py-3 px-4 !bg-[#2a3d33] text-white rounded-full
+             placeholder-gray-400 border border-[#2a3d33]
+             focus:border-[#2a3d33] focus:ring-1 focus:ring-[#2a3d33]
+             disabled:opacity-50 transition-all duration-200
+             focus:outline-none"
                         />
                         {error && (
                             <p className="text-red-500 text-sm mt-2">{error}</p>
