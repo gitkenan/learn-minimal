@@ -273,7 +273,13 @@ export default function AIExaminerPage() {
             <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative">
                 {/* The landing page */}
                 <div className="w-full relative">
-                    <form className={`w-full max-w-xl flex flex-col mx-auto transition-all duration-500 ease-in-out transform ${!showQuiz ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 absolute inset-0'}`}>
+                    <form 
+                        className={`w-full max-w-xl flex flex-col mx-auto transition-all duration-500 ease-in-out transform ${!showQuiz ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 absolute inset-0'}`}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            startQuiz();
+                        }}
+                    >
                         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
                         </h1>
                         <p className="text-[#3c6e47]/80 text-center mb-12 text-lg md:text-xl lg:text-2xl max-w-2xl">
@@ -281,14 +287,35 @@ export default function AIExaminerPage() {
                         </p>
 
                         <div className="flex flex-col gap-4">
-                            <input
-                                type="text"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Enter a subject to be examined on..."
-                                className="w-full px-4 py-3 bg-white rounded-xl border border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-gray-400 shadow-sm pr-12"
-                                disabled={isLoading}
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    placeholder="Enter a subject to be examined on..."
+                                    className="w-full px-4 py-3 bg-white rounded-xl border border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-gray-400 shadow-sm pr-14"
+                                    disabled={isLoading}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!subject.trim() || isLoading}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#3c6e47] hover:bg-[#2a4d32] text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                                >
+                                    <svg 
+                                        className="w-5 h-5" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth={2} 
+                                            d="M5 10l7-7m0 0l7 7m-7-7v18" 
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setShowAdvanced(!showAdvanced)}
@@ -335,26 +362,6 @@ export default function AIExaminerPage() {
                                 </>
                             )}
 
-                            <button
-                                onClick={startQuiz}
-                                disabled={!subject.trim() || isLoading}
-                                className="w-full px-6 py-3 bg-[#3c6e47] hover:bg-[#98c3a4] text-white rounded-lg 
-                           transition-all duration-200 disabled:opacity-50 disabled:bg-[#3c6e47]/50 
-                           flex items-center justify-center font-medium text-base"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loading
-                                            variant="spinner"
-                                            size="sm"
-                                            className="text-white -ml-1 mr-3"
-                                        />
-                                        Starting...
-                                    </>
-                                ) : (
-                                    'Start Exam'
-                                )}
-                            </button>
                         </div>
                     </form>
                 </div>
