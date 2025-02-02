@@ -33,56 +33,49 @@ function MobileMenu() {
   };
 
   return (
-    <div className="md:hidden">
-      <div className="flex items-center justify-end px-4 py-3">
-        <div ref={menuRef} className="relative">
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 hover:bg-[#3c6e47]/5 rounded-lg text-[#3c6e47]/70 hover:text-[#3c6e47] transition-all duration-200"
-          >
-            <Menu size={20} />
-          </button>
+    <div className="md:hidden absolute right-4 top-4">
+      <div ref={menuRef} className="relative">
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="p-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200"
+        >
+          <Menu size={20} />
+        </button>
 
-          {menuOpen && (
-            <>
-              <div className="bottom-sheet-enhanced__overlay" />
-              <div className="fixed inset-x-0 bottom-0 top-14 bg-white py-2 z-[60] animate-fade-in border-t border-[#3c6e47]/10
-                    transform-gpu will-change-transform overflow-visible backdrop-blur-sm
-                    animate-slide-up">
-                <button
-                  onClick={() => handleNavigation('/dashboard')}
-                  className="w-full px-4 py-2 text-left text-sm text-[#3c6e47]/70 hover:bg-[#3c6e47]/5 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => handleNavigation('/exam')}
-                  className="w-full px-4 py-2 text-left text-sm text-[#3c6e47]/70 hover:bg-[#3c6e47]/5 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Exam
-                </button>
-                <button
-                  onClick={() => handleNavigation('/calendar')}
-                  className="w-full px-4 py-2 text-left text-sm text-[#3c6e47]/70 hover:bg-[#3c6e47]/5 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Calendar
-                </button>
-                <button
-                  onClick={() => handleNavigation('/')}
-                  className="w-full px-4 py-2 text-left text-sm text-[#3c6e47]/70 hover:bg-[#3c6e47]/5 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Create New Plan
-                </button>
-                <button
-                  onClick={signOut}
-                  className="w-full px-4 py-2 text-left text-sm text-[#3c6e47]/70 hover:bg-[#3c6e47]/5 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        {menuOpen && (
+          <div className="absolute right-0 top-12 w-48 bg-[#1d332b] rounded-2xl shadow-lg py-2 z-50">
+            <button
+              onClick={() => handleNavigation('/dashboard')}
+              className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => handleNavigation('/exam')}
+              className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
+            >
+              Exam
+            </button>
+            <button
+              onClick={() => handleNavigation('/calendar')}
+              className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
+            >
+              Calendar
+            </button>
+            <button
+              onClick={() => handleNavigation('/')}
+              className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
+            >
+              Create New Plan
+            </button>
+            <button
+              onClick={signOut}
+              className="w-full px-4 py-2 text-left text-sm text-white/70 hover:bg-[#2a3d33] hover:text-white transition-colors duration-200"
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,58 +86,46 @@ export default function Header() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
-    <header className="bg-white/40 backdrop-blur-[2px] relative z-50 border-b border-[#3c6e47]/5">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        {isMobile ? (
-          <MobileMenu />
-        ) : (
-          <div className="flex items-center justify-end h-16">
-            <div className="flex items-center gap-6">
-              <nav className="flex gap-4">
-                <Link 
-                  href="/" 
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Home
-                </Link>
-                <Link 
-                  href="/dashboard" 
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  href="/exam" 
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Exam
-                </Link>
-                <Link 
-                  href="/calendar" 
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Calendar
-                </Link>
-              </nav>
-              {!user ? (
-                <Link
-                  href="/auth"
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Sign In
-                </Link>
-              ) : (
-                <button
-                  onClick={signOut}
-                  className="text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
-                >
-                  Sign Out
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+    <header className="absolute right-4 top-4 z-50">
+      {isMobile ? (
+        <MobileMenu />
+      ) : (
+        <nav className="flex gap-2">
+          <Link 
+            href="/dashboard" 
+            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+          >
+            Dashboard
+          </Link>
+          <Link 
+            href="/exam" 
+            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+          >
+            Exam
+          </Link>
+          <Link 
+            href="/calendar" 
+            className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+          >
+            Calendar
+          </Link>
+          {!user ? (
+            <Link
+              href="/auth"
+              className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+            >
+              Sign In
+            </Link>
+          ) : (
+            <button
+              onClick={signOut}
+              className="px-4 py-2 bg-[#1d332b] hover:bg-[#2a3d33] rounded-full text-white/70 hover:text-white transition-all duration-200 text-sm"
+            >
+              Sign Out
+            </button>
+          )}
+        </nav>
+      )}
     </header>
   );
 }
