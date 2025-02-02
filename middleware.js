@@ -52,6 +52,13 @@ export async function middleware(req) {
         }
       });
 
+      // Example: Express.js cookie settings
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Enable in prod
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        });
+
       return response;
     }
 
