@@ -303,13 +303,13 @@ export default function AIExaminerPage() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Enter a subject to be examined on..."
-                  className="w-full px-4 py-3 bg-white border border-[#3c6e47]/20 rounded-lg text-[#3c6e47] placeholder-[#3c6e47]/50 focus:outline-none focus:border-[#3c6e47] transition-all duration-200"
+                  className="w-full px-4 py-3 bg-white rounded-xl border border-gray-300 text-base placeholder-gray-500 focus:outline-none focus:border-gray-400 shadow-sm pr-12"
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center justify-center gap-2 text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200"
+                  className="flex items-center justify-center gap-2 text-[#3c6e47]/70 hover:text-[#3c6e47] transition-colors duration-200 text-sm"
                 >
                   <span>{showAdvanced ? 'Hide' : 'Show'} Advanced Options</span>
                   <svg
@@ -432,8 +432,7 @@ export default function AIExaminerPage() {
                     <button
                       onClick={submitAnswer}
                       disabled={isLoading || !userAnswer.trim()}
-                      className="p-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors
-                               disabled:opacity-50 disabled:pointer-events-none"
+                      className="absolute right-2 bottom-1/2 transform translate-y-1/2 p-1.5 bg-[#3c6e47] hover:bg-[#2a4d32] text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
