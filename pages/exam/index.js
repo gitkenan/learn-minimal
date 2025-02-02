@@ -271,6 +271,7 @@ export default function AIExaminerPage() {
         <div className="min-h-screen bg-[#f8faf9] relative">
             <div className="absolute inset-0 bg-gradient-to-b from-[#e8f0eb] to-transparent"></div>
             <main className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[calc(100vh-64px)] relative">
+                {/* The landing page */}
                 <div className="w-full relative">
                     <form className={`w-full max-w-xl flex flex-col mx-auto transition-all duration-500 ease-in-out transform ${!showQuiz ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 absolute inset-0'}`}>
                         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4 text-center bg-gradient-to-r from-[#3c6e47] to-[#98c3a4] bg-clip-text text-transparent">
@@ -357,6 +358,7 @@ export default function AIExaminerPage() {
                         </div>
                     </form>
                 </div>
+                {/* Chat interface */}
                 <div className={`w-full flex flex-col h-full mx-auto transition-all duration-500 ease-in-out transform ${showQuiz ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 absolute inset-0'}`}>
                     <div className="flex-1">
                         <div ref={chatRef} className="h-[calc(100vh-200px)] overflow-y-auto">
