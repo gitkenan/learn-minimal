@@ -4,6 +4,7 @@ export const useGoogleChat = (initialHistory = []) => {
   const [messages, setMessages] = useState(initialHistory);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(() => Date.now().toString());
 
   const sendMessage = useCallback(async (message, systemPrompt) => {
     setIsLoading(true);
@@ -24,7 +25,8 @@ export const useGoogleChat = (initialHistory = []) => {
         },
         body: JSON.stringify({
           message,
-          systemPrompt
+          systemPrompt,
+          sessionId
         })
       });
 
@@ -54,6 +56,7 @@ export const useGoogleChat = (initialHistory = []) => {
     setMessages([]);
     setError(null);
     setIsLoading(false);
+    setSessionId(Date.now().toString());
   }, []);
 
   return { 
